@@ -123,8 +123,8 @@ class SplineGenerator:
         output_waypoints.append(self._waypoints[-1])
 
         # Remove any consecutive waypoints that are the same
-        index_range = range(len(output_waypoints))
-        index_range.sort(reverse=True)
+        index_range_r = range(len(output_waypoints))
+        index_range = index_range_r[::-1]
         for index in index_range:
             current_waypoint = output_waypoints[index]
             next_waypoint = output_waypoints[index - 1]
