@@ -779,7 +779,7 @@ def interpolate_all_curves(waypoints, centre_points, turn_radius, resolution, pr
             output.insert(sample_point[0], sample_point[1])
     return output
 
-def plot_waypoints(waypoints_to_plot, centre_points=[]):
+def plot_waypoints(waypoints_to_plot, centre_points=[], original_wav =[]):
     """
     A matplotlib function to plot the waypoints and curve centre points if given.
     :param waypoints_to_plot: A list of waypoints to plot.
@@ -789,22 +789,29 @@ def plot_waypoints(waypoints_to_plot, centre_points=[]):
         return False
     lat_vals = []
     lon_vals = []
+    wavepoints_lat= []
+    wavepoints_lon = []
     # Loop through to get each lat and lon value
     for waypoint in waypoints_to_plot:
         lat_vals.append(waypoint[0])
-        lon_vals.append(waypoint[1])
+        lon_vals.append(waypoint[1])  
+
+    for waypoint in original_wav:
+        wavepoints_lat.append(waypoint[0])
+        wavepoints_lon.append(waypoint[1])  
+
     centre_x = []
     centre_y = []
     for centre_point in centre_points:
         if centre_point[0] == "curve":
             centre_x.append(centre_point[1][0])
             centre_y.append(centre_point[1][1])
-    plt.plot(lat_vals, lon_vals, '--bo')
-    plt.scatter(centre_x, centre_y)
+    plt.plot(lat_vals, lon_vals,'--bo', color = 'g')
+    plt.plot(wavepoints_lat, wavepoints_lon,'bo', color='red')
+    #plt.scatter(centre_x, centre_y)
     plt.xlim([0, 10])
     plt.ylim([0, 10])
     plt.axis('equal')
-
     plt.show()
 
 
@@ -827,5 +834,5 @@ if "__main__" == __name__:
     """Use the 'generate_spline' method to calculate the new interpolated waypoints and centre points."""
     spline_waypoints, centre_points = spline.generate_spline()
     """Do whatever you want with the output. For instance here we plot them."""
-    plot_waypoints(spline_waypoints, centre_points)
+    plot_waypoints(spline_waypoints, centre_points, waypoints)
     print(spline_waypoints)
