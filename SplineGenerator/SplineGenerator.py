@@ -425,11 +425,11 @@ def get_closest_centre_point(previous_waypoint, current_waypoint, next_waypoint,
 def calculate_curve_exit(previous_waypoint, current_waypoint, next_waypoint, radius, print_data=False):
     """
     Calculates the point at which the albatross exits the curve towards the next waypoint.
-    :param previous_waypoint: The [lat, lon] coordinate of the previous waypoint.
-    :param current_waypoint: The [lat, lon] coordinate of the current waypoint.
-    :param next_waypoint: The [lat, lon] coordinate of the next waypoint.
-    :param radius: The minimum turning radius of the plane.
-    :param print_data: A flag that will return information about all sorts of things. This is a debugging resource.
+    :param: previous_waypoint: The [lat, lon] coordinate of the previous waypoint.
+    :param: current_waypoint: The [lat, lon] coordinate of the current waypoint.
+    :param: next_waypoint: The [lat, lon] coordinate of the next waypoint.
+    :param: radius: The minimum turning radius of the plane.
+    :param: print_data: A flag that will return information about all sorts of things. This is a debugging resource.
     :return: A [lat, lon] point where the plane exits the curve and the centre point of the circle it traces. Returns
     as <[lat, lon], [lat, lon]>
     """
@@ -726,11 +726,11 @@ def interpolate_all_curves(waypoints, centre_points, turn_radius, resolution, pr
     """
     Takes in a list of waypoints and a list of centre points for curves and returns a list of waypoints that
     also interpolate the curves to a specified resolution.
-    :param waypoints: A list of waypoints that define waypoint to waypoint with curve exits.
-    :param centre_points: A list of centre points of the circles the plane with trace.
-    :param turn_radius: The minimum turn radius of the plane.
-    :param resolution: The resolution in waypoints per metre.
-    :param print_data: A flag that will return information about all sorts of things. This is a debugging resource.
+    :param: waypoints: A list of waypoints that define waypoint to waypoint with curve exits.
+    :param: centre_points: A list of centre points of the circles the plane with trace.
+    :param: turn_radius: The minimum turn radius of the plane.
+    :param: resolution: The resolution in waypoints per metre.
+    :param: print_data: A flag that will return information about all sorts of things. This is a debugging resource.
     :return: A list of waypoints that also contain the interpolated curve waypoints.
     """
     r = turn_radius
@@ -816,8 +816,8 @@ if "__main__" == __name__:
     # waypoints = [[4.0, 5.0], [7.0, 6.0], [6.0, 9.0], [4.0, 7.0], [2.0, 6], [1, 3], [-3, 0], [-4, 5]]
     # waypoints = [[40, 40], [40, 70], [70, 70], [70, 40]]
     # waypoints = [[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0], [8, 5], [9, 3], [6, -4]]
-    # waypoints = [[-10, 0], [-7, 0], [-5, 0], [-3, 0], [1, 2], [5, 4], [3, 0], [5, 2], [7, 0], [9, 2], [11, 0]]
-    waypoints = [[5, 10], [9, 19], [12, 14], [11, 5], [3, -4], [-4, 2]]
+    waypoints = [[-10, 0], [-7, 0], [-5, 0], [-3, 0], [1, 2], [5, 4], [3, 0], [5, 2], [7, 0], [9, 2], [11, 0]]
+    # waypoints = [[5, 10], [9, 19], [12, 14], [11, 5], [3, -4], [-4, 2]]
     # waypoints = [[5, 2], [10, 9], [13, 6]]
     """Then create an instance of the class and pass in the arguments."""
     spline = SplineGenerator(waypoints=waypoints, turn_radius=get_maximum_turn_radius(waypoints=waypoints),
@@ -828,4 +828,4 @@ if "__main__" == __name__:
     spline_waypoints, centre_points = spline.generate_spline()
     """Do whatever you want with the output. For instance here we plot them."""
     plot_waypoints(spline_waypoints, centre_points)
-
+    print(spline_waypoints)
