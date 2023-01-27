@@ -227,7 +227,7 @@ def vertex_angle(point_one, point_two, point_three):
     dist_two_three = distance_between_two_points(point_two, point_three)
     numerator = dist_one_two ** 2 + dist_one_three ** 2 - dist_two_three ** 2
     denominator = 2 * dist_one_two * dist_one_three
-    angle = math.acos(numerator / denominator) * 180 / math.pi
+    angle = math.acos(numerator / denominator)
     return angle
 
 def get_angle_range(first_angle, second_angle, is_clockwise):
@@ -779,7 +779,7 @@ def interpolate_all_curves(waypoints, centre_points, turn_radius, resolution, pr
             output.insert(sample_point[0], sample_point[1])
     return output
 
-def plot_waypoints(waypoints_to_plot, centre_points=[], original_wav =[]):
+def plot_waypoints(waypoints_to_plot, centre_points=[], original_waypoints =[]):
     """
     A matplotlib function to plot the waypoints and curve centre points if given.
     :param waypoints_to_plot: A list of waypoints to plot.
@@ -796,7 +796,7 @@ def plot_waypoints(waypoints_to_plot, centre_points=[], original_wav =[]):
         lat_vals.append(waypoint[0])
         lon_vals.append(waypoint[1])  
 
-    for waypoint in original_wav:
+    for waypoint in original_waypoints:
         wavepoints_lat.append(waypoint[0])
         wavepoints_lon.append(waypoint[1])  
 
@@ -814,6 +814,41 @@ def plot_waypoints(waypoints_to_plot, centre_points=[], original_wav =[]):
     plt.axis('equal')
     plt.show()
 
+def calculate_limit_lines_angle(previous_waypoint, current_waypoint, next_waypoint):
+    waypoints_angle = vertex_angle(previous_waypoint, current_waypoint, next_waypoint)
+    limit_lines_angle = math.pi - waypoints_angle
+    return limit_lines_angle
+
+def check_if_out_of_bounds(centre_point, boundary_points, radius, is_clockwise):
+    # Create a range of possible curve samples to test
+    return False
+
+def calculate_centre_point_angle(previous_waypoint, current_waypoint, next_waypoint, boundary_points, radius):
+    limit_lines_angle = calculate_limit_lines_angle(previous_waypoint, current_waypoint, next_waypoint)
+    # For loop to loop through each condition until it finds one that doesn't exceed the boundary or runs out of attempts.
+    initial_centre_point = get_closest_centre_point(previous_waypoint, current_waypoint, next_waypoint, radius)
+    reference_angle = math.atan2(initial_centre_point[0] - current_waypoint[0], initial_centre_point[1] - current_waypoint[1])
+    percentage_range = [0, 1, 0.5, 0.75, 0.25, 0.875, 0.125]
+    for percentage in percentage_range:
+        check_angle = reference_angle - limit_lines_angle * percentage
+        centre_point = [current_waypoint[0] + math.cos(check_angle), current_waypoint[1] + math.sin(check_angle)]
+        is_clockwise = get_circle_direction(previous_waypoint, current_waypoint, centre_point)
+        if not check_if_out_of_bounds(centre_point, boundary_points, radius, is_clockwise):
+            return check_angle, centre_point
+    return None
+
+def calculate_curve_entrance_and_exit(previous_waypoint, current_waypoint, next_waypoint, boundary_points, radius):
+    """
+    Finds the curve entrance and exit coordinates whilst considering the boundary and waypoints that are close together.
+    :param previous_waypoint: The previous waypoint.
+    :param current_waypoint: The current waypoint.
+    :param next_waypoint: The next waypoint.
+    :return: Two coordinates <[entrance_lat, entrance_lon], [exit_lat, exit_lon]>
+    """
+    # Find what angle (from the current waypoint to the centre point) the centre point will be at based on boundary
+    centre_point_angle = calculate_centre_point_angle(previous_waypoint, current_waypoint, next_waypoint, boundary_points, radius)
+
+
 
 if "__main__" == __name__:
     """
@@ -826,9 +861,10 @@ if "__main__" == __name__:
     waypoints = [[-10, 0], [-7, 0], [-5, 0], [-3, 0], [1, 2], [5, 4], [3, 0], [5, 2], [7, 0], [9, 2], [11, 0]]
     # waypoints = [[5, 10], [9, 19], [12, 14], [11, 5], [3, -4], [-4, 2]]
     # waypoints = [[5, 2], [10, 9], [13, 6]]
+    waypoints = [[2, 4], [2, 10], [5, 10], [5, 4], [8, 4], [8, 10], [11, 10], [11, 4], [14, 4], [14, 10]]
     """Then create an instance of the class and pass in the arguments."""
-    spline = SplineGenerator(waypoints=waypoints, turn_radius=get_maximum_turn_radius(waypoints=waypoints),
-                             resolution=1, tolerance=0, boundary_points=[])
+    spline = SplineGenerator(waypoints=waypoints, turn_radius=0.4,
+                             resolution=3, tolerance=0, boundary_points=[])
     """You can print the waypoint to the console just for the user."""
     spline.print_waypoints()
     """Use the 'generate_spline' method to calculate the new interpolated waypoints and centre points."""
