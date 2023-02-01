@@ -816,6 +816,7 @@ def plot_waypoints(waypoints_to_plot, centre_points=[], original_waypoints =[]):
 
 def calculate_limit_lines_angle(previous_waypoint, current_waypoint, next_waypoint):
     limit_lines_angle = vertex_angle(current_waypoint, next_waypoint, previous_waypoint)
+    limit_lines_angle = math.pi - limit_lines_angle
     return limit_lines_angle
 
 def check_if_out_of_bounds(centre_point, boundary_points, radius, is_clockwise):
@@ -829,16 +830,45 @@ def calculate_centre_point_angle(previous_waypoint, current_waypoint, next_waypo
     initial_centre_point = get_closest_centre_point(previous_waypoint, current_waypoint, next_waypoint, radius)
     reference_angle = math.atan2(initial_centre_point[1] - current_waypoint[1], initial_centre_point[0] - current_waypoint[0])
     print("Reference Angle:", reference_angle)
-    percentage = 0
-    angle_step = reference_angle - percentage * limit_lines_angle
+    percentage = 0.5
+    if previous_waypoint[1] < current_waypoint[1]:
+        angle_step = reference_angle - percentage * limit_lines_angle
+    else:
+        angle_step = reference_angle + percentage * limit_lines_angle
+
     test_centre_point = [current_waypoint[0] + radius * math.cos(angle_step), current_waypoint[1] + radius * math.sin(angle_step)]
     print("Center point:", test_centre_point)
-    next_point_angle = find_dual_perpendicular_angle(radius, test_centre_point, next_waypoint)
-    previous_point_angle = find_dual_perpendicular_angle(radius, test_centre_point, previous_waypoint)
-    print("Next angle:", next_point_angle * 180 / math.pi)
-    print("Previous angle:", previous_point_angle * 180 / math.pi)
-    return [["curve", test_centre_point], next_point_angle, previous_point_angle]
+    exit_point_angle, exit_point_angle_mirror = calculate_dual_perpendicular_angles(test_centre_point, next_waypoint, radius)
+    entrance_point_angle, entrance_point_angle_mirror = calculate_dual_perpendicular_angles(test_centre_point, previous_waypoint, radius)
+    print("Exit 1:", exit_point_angle, "Exit 2:", exit_point_angle_mirror, "Entrance 1:", entrance_point_angle, "Entrance 2:", entrance_point_angle_mirror)
+    if previous_waypoint[1] < current_waypoint[1]:
+        return [["curve", test_centre_point], exit_point_angle, entrance_point_angle_mirror]
+    else:
+        return [["curve", test_centre_point], exit_point_angle_mirror, entrance_point_angle]
 
+def get_mirrored_angle(centre_point, waypoint, angle, radius):
+    point = get_point_from_angle(angle, centre_point, radius)
+    mirrored_point = mirror_across_line(centre_point, waypoint, point)
+    mirrored_angle = get_angle_from_point(centre_point, mirrored_point)
+    return mirrored_angle
+
+def choose_correct_entrance_exit(entrance_point, exit_point, centre_point, previous_waypoint, current_waypoint, next_waypoint):
+    # Get mirror waypoints stored
+    entrance_point_mirror = mirror_across_line(centre_point, previous_waypoint, entrance_point)
+    exit_point_mirror = mirror_across_line(centre_point, next_waypoint, exit_point)
+    # Get direction of plane
+    is_clockwise = get_circle_direction(previous_waypoint, current_waypoint, next_waypoint)
+    # Find the correct sequence of points to find if the mirrored points are correct or not. Order should always be:
+    # Entrance point, current waypoint, exit point. Points can lie on current waypoint too.
+    return entrance_point_mirror, exit_point
+
+def get_point_from_angle(angle, origin, radius):
+    new_point = [origin[0] + radius * math.cos(angle), origin[1] + radius * math.sin(angle)]
+    return new_point
+
+def get_angle_from_point(origin, point):
+    angle = math.atan2(point[1] - origin[1], point[0] - origin[0])
+    return angle
 
 def calculate_curve_entrance_and_exit(previous_waypoint, current_waypoint, next_waypoint, boundary_points, radius):
     """
@@ -855,11 +885,13 @@ def calculate_curve_entrance_and_exit(previous_waypoint, current_waypoint, next_
     # 2: Find the first angle to be tested which is zero percent
     # 3: Put the centre point at that first angle and
 
-def iterative_perpendicular_calculation(origin_point, next_point, radius):
-    upper_bound = math.pi
-    lower_bound = - math.pi
-
-
+def calculate_dual_perpendicular_angles(origin, destination, radius):
+    distance = distance_between_two_points(origin, destination)
+    destination_x_norm = destination[0] - origin[0]
+    destination_y_norm = destination[1] - origin[1]
+    first_angle = math.acos(radius / distance) + math.atan2(destination_y_norm, destination_x_norm)
+    second_angle = - math.acos(radius / distance) + math.atan2(destination_y_norm, destination_x_norm)
+    return first_angle, second_angle
 
 if "__main__" == __name__:
     """
@@ -884,12 +916,11 @@ if "__main__" == __name__:
     # plot_waypoints(spline_waypoints, centre_points, waypoints)
     # print(spline_waypoints)
 
-    point_one = [0, 0]
+    point_one = [2, 0]
     point_two = [0, 2]
     point_three = [2, 2]
     radius = 0.5
     centre_point = calculate_centre_point_angle(point_one, point_two, point_three, [], radius=radius)
-    print(centre_point)
     le_one = [centre_point[0][1][0] + radius * math.cos(centre_point[1]), centre_point[0][1][1] + radius * math.sin(centre_point[1])]
     le_two = [centre_point[0][1][0] + radius * math.cos(centre_point[2]), centre_point[0][1][1] + radius * math.sin(centre_point[2])]
     plot_waypoints([point_one, point_two, point_three], [centre_point[0], ["curve", le_one], ["curve", le_two]])
