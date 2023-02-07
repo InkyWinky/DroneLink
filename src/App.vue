@@ -8,6 +8,7 @@ import UIkit from 'uikit';
 import Icons from 'uikit/dist/js/uikit-icons';
 import SettingsPanel from "./components/SettingsPanel.vue";
 import SpeedIndicator from './components/SpeedIndicator.vue';
+import BatteryStatistics from './components/BatteryStatistics.vue';
 UIkit.use(Icons);
 
 // Set up global state for settings button - must be reactive
@@ -48,7 +49,11 @@ function toggleSettings() {
     <!-- Let's say that the settings panel goes at the bottom of the element stack for now - it's a modal so it should appear on top of everything anyway. -->
     <SettingsPanel v-if="settingsOpen.value" />
 
+    <label for="airspeed" style="margin-right: 0.5rem">Airspeed (debug input): </label>
     <input v-model="airspeed.value" type="number" />
+
+    <BatteryStatistics />
+
   </main>
 </template>
 

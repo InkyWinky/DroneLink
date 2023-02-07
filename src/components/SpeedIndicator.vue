@@ -39,7 +39,7 @@ const airspeedPercent = computed(() => {
     <div class="uk-card uk-card-default uk-card-body">
         <h3>Airspeed</h3>
         <!-- We need a custom div here in order to show the speed gradient -->
-        <div class="speedBar">
+        <div class="speed-bar">
             <!-- Display min and max at either end of the bar -->
             <span class="uk-text-meta text-outside-top-left">{{ min }}</span>
             <span class="uk-text-meta text-outside-top-right">{{ max }}</span>
@@ -57,7 +57,7 @@ const airspeedPercent = computed(() => {
 
 <style scoped>
 /* The speed bar uses a three-step gradient */
-.speedBar {
+.speed-bar {
     width: 100%;
     height: 2rem;
     background-image: linear-gradient(to right, red, yellow, green, yellow, red);
