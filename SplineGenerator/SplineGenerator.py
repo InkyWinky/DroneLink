@@ -343,6 +343,7 @@ def get_circle_direction(previous_waypoint, current_waypoint, centre_point, erro
 
 def get_circle_direction_improved(previous_waypoint, current_waypoint, next_waypoint):
     determinant = (next_waypoint[0] - previous_waypoint[0]) * (current_waypoint[1] - previous_waypoint[1]) - (next_waypoint[1] - previous_waypoint[1]) * (current_waypoint[0] - previous_waypoint[0])
+    determinant = round(determinant, 10)
     if determinant >= 0:
         return True
     else:
@@ -964,11 +965,11 @@ if "__main__" == __name__:
     """
     # waypoints = [[4.0, 5.0], [7.0, 6.0], [6.0, 9.0], [4.0, 7.0], [2.0, 6], [1, 3], [-3, 0], [-4, 5]]
     # waypoints = [[40, 40], [40, 70], [70, 70], [70, 40]]
-    # waypoints = [[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0], [8, 5], [9, 3], [6, -4]]
+    waypoints = [[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0], [8, 5], [9, 3], [6, -4]]
     # waypoints = [[-10, 0], [-7, 0], [-5, 0], [-3, 0], [1, 2], [5, 4], [3, 0], [5, 2], [7, 0], [9, 2], [11, 0]]
     # waypoints = [[5, 10], [9, 19], [12, 14], [11, 5], [3, -4], [-4, 2]]
     # waypoints = [[5, 2], [10, 9], [13, 6]]
-    waypoints = [[2, 4], [2, 10], [5, 10], [5, 4], [8, 4], [8, 10], [11, 10], [11, 4], [14, 4], [14, 10]]
+    # waypoints = [[2, 4], [2, 10], [5, 10], [5, 4], [8, 4], [8, 10], [11, 10], [11, 4], [14, 4], [14, 10]]
     # waypoints = [[-0.5, 0.5], [0, 2], [2, 2], [3, 0.5], [1, 1.4], [-0.25, 0.5]]
     """Then create an instance of the class and pass in the arguments."""
     spline = SplineGenerator(waypoints=waypoints, turn_radius=0.5,
