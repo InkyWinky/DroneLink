@@ -149,6 +149,21 @@ class SplineGenerator:
     def generate_spline_boundary(self, print_data=False):
         pass
 
+class Waypoint:
+    def __init__(self, x=None, y=None):
+        self.x = x
+        self.y = y
+        self.constraints = None
+        self.entrance_constraint = None
+        self.exit_constraint = None
+
+    def edit_entrance_constraint(self, entrance_angle=None):
+        self.constraints = True
+        self.entrance_constraint = entrance_angle
+
+    def edit_exit_constraint(self, exit_angle=None):
+        self.constraints = True
+        self.exit_constraint = exit_angle
 
 # GENERAL USE FUNCTIONS:
 # Below are some general functions the Spline class uses and ones users can use for testing or for the passing
@@ -178,7 +193,7 @@ def distance_between_two_points(point_one, point_two):
     :param point_two: [x2, y2]
     :return: Distance between two points.
     """
-    distance = math.sqrt((point_one[1] - point_two[1]) ** 2 + (point_one[0] - point_two[0]) ** 2)
+    distance = math.sqrt((point_one.y - point_two.y) ** 2 + (point_one.x - point_two.x) ** 2)
     return distance
 
 def get_maximum_turn_radius(waypoints):
@@ -921,19 +936,6 @@ def calculate_entrance_exit_angles(previous_waypoint, current_waypoint, next_way
     else:
         return entrance_point_angle, exit_point_angle_mirror
 
-def calculate_centre_points_and_angles(previous_waypoint, current_waypoint, next_waypoint, boundary_points=[], boundary_resolution=10, radius=1.0):
-    for percentage_step in range(0, boundary_resolution + 1):
-        percentage = percentage_step / boundary_resolution
-        print(percentage)
-        centre_point_solution = get_centre_point_given_percentage(previous_waypoint, current_waypoint, next_waypoint, radius, percentage)
-        if is_not_out_of_bounds(boundary_points, centre_point_solution):
-            if boundary_tolerance_respected(centre_point_solution, boundary_points, radius):
-                entrance_angle, exit_angle = calculate_entrance_exit_angles(previous_waypoint, current_waypoint, next_waypoint, centre_point_solution, radius)
-                if entrance_angle is not None and exit_angle is not None:
-                    return centre_point_solution, entrance_angle, exit_angle
-    print("ERROR: No centre point solution found")
-    return None, None, None
-
 def calculate_centre_point_angle(previous_waypoint, current_waypoint, next_waypoint, boundary_points=[], radius=1.0):
     centre_point = scan_percentages_for_solution(previous_waypoint, current_waypoint, next_waypoint, boundary_resolution=10, boundary_points=boundary_points, radius=radius)
     # centre_point = get_centre_point_given_percentage(previous_waypoint, current_waypoint, next_waypoint, radius, 0.0)
@@ -1015,7 +1017,7 @@ def generate_spline_boundary(waypoints=[], radius=1.0, curve_resolution=3, toler
         current_waypoint = next_waypoint
         next_waypoint = waypoints[curve_index]
         # centre_point, entrance_angle, exit_angle = calculate_centre_point_angle(previous_point, current_point, next_point, boundary_points, radius)
-        centre_point, entrance_angle, exit_angle = calculate_centre_points_and_angles(previous_waypoint, current_waypoint, next_waypoint, boundary_points, boundary_resolution, radius)
+        centre_point, entrance_angle, exit_angle = calculate_centre_points_and_angles_old(previous_waypoint, current_waypoint, next_waypoint, boundary_points, boundary_resolution, radius)
         if centre_point is None or entrance_angle is None or exit_angle is None:
             return None, None
         centre_points.append(centre_point)
@@ -1026,6 +1028,106 @@ def generate_spline_boundary(waypoints=[], radius=1.0, curve_resolution=3, toler
     output_points.append(waypoints[-1])
     return output_points, centre_points
 
+def check_perpendicularity(waypoints=[], centre_points=[]):
+    for centre_index, waypoint_index in enumerate(range(1, len(waypoints) - 1, 2)):
+        angle = vertex_angle(centre_points[centre_index], waypoints[waypoint_index], waypoints[waypoint_index + 1])
+        if angle != math.pi / 2:
+            return False
+    return True
+
+def check_all_waypoints_calculated(waypoints=[]):
+    if len(waypoints) % 2 == 0:
+        return True
+    else:
+        return False
+
+def calculate_centre_points_and_angles_old(previous_waypoint=None, current_waypoint=None, next_waypoint=None, boundary_points=[], boundary_resolution=10, radius_range=(1.0, 3.0)):
+    for percentage_step in range(0, boundary_resolution + 1):
+        percentage = percentage_step / boundary_resolution
+        print(percentage)
+        centre_point_solution = get_centre_point_given_percentage(previous_waypoint, current_waypoint, next_waypoint, radius_range(0), percentage)
+        if is_not_out_of_bounds(boundary_points, centre_point_solution):
+            if boundary_tolerance_respected(centre_point_solution, boundary_points, radius_range(0)):
+                entrance_angle, exit_angle = calculate_entrance_exit_angles(previous_waypoint, current_waypoint, next_waypoint, centre_point_solution, radius_range(0))
+                if entrance_angle is not None and exit_angle is not None:
+                    return centre_point_solution, entrance_angle, exit_angle
+    print("ERROR: No centre point solution found")
+    return None, None, None
+
+def calculate_centre_points_and_angles(previous_waypoint=Waypoint(), current_waypoint=Waypoint(), next_waypoint=Waypoint(0, 0), radius_range=(1.0, 3.0), boundary_points=[], boundary_resolution=10, tolerance=0.0):
+    # Code is based off: https://math.stackexchange.com/questions/1781438/finding-the-center-of-a-circle-given-two-points-and-a-radius-algebraically
+    if current_waypoint.entrance_constraint is not None:
+
+
+
+
+
+def add_next_waypoint(original_waypoints=[], current_waypoints=[], radius_range=(1.0, 3.0), boundary_points=[], boundary_resolution=10, tolerance=0.0):
+    current_waypoint_index = (len(current_waypoints) - 1) / 2 + 1  # The index of the next waypoint to find the entrance and exit angles for in original_waypoints
+    previous_waypoint = current_waypoints[-1]
+    current_waypoint = original_waypoints[current_waypoint_index]
+    next_waypoint = original_waypoints[current_waypoint_index + 1]
+    centre_point, entrance_angle, exit_angle = calculate_centre_points_and_angles(previous_waypoint=previous_waypoint, current_waypoint=current_waypoint, next_waypoint=next_waypoint, radius_range=radius_range, boundary_points=boundary_points, boundary_resolution=boundary_resolution, tolerance=tolerance)
+
+
+
+def refine_waypoints_using_constraints(waypoints=[], radius_range=(1.0, 3.0), boundary_points=[], boundary_resolution=10, tolerance=0.0):
+    pass
+
+def entrances_and_exits_algorithm(waypoints=[], radius_range=(1.0, 3.0), boundary_points=[], boundary_resolution=10, tolerance=0.0):
+    all_curves_perpendicular = True
+    changes_are_made = True
+    all_waypoints_calculated = True
+    updated_waypoints = [waypoints[0]]
+    while not all_curves_perpendicular and changes_are_made or not all_waypoints_calculated:
+        old_waypoints = updated_waypoints
+        if all_curves_perpendicular:
+            updated_waypoints, centre_points = add_next_waypoint(original_waypoints=waypoints, current_waypoints=updated_waypoints, radius_range=radius_range, boundary_points=boundary_points, boundary_resolution=boundary_resolution, tolerance=tolerance)
+        else:
+            updated_waypoints, centre_points = refine_waypoints_using_constraints(waypoints=updated_waypoints, radius_range=radius_range, boundary_points=boundary_points, boundary_resolution=boundary_resolution, tolerance=tolerance)
+        all_curves_perpendicular = check_perpendicularity(waypoints=updated_waypoints, centre_points=centre_points)
+        all_waypoints_calculated = check_all_waypoints_calculated(waypoints=updated_waypoints)
+        changes_are_made = old_waypoints != updated_waypoints
+    if all_curves_perpendicular:
+        return updated_waypoints, centre_points
+    if not changes_are_made:
+        print("ERROR: No solution could be found for given parameters.")
+        return None, None
+
+def interpolation_of_curves_algorithm(waypoints_entrances_and_exits=[], centre_points=[], curve_resolution=3.0):
+    return waypoints_entrances_and_exits
+
+def generate_spline_boundary_v2(waypoints=[], radius_range=(1.0, 3.0), boundary_points=[], boundary_resolution=10, tolerance=0.0, curve_resolution=3.0):
+    waypoints_entrances_and_exits, centre_points = entrances_and_exits_algorithm(waypoints=[], radius_range=(1.0, 3.0), boundary_points=[], boundary_resolution=10, tolerance=0.0)
+    waypoints_curve_interpolated = interpolation_of_curves_algorithm(waypoints_entrances_and_exits=[], centre_points=[], curve_resolution=3.0)
+    return waypoints_curve_interpolated, centre_points
+
+def plot_waypoints_v2(waypoints=None, centre_points=None, boundary_points=None, original_waypoints=None):
+    if waypoints is not None:
+        lat_vals = [waypoint.x for waypoint in waypoints]
+        lon_vals = [waypoint.y for waypoint in waypoints]
+        plt.plot(lat_vals, lon_vals, '--bo', color='g')
+
+    if centre_points is not None:
+        centre_x = [centre.x for centre in centre_points]
+        centre_y = [centre.y for centre in centre_points]
+        plt.scatter(centre_x, centre_y)
+
+    if boundary_points is not None:
+        boundary_x = [boundary.x for boundary in boundary_points]
+        boundary_y = [boundary.y for boundary in boundary_points]
+        boundary_x.append(boundary_points[0].x)
+        boundary_y.append(boundary_points[0].y)
+        plt.plot(boundary_x, boundary_y, '--ko', color='k')
+
+    if original_waypoints is not None:
+        original_x = [original.x for original in original_waypoints]
+        original_y = [original.y for original in original_waypoints]
+        plt.plot(original_x, original_y, 'bo', color='red')
+
+    plt.axis('equal')
+    plt.show()
+
 
 if "__main__" == __name__:
     """
@@ -1034,25 +1136,26 @@ if "__main__" == __name__:
     """
     # waypoints = [[4.0, 5.0], [7.0, 6.0], [6.0, 9.0], [4.0, 7.0], [2.0, 6], [1, 3], [-3, 0], [-4, 5]]
     # waypoints = [[40, 40], [40, 70], [70, 70], [70, 40]]
-    waypoints = [[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0], [8, 5], [9, 3], [6, -4]]
+    # waypoints = [[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0], [8, 5], [9, 3], [6, -4]]
     # waypoints = [[-10, 0], [-7, 0], [-5, 0], [-3, 0], [1, 2], [5, 4], [3, 0], [5, 2], [7, 0], [9, 2], [11, 0]]
     # waypoints = [[5, 10], [9, 19], [12, 14], [11, 5], [3, -4], [-4, 2]]
     # waypoints = [[5, 2], [10, 9], [13, 6]]
     # waypoints = [[2, 4], [2, 10], [5, 10], [5, 4], [8, 4], [8, 10], [11, 10], [11, 4], [14, 4], [14, 10]]
     # waypoints = [[-0.5, 0.5], [0, 2], [2, 2], [3, 0.5], [1, 1.4], [-0.25, 0.5]]
     """Then create an instance of the class and pass in the arguments."""
-    spline = SplineGenerator(waypoints=waypoints, turn_radius=0.5,
-                             curve_resolution=3, tolerance=0, boundary_points=[])
+    # spline = SplineGenerator(waypoints=waypoints, turn_radius=0.5, curve_resolution=3, tolerance=0, boundary_points=[])
     """You can print the waypoint to the console just for the user."""
-    spline.print_waypoints()
+    # spline.print_waypoints()
     """Use the 'generate_spline' method to calculate the new interpolated waypoints and centre points."""
 
-    radius = 1.3
+    global_waypoints = [Waypoint(1.0, 1.0), Waypoint(2.0, 2.0), Waypoint(3.0, 3.0), Waypoint(4.0, 4.0), Waypoint(5.0, 5.0), Waypoint(8.0, 5.0), Waypoint(9.0, 3.0), Waypoint(6.0, -4.0)]
+
+    global_radius = 1.3
     right_wall = 10
     top_wall = 5.3
     bottom_wall = -5
     left_wall = 0
-    boundary_points = [[left_wall, bottom_wall], [left_wall, top_wall], [right_wall, top_wall],
-                       [right_wall, bottom_wall]]
-    output, centres = generate_spline_boundary(waypoints, radius, 3, 0, boundary_points=boundary_points)
-    plot_waypoints(waypoints=output, centre_points=centres, original_waypoints=waypoints, boundary_points=boundary_points)
+    global_boundary_points = [Waypoint(left_wall, bottom_wall), Waypoint(left_wall, top_wall), Waypoint(right_wall, top_wall), Waypoint(right_wall, bottom_wall)]
+
+    global_output, global_centres = generate_spline_boundary_v2(waypoints=global_waypoints, radius_range=(1.0, 3.0), boundary_points=global_boundary_points, boundary_resolution=10, tolerance=0, curve_resolution=3)
+    plot_waypoints_v2(waypoints=global_output, centre_points=global_centres, original_waypoints=global_waypoints, boundary_points=global_boundary_points)
