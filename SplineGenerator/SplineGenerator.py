@@ -149,13 +149,18 @@ class SplineGenerator:
     def generate_spline_boundary(self, print_data=False):
         pass
 
+
 class Waypoint:
-    def __init__(self, x=None, y=None):
+    def __init__(self, x=0.0, y=0.0):
         self.x = x
         self.y = y
         self.constraints = None
+        self.radius_constraint = None
         self.entrance_constraint = None
         self.exit_constraint = None
+        self.percentage_constraint = None
+        self.entrance_point = Waypoint()
+        self.exit_point = Waypoint()
 
     def edit_entrance_constraint(self, entrance_angle=None):
         self.constraints = True
@@ -164,6 +169,22 @@ class Waypoint:
     def edit_exit_constraint(self, exit_angle=None):
         self.constraints = True
         self.exit_constraint = exit_angle
+
+    def edit_radius_constraint(self, radius=None):
+        self.constraints = True
+        self.radius_constraint = radius
+
+    def edit_percentage_constraint(self, percentage=None):
+        self.constraints = True
+        self.percentage_constraint = percentage
+
+    def edit_entrance_point(self, point=None):
+        self.constraints = True
+        self.entrance_point = point
+
+    def edit_exit_point(self, point=None):
+        self.constraints = True
+        self.exit_point = point
 
 # GENERAL USE FUNCTIONS:
 # Below are some general functions the Spline class uses and ones users can use for testing or for the passing
@@ -1054,11 +1075,21 @@ def calculate_centre_points_and_angles_old(previous_waypoint=None, current_waypo
     print("ERROR: No centre point solution found")
     return None, None, None
 
-def calculate_centre_points_and_angles(previous_waypoint=Waypoint(), current_waypoint=Waypoint(), next_waypoint=Waypoint(0, 0), radius_range=(1.0, 3.0), boundary_points=[], boundary_resolution=10, tolerance=0.0):
+def calculate_centre_points_and_angles(previous_waypoint=Waypoint(), current_waypoint=Waypoint(), next_waypoint=Waypoint(), radius_range=(1.0, 3.0), boundary_points=[], boundary_resolution=10, tolerance=0.0):
     # Code is based off: https://math.stackexchange.com/questions/1781438/finding-the-center-of-a-circle-given-two-points-and-a-radius-algebraically
+    direction = get_circle_direction_improved(previous_waypoint, current_waypoint, next_waypoint)
     if current_waypoint.entrance_constraint is not None:
+        radius = current_waypoint.radius_constraint
+        entrance_angle = current_waypoint.entrance_constraint
+        entrance_point = current_waypoint.entrance_point
+        centre_point = Waypoint(entrance_point.x + radius * math.cos(math.pi - entrance_angle), entrance_point.y + radius * math.sin(math.pi - entrance_angle))
 
-
+        entrance_point_angle, entrance_point_angle_mirror = calculate_dual_perpendicular_angles(centre_point, previous_waypoint, radius)
+        exit_point_angle, exit_point_angle_mirror = calculate_dual_perpendicular_angles(centre_point, next_waypoint, radius)
+        if direction:
+            return centre_point, entrance_point_angle_mirror, exit_point_angle
+        else:
+            return centre_point, entrance_point_angle, exit_point_angle_mirror
 
 
 
