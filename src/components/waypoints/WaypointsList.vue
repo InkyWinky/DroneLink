@@ -1,50 +1,88 @@
 <template>
+  <Transition>
+    <div v-show="showMap" id="mapCon" />
+  </Transition>
   <div id="bg">
     <h2>Waypoints</h2>
-    <ul>
-      <!-- Iterate through array of waypoints and show them on list -->
-      <li v-for="waypt in waypoints" :key="waypt.id">
-        <span id="wayptID">{{ waypt.id }}</span>
-        <span> Long:</span>
-        {{ waypt.long }}
-        <span> Lat:</span>
-        {{ waypt.lat }}
-        <span> Alt:</span>
-        {{ waypt.alt }}
-        <button id="removeWayptBtn" @click="removeWaypt(waypt)">
-          <i id="trashBtn" class="fa fa-trash"></i>
+    <div id="listWrapper">
+      <ul>
+        <!-- Iterate through array of waypoints and show them on list -->
+        <li v-for="waypt in waypoints" :key="waypt.id">
+          <span id="wayptID">{{ waypt.id }}</span>
+          <span> Long:</span>
+          {{ waypt.long }}
+          <span> Lat:</span>
+          {{ waypt.lat }}
+          <span> Alt:</span>
+          {{ waypt.alt }}
+          <button id="removeWayptBtn" @click="removeWaypt(waypt)">
+            <i id="trashBtn" class="fa fa-trash"></i>
+          </button>
+        </li>
+        <!-- Button for importing waypoints via csv file -->
+      </ul>
+      <!-- Form for adding a waypoint: -->
+      <!-- Prevent default behaviour of submitting form and add waypoint instead -->
+      <form @submit.prevent="addWaypt">
+        <label for="longitude">Long: </label>
+        <input
+          class="coordInput"
+          type="number"
+          name="longitude"
+          step="any"
+          v-model="long"
+        />
+        <label for="latitude">Lat: </label>
+        <input
+          class="coordInput"
+          type="number"
+          step="any"
+          name="latitude"
+          v-model="lat"
+        />
+        <label for="Altitude">Alt: </label>
+        <input
+          class="coordInput"
+          type="number"
+          step="any"
+          name="altitude"
+          v-model="alt"
+        />
+        <button class="transparentBtn" id="addWayptBtn">
+          <i class="fa fa-check"></i>
         </button>
-      </li>
-      <!-- Button for importing waypoints via csv file -->
-    </ul>
-
-    <!-- Form for adding a waypoint: -->
-    <!-- Prevent default behaviour of submitting form and add waypoint instead -->
-    <form @submit.prevent="addWaypt">
-      <label for="longitude">Long: </label>
-      <input class="coordInput" type="number" name="longitude" v-model="long" />
-      <label for="latitude">Lat: </label>
-      <input class="coordInput" type="number" name="latitude" v-model="lat" />
-      <label for="Altitude">Alt: </label>
-      <input class="coordInput" type="number" name="altitude" v-model="alt" />
-      <button id="addWayptBtn"><i class="fa fa-check"></i></button>
-    </form>
-    <input type="file" accept=".csv" @change="readFile" />
+        <button
+          class="transparentBtn"
+          id="addByMapBtn"
+          @click="showMap = !showMap"
+          type="button"
+        >
+          <i class="fa-solid fa-location-dot"></i>
+        </button>
+      </form>
+    </div>
+    <input id="importBtn" type="file" accept=".csv" @change="readFile" />
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import "mapbox-gl/dist/mapbox-gl.css";
+import mapboxgl from "mapbox-gl";
+import { onMounted } from "vue";
+
 // give each waypoint a unique id
+let showMap = ref(false);
 let id = 0;
 // Instantiate variables for coordinates
 const long = ref("");
 const lat = ref("");
 const alt = ref("");
+let map = ref();
 
 //And example of a waypoint object:
 //Instantiat array for containing waypoints
-const waypoints = ref([{ id: id++, long: 1, lat: 2, alt: 3 }]);
+const waypoints = ref([]);
 
 function addWaypt() {
   //The function addWaypt adds a waypoint to the waypoint array
@@ -59,6 +97,7 @@ function addWaypt() {
     lat: lat.value,
     alt: alt.value,
   });
+  addMarkerToMap(long.value, lat.value);
   //Clear out input boxes after adding waypoint
   long.value = "";
   lat.value = "";
@@ -71,7 +110,10 @@ function removeWaypt(waypt) {
   //Output: Waypoints displayed and in array is decreased by the one to be removed
   waypoints.value = waypoints.value.filter((t) => t !== waypt);
 }
-
+function addMarkerToMap(long, lat) {
+  const marker = new mapboxgl.Marker().setLngLat([long, lat]).addTo(map.value);
+  console.log(marker);
+}
 function readFile(formInput) {
   //The function readFile reads the waypoiants from the csv file chosen in the input form and turns it into text
   //Input: formInput is the file that was selected when you click "import waypoints from csv" button
@@ -102,19 +144,45 @@ function addWaypointsFromTxt(csvText) {
       lat: coord[1],
       alt: coord[2],
     });
+    addMarkerToMap(coord[0], coord[1]);
   }
+  map.value.flyTo({
+    center: [waypoints.value[0].long, waypoints.value[0].lat],
+    zoom: 14,
+  }); //Center map to first waypoint in list
 }
+
+onMounted(() => {
+  mapboxgl.accessToken =
+    "pk.eyJ1IjoiaWxpbjAwMDUiLCJhIjoiY2xlYzh3aDhhMGF3czN3bnAzYTBqMWQ0ZyJ9.P2gZdcxMsZsxg1HdvKKEJQ";
+  map.value = new mapboxgl.Map({
+    container: "mapCon",
+    style: "mapbox://styles/mapbox/light-v9",
+  });
+  map.value.on("idle", () => {
+    map.value.resize();
+  });
+  map.value.on("click", (e) => {
+    long.value = e.lngLat.wrap().lng;
+    lat.value = e.lngLat.wrap().lat;
+    console.log(
+      JSON.stringify(e.point) + "<br />" + JSON.stringify(e.lngLat.wrap())
+    );
+  });
+});
 </script>
 <style>
 /* Background of waypoints panel */
 #bg {
-  width: 27%;
+  width: 25%;
   height: 70%;
   background-color: white;
   padding: 1.5%;
   margin: 2%;
   border-radius: 15px;
   box-shadow: 5px 5px 5px grey;
+  position: relative;
+  z-index: 1;
 }
 
 ul {
@@ -130,6 +198,7 @@ li {
   padding: 1.5%;
   position: relative;
   margin: 2%;
+  padding-left: 25px;
 }
 
 form {
@@ -158,6 +227,7 @@ li:hover #removeWayptBtn,
 }
 span {
   font-weight: bold;
+  font-size: 0.8em;
 }
 
 #wayptID {
@@ -167,13 +237,64 @@ span {
 
 .coordInput {
   width: 10%;
+  font-size: 0.8em;
+}
+label {
+  font-size: 0.8em;
+  margin: 5px;
 }
 
-#addWayptBtn {
+.transparentBtn {
   background-color: transparent;
   border-style: none;
 }
-h {
-  font-family: "Aldrich", sans-serif;
+
+#listWrapper {
+  height: 80%;
+  overflow: auto;
 }
+#importBtn {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}
+#mapCon {
+  height: 100vh;
+  width: 100vw;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+.mapboxgl-ctrl-bottom-right {
+  display: none;
+}
+
+/* remove number input arrows */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* .mapboxgl-canvas {
+  height: 100vh !important;
+} */
+/* .mapboxgl-canvas-container {
+  height: 100vh !important;
+  width: 100vw !important;
+} */
+.mapboxgl-marker {
+  margin: 0 !important;
+  height: 41px !important;
+}
+/* .mapboxgl-marker-anchor-center */
 </style>
