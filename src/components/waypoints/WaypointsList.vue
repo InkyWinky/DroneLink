@@ -136,7 +136,7 @@ function addWaypointsFromTxt(csvText) {
   let waypointsArr = csvText.split("\r\n"); //Split the text so that each waypoint is an element in an array
   for (let i = 0; i < waypointsArr.length; i++) {
     //Iterate through the resulting array
-    let coord = waypointsArr[i].split(", "); //Create an array called coord and split each element so that long, lat and alt are elements of the coord array
+    let coord = waypointsArr[i].split(","); //Create an array called coord and split each element so that long, lat and alt are elements of the coord array
     waypoints.value.push({
       //Push each waypoint into the waypoints array
       id: id++,

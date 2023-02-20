@@ -1,8 +1,5 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/map">Map</router-link>
-  </nav>
+  <nav><router-link to="/">DroneLink</router-link></nav>
   <router-view />
 </template>
 
@@ -20,9 +17,12 @@ html {
 }
 body {
   height: 100%;
+  margin: 0;
 }
 nav {
-  padding: 30px;
+  background: linear-gradient(0.25turn, #79d9ff, #9198e5);
+  padding: 15px;
+  margin: 0;
 }
 
 nav a {
@@ -31,6 +31,7 @@ nav a {
 }
 
 nav a.router-link-exact-active {
-  color: #42b983;
+  color: white;
+  font-size: 2em;
 }
 </style>
