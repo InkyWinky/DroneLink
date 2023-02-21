@@ -20,7 +20,7 @@
           <span> Alt:</span>
           {{ waypt.alt }}
           <button id="removeWayptBtn" @click="removeWaypt(waypt)">
-            <i id="trashBtn" class="fa fa-trash"></i>
+            <i id="trashBtn" class="fa fa-trash white-hover"></i>
           </button>
         </li>
         <!-- Button for importing waypoints via csv file -->
@@ -53,7 +53,7 @@
           v-model="alt"
         />
         <button class="transparentBtn" id="addWayptBtn">
-          <i class="fa fa-check"></i>
+          <i class="fa fa-check white-hover"></i>
         </button>
         <button
           class="transparentBtn"
@@ -61,7 +61,7 @@
           @click="showMap = !showMap"
           type="button"
         >
-          <i class="fa-solid fa-location-dot"></i>
+          <i class="fa-solid fa-location-dot white-hover"></i>
         </button>
       </form>
     </div>
@@ -203,7 +203,9 @@ onMounted(() => {
   top: 13%;
   z-index: 1;
 }
-
+.white-hover:hover {
+  color: white;
+}
 ul {
   /* Remove bullet points */
   list-style: none;
@@ -219,7 +221,9 @@ li {
   margin: 2%;
   padding-left: 25px;
 }
-
+input {
+  border-style: none;
+}
 form {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
   border-radius: 5px;

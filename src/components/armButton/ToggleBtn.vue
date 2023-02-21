@@ -34,7 +34,7 @@ input[type="checkbox"] {
   height: 80px;
   position: absolute;
   top: 33px;
-  right: 6px;
+  right: 5px;
   z-index: 1;
   pointer-events: none;
   animation: rotation 1s ease-out;
@@ -44,7 +44,7 @@ input[type="checkbox"] {
     transform: rotate(0deg);
   }
   to {
-    transform: rotate(359deg);
+    transform: rotate(360deg);
   }
 }
 
