@@ -23,11 +23,13 @@ nav {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
   padding: 15px;
   margin: 0;
+  text-decoration: none;
 }
 
 nav a {
   font-weight: bold;
   color: #2c3e50;
+  text-decoration: none;
 }
 
 nav a.router-link-exact-active {
