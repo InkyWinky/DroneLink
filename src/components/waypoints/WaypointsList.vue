@@ -200,7 +200,7 @@ onMounted(() => {
   border-radius: 15px;
   box-shadow: 5px 5px 5px grey;
   position: absolute;
-  top: 60px;
+  top: 13%;
   z-index: 1;
 }
 
