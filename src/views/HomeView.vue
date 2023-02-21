@@ -29,6 +29,8 @@ div {
 #toggleBtn {
   text-align: center;
   width: 25%;
+  position: absolute;
+  top: 5%;
   /* Same width as waypoints list */
 }
 </style>
