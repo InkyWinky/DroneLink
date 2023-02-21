@@ -1,4 +1,8 @@
 <template>
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css"
+    rel="stylesheet"
+  />
   <Transition>
     <div v-show="showMap" id="mapCon" />
   </Transition>
@@ -111,7 +115,9 @@ function removeWaypt(waypt) {
   waypoints.value = waypoints.value.filter((t) => t !== waypt);
 }
 function addMarkerToMap(long, lat) {
-  const marker = new mapboxgl.Marker().setLngLat([long, lat]).addTo(map.value);
+  const marker = new mapboxgl.Marker({ anchor: "bottom" })
+    .setLngLat([long, lat])
+    .addTo(map.value);
   console.log(marker);
 }
 function readFile(formInput) {
@@ -159,12 +165,24 @@ onMounted(() => {
     container: "mapCon",
     style: "mapbox://styles/mapbox/light-v9",
   });
+  //Resize map to be full screen --need to find a better way to fix this problem
   map.value.on("idle", () => {
     map.value.resize();
   });
+  //
+
   map.value.on("click", (e) => {
-    long.value = e.lngLat.wrap().lng;
-    lat.value = e.lngLat.wrap().lat;
+    //Get longitude and latitude values based on mouse click position. Had an issue where the value returned was one viewport higher than what it should be, so I adjusted it with some maths, but the marker is still placed slightly inaccurately. Need to fix.
+    let container = map.value.getContainer();
+    let mapHeight = container.clientHeight;
+    console.log("mapHeight: " + mapHeight);
+    let yPixel = e.point.y;
+    let xPixel = e.point.x;
+    let adjusted_yPixel = yPixel + mapHeight;
+    console.log("adjusted ypixel:" + adjusted_yPixel);
+    let latitude = map.value.unproject([xPixel, adjusted_yPixel]).lat;
+    long.value = e.lngLat.lng;
+    lat.value = latitude;
     console.log(
       JSON.stringify(e.point) + "<br />" + JSON.stringify(e.lngLat.wrap())
     );
@@ -181,7 +199,8 @@ onMounted(() => {
   margin: 2%;
   border-radius: 15px;
   box-shadow: 5px 5px 5px grey;
-  position: relative;
+  position: absolute;
+  top: 60px;
   z-index: 1;
 }
 
@@ -268,13 +287,11 @@ label {
   opacity: 0;
 }
 #mapCon {
-  height: 100vh;
-  width: 100vw;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
 }
+/* Hide inbuilt mapbox footer */
 .mapboxgl-ctrl-bottom-right {
   display: none;
 }
