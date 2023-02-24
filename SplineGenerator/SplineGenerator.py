@@ -22,13 +22,17 @@ class SplineGenerator:
         self.curve_resolution = curve_resolution
 
     def add_waypoint(self, new_waypoint=None, index=None):
-        pass
+        self.waypoints.insert(new_waypoint, index)
 
-    def remove_waypoint(self):
-        pass
+    def remove_waypoint(self, index=None):
+        # removed_wavepoint = self.wavepoints.pop(index)
+        self.waypoints.pop(index)
 
-    def reorder_waypoint(self):
-        pass
+    def reorder_waypoint(self, index1 = None, index2 = None, switch = False):
+        if switch == False:
+            self.waypoints.insert(self.wavepoints[index2], index1)
+        else:
+            self.waypoints[index1], self.waypoints[index2] = self.waypoints[index2], self.waypoints[index1]
 
     def generate_spline(self):
         self.waypoints = generate_spline_including_boundary(waypoints=self.waypoints,
