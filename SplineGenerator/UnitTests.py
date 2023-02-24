@@ -2,8 +2,8 @@ import unittest
 import math
 from SplineGenerator import *
 
-class UnitTests(unittest.TestCase):
 
+class UnitTests(unittest.TestCase):
 
     def test_spline_perpendicularity(self):
         # Each test will have
@@ -15,12 +15,19 @@ class UnitTests(unittest.TestCase):
         # Boundary resolution
         # {'waypoints': [], 'radius': 0.0, 'boundary': [], 'boundary_res': 0, 'tolerance': 0.0, 'curve_resolution': 0.0}
         # {'waypoints': [[1, 1], [2, 3], [5, 7], [4, 2], [2, -4]], 'radius': 0.9, 'boundary': [], 'boundary_res': 0, 'tolerance': 0.0, 'curve_resolution': 3.0}
-        test_waypoint_lists = [{'waypoints': [[1, 1], [2, 3], [5, 7], [4, 2], [2, -4]], 'radius': 0.9, 'boundary': [], 'boundary_res': 0, 'tolerance': 0.0, 'curve_resolution': 3.0},
-                               {},
-                               {},
-                               {}]
-        for waypoint_list in test_waypoint_lists:
-            self.assertTrue(test_perpendicularity(, len(waypoint_list)))
+        test_cases = [{'waypoints': [[1, 1], [2, 3], [5, 7], [7, 2], [2, -4]], 'radius': (0.9, 1.9), 'boundary': [], 'boundary_resolution': 0, 'tolerance': 0.0, 'curve_resolution': 3.0}
+                      ]
+        for test_case in test_cases:
+            waypoint_classed = [Waypoint(point[0], point[1]) for point in test_case['waypoints']]
+            case = SplineGenerator(waypoints=waypoint_classed,
+                                   radius_range=test_case['radius'],
+                                   boundary_points=test_case['boundary'],
+                                   boundary_resolution=test_case['boundary_resolution'],
+                                   tolerance=test_case['tolerance'],
+                                   curve_resolution=test_case['curve_resolution'])
+            case.generate_spline()
+            self.assertTrue(test_perpendicularity(case.waypoints))
+            self.assertTrue(test_valid_entrance_exit_locations(case.waypoints))
 
 
 if __name__ == '__main__':
