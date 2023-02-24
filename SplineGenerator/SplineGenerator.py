@@ -392,6 +392,10 @@ def test_valid_entrance_exit_locations(waypoints=None):
         # If the waypoint angle is not between (inclusive) the entrance and exit angle, return false.
         # TODO: Write something to return false is any of the waypoints have their coordinates outside the entrance and exit angles.
 
+        if waypoint_angle < entrance_angle and waypoint_angle > exit_angle:
+                print("Point outside the angle of entrance or exit")
+                return False
+
         # TODO END
     return True
 
