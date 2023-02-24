@@ -8,27 +8,38 @@ class SplineGenerator:
     spline between waypoints.
     """
 
-    def __init__(self, waypoints=None, radius_range=None, boundary_points=None, curve_resolution=None, tolerance=None):
+    def __init__(self, waypoints=None, radius_range=None, boundary_points=None, boundary_resolution=None, tolerance=None, curve_resolution=None):
         """
         Initialiser method
             This method can be used to initialise the class with or without the parameters
             listed below.
-        :param: turn_radius: The minimum radius for any turn created by the spline algorithm
-        in metres.
-        :param: boundary_points: An array of [latitude, longitude] arrays that define a
-        boundary the spline path won't cross.
-        :param: waypoints: An array of [latitude, longitude] arrays that the spline path
-        will intersect.
-        :param: resolution: How many waypoints per metre we want. A higher value will give a higher resolution.
-        :param: tolerance: How many metres within the boundary the spline generator will allow.
         """
         self.waypoints = waypoints
-        self.turn_radius = turn_radius
+        self.radius_range = radius_range
         self.boundary_points = boundary_points
-        self.waypoints = waypoints
-        self.curve_resolution = curve_resolution
+        self.boundary_resolution = boundary_resolution
         self.tolerance = tolerance
+        self.curve_resolution = curve_resolution
 
+    def add_waypoint(self, new_waypoint=None, index=None):
+        pass
+
+    def remove_waypoint(self):
+        pass
+
+    def reorder_waypoint(self):
+        pass
+
+    def generate_spline(self):
+        self.waypoints = generate_spline_including_boundary(waypoints=self.waypoints,
+                                                            radius_range=self.radius_range,
+                                                            boundary_points=self.boundary_points,
+                                                            boundary_resolution=self.boundary_resolution,
+                                                            tolerance=self.tolerance,
+                                                            curve_resolution=self.curve_resolution)
+
+    def plot_waypoints(self):
+        pass
 
 class Point:
     def __init__(self, x=None, y=None):

@@ -1,6 +1,6 @@
 import unittest
 import math
-from SplineGenerator import SplineGenerator
+from SplineGenerator import *
 
 class UnitTests(unittest.TestCase):
 
@@ -20,7 +20,7 @@ class UnitTests(unittest.TestCase):
                                {},
                                {}]
         for waypoint_list in test_waypoint_lists:
-            self.assertTrue(validate_perpendicularity(output, len(waypoint_list)))
+            self.assertTrue(test_perpendicularity(, len(waypoint_list)))
 
 
 if __name__ == '__main__':
