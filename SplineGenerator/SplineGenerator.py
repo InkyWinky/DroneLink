@@ -502,6 +502,23 @@ if "__main__" == __name__:
     plot_waypoints_v3(waypoints=global_waypoints, boundary_points=global_boundary_points, show_boundary=True, show_original=True, show_centres=True, show_points=True)
 
 
+    starting_point = output[0].exit
+    print(starting_point.x, starting_point.y)
+    length = len(output)-1
+
+
+    for i in range(1, length):
+        entrance = output[i].entrance
+        print(entrance.x, entrance.y)
+
+        for j in output[i].interpolated_curve:
+            print(j.x, j.y)
+        exit = output[i].exit
+        print(exit.x, exit.y)
+        
+    last_point = output[length].entrance
+    print(last_point)
+    print(last_point.x, last_point.y)
 
     #
     # right_wall = 6
