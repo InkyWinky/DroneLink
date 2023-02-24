@@ -30,7 +30,7 @@ class SplineGenerator:
 
     def reorder_waypoint(self, index1 = None, index2 = None, switch = False):
         if switch == False:
-            changed_waypoint = self.wavepoints.pop(index2)
+            changed_waypoint = self.waypoints.pop(index2)
             self.waypoints.insert(changed_waypoint, index1)
         else:
             self.waypoints[index1], self.waypoints[index2] = self.waypoints[index2], self.waypoints[index1]
