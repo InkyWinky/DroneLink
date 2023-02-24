@@ -44,7 +44,7 @@ class SplineGenerator:
                                                             curve_resolution=self.curve_resolution)
 
     def plot_waypoints(self):
-        pass
+        plot_waypoints_v3(waypoints=self.waypoints, boundary_points=self.boundary_points)
 
 class Point:
     def __init__(self, x=None, y=None):
@@ -363,7 +363,7 @@ def interpolate_single_curve(waypoint=None, curve_resolution=3):
         waypoint_exit_angle += math.pi * 2
     angle_interval = angle_difference / num_of_points
     interpolate_points = []
-    for index in range(int(num_of_points)):
+    for index in range(1, int(num_of_points)):
         if waypoint.is_clockwise:
             angle = waypoint_entrance_angle - index * angle_interval
         else:
@@ -479,6 +479,23 @@ def plot_waypoints_v3(waypoints=None, boundary_points=None, show_centres=True, s
         plt.savefig('Spline_Demo' + str(count), dpi=300)
     plt.show()
 
+def print_waypoints(output=None):
+    starting_point = output[0].exit
+    print(starting_point.x, starting_point.y)
+    length = len(output) - 1
+
+    for i in range(1, length):
+        entrance = output[i].entrance
+        print(entrance.x, entrance.y)
+
+        for j in output[i].interpolated_curve:
+            print(j.x, j.y)
+        exit = output[i].exit
+        print(exit.x, exit.y)
+
+    last_point = output[length].entrance
+    print(last_point)
+    print(last_point.x, last_point.y)
 
 if "__main__" == __name__:
     """
@@ -515,27 +532,16 @@ if "__main__" == __name__:
     left_wall = -5
 
     global_boundary_points = [Point(left_wall, bottom_wall), Point(left_wall, top_wall), Point(right_wall, top_wall), Point(right_wall, bottom_wall)]
-    output = generate_spline_including_boundary(waypoints=global_waypoints, radius_range=(global_radius, 3.0), boundary_points=global_boundary_points, boundary_resolution=100, tolerance=0, curve_resolution=2)
-    plot_waypoints_v3(waypoints=global_waypoints, boundary_points=global_boundary_points, show_boundary=True, show_original=True, show_centres=True, show_points=True)
+    path = SplineGenerator(waypoints=global_waypoints,
+                           radius_range=(global_radius, global_radius + 1),
+                           boundary_points=global_boundary_points,
+                           boundary_resolution=100,
+                           tolerance=0.0,
+                           curve_resolution=2)
+    path.generate_spline()
+    path.plot_waypoints()
+    print_waypoints(path.waypoints)
 
-
-    starting_point = output[0].exit
-    print(starting_point.x, starting_point.y)
-    length = len(output)-1
-
-
-    for i in range(1, length):
-        entrance = output[i].entrance
-        print(entrance.x, entrance.y)
-
-        for j in output[i].interpolated_curve:
-            print(j.x, j.y)
-        exit = output[i].exit
-        print(exit.x, exit.y)
-
-    last_point = output[length].entrance
-    print(last_point)
-    print(last_point.x, last_point.y)
 
     #
     # right_wall = 6
