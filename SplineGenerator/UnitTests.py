@@ -14,8 +14,9 @@ class UnitTests(unittest.TestCase):
         # An array of boundary points
         # Boundary resolution
         # {'waypoints': [], 'radius': 0.0, 'boundary': [], 'boundary_res': 0, 'tolerance': 0.0, 'curve_resolution': 0.0}
-        # {'waypoints': [[1, 1], [2, 3], [5, 7], [4, 2], [2, -4]], 'radius': 0.9, 'boundary': [], 'boundary_res': 0, 'tolerance': 0.0, 'curve_resolution': 3.0}
-        test_cases = [{'waypoints': [[1, 1], [2, 3], [5, 7], [7, 2], [2, -4]], 'radius': (0.9, 1.9), 'boundary': [], 'boundary_resolution': 0, 'tolerance': 0.0, 'curve_resolution': 3.0}
+        # {'waypoints': [[1, 1], [2, 3], [5, 7], [7, 2], [2, -4]], 'radius': (0.9, 1.9), 'boundary': None, 'boundary_resolution': None, 'tolerance': 0.0, 'curve_resolution': 3.0}
+        test_cases = [{'waypoints': [[1, 1], [2, 3], [5, 7], [7, 2], [2, -4]], 'radius': (0.9, 1.9), 'boundary': None, 'boundary_resolution': None, 'tolerance': 0.0, 'curve_resolution': 3.0},
+                      {'waypoints': [[1, 1], [3, 3], [5, 5], [7, 7], [5, -4]], 'radius': (0.9, 1.9), 'boundary': None, 'boundary_resolution': None, 'tolerance': 0.0, 'curve_resolution': 1.7}
                       ]
         for test_case in test_cases:
             waypoint_classed = [Waypoint(point[0], point[1]) for point in test_case['waypoints']]
@@ -26,6 +27,7 @@ class UnitTests(unittest.TestCase):
                                    tolerance=test_case['tolerance'],
                                    curve_resolution=test_case['curve_resolution'])
             case.generate_spline()
+            plot_waypoints_v3(case.waypoints)
             self.assertTrue(test_perpendicularity(case.waypoints))
             self.assertTrue(test_valid_entrance_exit_locations(case.waypoints))
 

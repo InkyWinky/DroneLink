@@ -219,6 +219,8 @@ def get_centre_point_given_percentage(previous_waypoint=Point(), current_waypoin
 def scan_percentages_for_solution(previous_waypoint=Point(), current_waypoint=Point(), next_waypoint=Point(), boundary_resolution=10, boundary_points=None, radius=1.0, tolerance=0.0):
     # Loop through percentages as for loop
     centre_point_solution = None
+    if boundary_points is None or boundary_resolution is None:
+        return get_closest_centre_point(previous_waypoint, current_waypoint, next_waypoint, radius)
     for percentage_step in range(0, boundary_resolution + 1):
         percentage = percentage_step / boundary_resolution
         possible_point_solution = get_centre_point_given_percentage(previous_waypoint, current_waypoint, next_waypoint, radius, percentage)
@@ -344,7 +346,7 @@ def get_arc_length(entrance_angle, exit_angle, radius, clockwise):
     return arc_length, angle_difference
 
 def get_num_of_interpolated_points(arc_length=0.0, curve_resolution=3):
-    num_of_points = math.floor(arc_length * curve_resolution)
+    num_of_points = math.ceil(arc_length * curve_resolution)
     return num_of_points
 
 def interpolate_single_curve(waypoint=None, curve_resolution=3):
@@ -352,6 +354,8 @@ def interpolate_single_curve(waypoint=None, curve_resolution=3):
     waypoint_exit_angle = math.atan2(waypoint.exit.y - waypoint.centre_point.y, waypoint.exit.x - waypoint.centre_point.x)
     # Get the arc length between the entrance and exit
     arc_length, angle_difference = get_arc_length(waypoint_entrance_angle, waypoint_exit_angle, waypoint.radius, waypoint.is_clockwise)
+    if arc_length == 0.0:
+        return None
     num_of_points = get_num_of_interpolated_points(arc_length, curve_resolution)
     if waypoint_entrance_angle < 0.0:
         waypoint_entrance_angle += math.pi * 2
@@ -391,11 +395,21 @@ def test_valid_entrance_exit_locations(waypoints=None):
         # TODO END
     return True
 
+def ignore_duplicate_points(waypoints=None):
+    for waypoint in waypoints:
+        if waypoint.entrance is not None and waypoint.exit is not None:
+            if are_points_equal(waypoint.entrance, waypoint.exit):
+                waypoint.centre_point = None
+                waypoint.entrance = None
+                waypoint.exit = None
+    return waypoints
+
 def generate_spline_including_boundary(waypoints=None, radius_range=(1.0, 3.0), boundary_points=None, boundary_resolution=10, tolerance=0.0, curve_resolution=3):
     output_entrances_and_exits = generate_entrances_and_exits(waypoints=waypoints, radius_range=radius_range, boundary_points=boundary_points, boundary_resolution=boundary_resolution, tolerance=tolerance)
     print("TEST: PERPENDICULARITY:", test_perpendicularity(output_entrances_and_exits))
     print("TEST: WAYPOINT WITHIN ENTRANCE AND EXIT:", test_valid_entrance_exit_locations(output_entrances_and_exits))
-    output_interpolated = interpolate_all_curves(output_entrances_and_exits, curve_resolution)
+    output_duplicates_ignored = ignore_duplicate_points(output_entrances_and_exits)
+    output_interpolated = interpolate_all_curves(output_duplicates_ignored, curve_resolution)
     return output_interpolated
 
 def get_tangency_angle(waypoint_current, waypoint_next):
@@ -425,6 +439,9 @@ def plot_waypoints_v3(waypoints=None, boundary_points=None, show_centres=True, s
         if waypoint.exit is not None:
             x_vals.append(waypoint.exit.x)
             y_vals.append(waypoint.exit.y)
+        if waypoint.entrance is None and waypoint.exit is None:
+            x_vals.append(waypoint.coords.x)
+            y_vals.append(waypoint.coords.y)
     if show_points:
         plt.plot(x_vals, y_vals, '-.o', color='k', markersize=4)
     else:
@@ -515,7 +532,7 @@ if "__main__" == __name__:
             print(j.x, j.y)
         exit = output[i].exit
         print(exit.x, exit.y)
-        
+
     last_point = output[length].entrance
     print(last_point)
     print(last_point.x, last_point.y)
