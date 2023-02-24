@@ -8,7 +8,7 @@ class SplineGenerator:
     spline between waypoints.
     """
 
-    def __init__(self, turn_radius=1.0, boundary_points=None, waypoints=None, curve_resolution=1.0, tolerance=0.0):
+    def __init__(self, waypoints=None, radius_range=None, boundary_points=None, curve_resolution=None, tolerance=None):
         """
         Initialiser method
             This method can be used to initialise the class with or without the parameters
@@ -22,74 +22,13 @@ class SplineGenerator:
         :param: resolution: How many waypoints per metre we want. A higher value will give a higher resolution.
         :param: tolerance: How many metres within the boundary the spline generator will allow.
         """
-        if waypoints is None:
-            waypoints = []
-        if boundary_points is None:
-            boundary_points = []
-        self._turn_radius = turn_radius
-        self._boundary_points = boundary_points
-        self._waypoints = waypoints
-        self._curve_resolution = curve_resolution
-        self._tolerance = tolerance
+        self.waypoints = waypoints
+        self.turn_radius = turn_radius
+        self.boundary_points = boundary_points
+        self.waypoints = waypoints
+        self.curve_resolution = curve_resolution
+        self.tolerance = tolerance
 
-    def add_waypoints(self, waypoints=None):
-        """
-        This method allows the adding of waypoints to the current waypoint list. They
-        will be appended after all the previous waypoints.
-        :param waypoints: An array of [latitude, longitude] arrays in the order the vehicle
-        has to travel. As an example index 0 will be the first waypoint to go to and index
-        1 the second waypoint and so on.
-        """
-        # Loop through each waypoint and append it to self._waypoints
-        if waypoints is None:
-            waypoints = []
-        for waypoint in waypoints:
-            self._waypoints.append(waypoint)
-
-    def remove_waypoints(self, indices=None):
-        """
-        This method allows users to remove waypoints by single index or multiple
-        indices at a time.
-        :param: indices: An array of indices to remove from the waypoint list.
-        [firstIndex, secondIndex, ...]
-        """
-        # Sort the indices array in descending order
-        if indices is None:
-            indices = []
-        indices.sort(reverse=True)
-        # Pop each waypoint at each index in descending order
-        for index in indices:
-            self._waypoints.pop(index)
-
-    def add_boundary(self, boundary_points=None):
-        """
-        This method replaces the class instance's boundary points with the list provided by the arguments.
-        :param: boundary_points: A list of [lat, lon] arrays that create a closed boundary. The final point can equal
-        the initial point but doesn't have to. The program will connect the ends together anyway.
-        """
-        if boundary_points is None:
-            boundary_points = []
-        self._boundary_points = boundary_points
-
-    def edit_turn_radius(self, turn_radius):
-        """
-        Replaces the class instance's minimum turn radius with the argument given.
-        :param: turn_radius: Minimum turn radius in metres.
-        """
-        self._turn_radius = turn_radius
-
-    def print_waypoints(self):
-        """
-        Prints the current waypoints saved to the class instance.
-        """
-        print("Instance Waypoints:")
-        if len(self._waypoints) == 0:
-            print("\tNo waypoints saved.")
-        for waypoint in self._waypoints:
-            print("\t", waypoint, sep="")
-
-    def generate_spline_boundary(self, print_data=False):
-        pass
 
 class Point:
     def __init__(self, x=None, y=None):
@@ -267,6 +206,7 @@ def scan_percentages_for_solution(previous_waypoint=Point(), current_waypoint=Po
     for percentage_step in range(0, boundary_resolution + 1):
         percentage = percentage_step / boundary_resolution
         possible_point_solution = get_centre_point_given_percentage(previous_waypoint, current_waypoint, next_waypoint, radius, percentage)
+        # Check the centre point is valid
         if is_not_out_of_bounds(boundary_points, possible_point_solution):
             if boundary_tolerance_respected(possible_point_solution, boundary_points, radius + tolerance):
                 centre_point_solution = possible_point_solution
@@ -334,6 +274,7 @@ def generate_entrances_and_exits(waypoints=None, radius_range=(1.0, 3.0), bounda
                 radius_current = backwards_current_waypoint.radius
                 radius_next = backwards_next_waypoint.radius
 
+                # https://math.stackexchange.com/questions/1297189/calculate-tangent-points-of-two-circles
                 if radius_current == radius_next:
                     entrance_angle = math.atan2(backwards_next_waypoint.centre_point.y - backwards_current_waypoint.centre_point.y, backwards_next_waypoint.centre_point.x - backwards_current_waypoint.centre_point.x) + math.pi / 2
                     exit_angle = math.atan2(backwards_next_waypoint.centre_point.y - backwards_current_waypoint.centre_point.y, backwards_next_waypoint.centre_point.x - backwards_current_waypoint.centre_point.x) + math.pi / 2
@@ -454,7 +395,7 @@ def get_tangency_angle(waypoint_current, waypoint_next):
     else:
         return -angle_exit, angle_entrance
 
-def plot_waypoints_v3(waypoints=None, boundary_points=None, show_centres=True, show_original=True, show_boundary=True, show_points=True):
+def plot_waypoints_v3(waypoints=None, boundary_points=None, show_centres=True, show_original=True, show_boundary=True, show_points=True, save_fig=False, count=0):
     x_vals = []
     y_vals = []
     for waypoint in waypoints:
@@ -500,7 +441,9 @@ def plot_waypoints_v3(waypoints=None, boundary_points=None, show_centres=True, s
             y_vals.append(boundary_points[0].y)
             plt.plot(x_vals, y_vals, '--k')
 
-    plt.axis('equal')
+    plt.axis([-9, 9, -9, 9])
+    if save_fig:
+        plt.savefig('Spline_Demo' + str(count), dpi=300)
     plt.show()
 
 
@@ -533,11 +476,50 @@ if "__main__" == __name__:
     global_waypoints = [Waypoint(1, -2), Waypoint(-3, -2), Waypoint(-3, 5), Waypoint(4, 6), Waypoint(3, -6), Waypoint(-2, -6)]
 
     global_radius = 1.5
-    right_wall = 4.7
+    right_wall = 6
     top_wall = 8
     bottom_wall = -8
-    left_wall = -3.5
+    left_wall = -5
 
     global_boundary_points = [Point(left_wall, bottom_wall), Point(left_wall, top_wall), Point(right_wall, top_wall), Point(right_wall, bottom_wall)]
     output = generate_spline_including_boundary(waypoints=global_waypoints, radius_range=(global_radius, 3.0), boundary_points=global_boundary_points, boundary_resolution=100, tolerance=0, curve_resolution=2)
     plot_waypoints_v3(waypoints=global_waypoints, boundary_points=global_boundary_points, show_boundary=True, show_original=True, show_centres=True, show_points=True)
+
+
+
+    #
+    # right_wall = 6
+    # left_wall = -5
+    # count = 160
+    # while right_wall > 4.05:
+    #     global_waypoints = [Waypoint(1, -2), Waypoint(-3, -2), Waypoint(-3, 5), Waypoint(4, 6), Waypoint(3, -6), Waypoint(-2, -6)]
+    #
+    #     global_radius = 1.5
+    #     top_wall = 8
+    #     bottom_wall = -8
+    #
+    #
+    #     global_boundary_points = [Point(left_wall, bottom_wall), Point(left_wall, top_wall), Point(right_wall, top_wall), Point(right_wall, bottom_wall)]
+    #     output = generate_spline_including_boundary(waypoints=global_waypoints, radius_range=(global_radius, 3.0), boundary_points=global_boundary_points, boundary_resolution=100, tolerance=0, curve_resolution=2)
+    #     plot_waypoints_v3(waypoints=global_waypoints, boundary_points=global_boundary_points, show_boundary=True, show_original=True, show_centres=False, show_points=True, save_fig=True, count=count)
+    #
+    #     right_wall -= 0.05
+    #     left_wall += 0.05
+    #     count += 1
+    #
+    # right_wall = 4.05
+    # left_wall = -3.05
+    # while right_wall < 6:
+    #     global_waypoints = [Waypoint(1, -2), Waypoint(-3, -2), Waypoint(-3, 5), Waypoint(4, 6), Waypoint(3, -6), Waypoint(-2, -6)]
+    #
+    #     global_radius = 1.5
+    #     top_wall = 8
+    #     bottom_wall = -8
+    #
+    #     global_boundary_points = [Point(left_wall, bottom_wall), Point(left_wall, top_wall), Point(right_wall, top_wall), Point(right_wall, bottom_wall)]
+    #     output = generate_spline_including_boundary(waypoints=global_waypoints, radius_range=(global_radius, 3.0), boundary_points=global_boundary_points, boundary_resolution=100, tolerance=0, curve_resolution=2)
+    #     plot_waypoints_v3(waypoints=global_waypoints, boundary_points=global_boundary_points, show_boundary=True, show_original=True, show_centres=False, show_points=True, save_fig=True, count=count)
+    #
+    #     right_wall += 0.05
+    #     left_wall -= 0.05
+    #     count += 1
