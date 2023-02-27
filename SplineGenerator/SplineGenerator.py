@@ -23,17 +23,19 @@ class SplineGenerator:
 
     def add_waypoint(self, new_waypoint=None, index=None):
         self.waypoints.insert(index, new_waypoint)
+        self.generate_spline()
 
     def remove_waypoint(self, index=None):
-        # removed_wavepoint = self.wavepoints.pop(index)
         self.waypoints.pop(index)
+        self.generate_spline()
 
-    def reorder_waypoint(self, index1 = None, index2 = None, switch = False):
-        if switch == False:
-            changed_waypoint = self.waypoints.pop(index2)
-            self.waypoints.insert(index1, changed_waypoint, )
+    def reorder_waypoint(self, first_index=None, second_index=None, swap_flag=False):
+        if swap_flag is False:
+            changed_waypoint = self.waypoints.pop(second_index)
+            self.waypoints.insert(first_index, changed_waypoint, )
         else:
-            self.waypoints[index1], self.waypoints[index2] = self.waypoints[index2], self.waypoints[index1]
+            self.waypoints[first_index], self.waypoints[second_index] = self.waypoints[second_index], self.waypoints[first_index]
+        self.generate_spline()
 
     def generate_spline(self):
         self.waypoints = generate_spline_including_boundary(waypoints=self.waypoints,
@@ -43,8 +45,60 @@ class SplineGenerator:
                                                             tolerance=self.tolerance,
                                                             curve_resolution=self.curve_resolution)
 
-    def plot_waypoints(self):
-        plot_waypoints_v3(waypoints=self.waypoints, boundary_points=self.boundary_points)
+    def plot_waypoints(self, show_points=True, show_original=True, show_centres=True, show_boundary=True, save_fig=False, count=None):
+        x_vals = []
+        y_vals = []
+        if self.waypoints is not None:
+            for waypoint in self.waypoints:
+                if waypoint.entrance is not None:
+                    x_vals.append(waypoint.entrance.x)
+                    y_vals.append(waypoint.entrance.y)
+                if waypoint.interpolated_curve is not None:
+                    for point in waypoint.interpolated_curve:
+                        x_vals.append(point.x)
+                        y_vals.append(point.y)
+                if waypoint.exit is not None:
+                    x_vals.append(waypoint.exit.x)
+                    y_vals.append(waypoint.exit.y)
+                if waypoint.entrance is None and waypoint.exit is None:
+                    x_vals.append(waypoint.coords.x)
+                    y_vals.append(waypoint.coords.y)
+            if show_points:
+                plt.plot(x_vals, y_vals, '-.o', color='k', markersize=4)
+            else:
+                plt.plot(x_vals, y_vals, '-.o', color='k', markersize=0)
+
+        x_orig = []
+        y_orig = []
+        if show_original:
+            if self.waypoints is not None:
+                for waypoint in self.waypoints:
+                    x_orig.append(waypoint.coords.x)
+                    y_orig.append(waypoint.coords.y)
+            plt.scatter(x_orig, y_orig, color='r', s=75)
+
+        x_cent = []
+        y_cent = []
+        if show_centres:
+            if self.waypoints is not None:
+                for waypoint in self.waypoints:
+                    if waypoint.centre_point is not None:
+                        x_cent.append(waypoint.centre_point.x)
+                        y_cent.append(waypoint.centre_point.y)
+                plt.scatter(x_cent, y_cent, color='b')
+
+        if show_boundary:
+            if self.boundary_points is not None:
+                x_vals = [point.x for point in self.boundary_points]
+                y_vals = [point.y for point in self.boundary_points]
+                x_vals.append(self.boundary_points[0].x)
+                y_vals.append(self.boundary_points[0].y)
+                plt.plot(x_vals, y_vals, '--k')
+
+        # plt.axis([-9, 9, -9, 9])
+        if save_fig:
+            plt.savefig('Spline_Demo' + str(count), dpi=300)
+        plt.show()
 
 class Point:
     def __init__(self, x=None, y=None):
@@ -256,14 +310,19 @@ def calculate_entrance_and_exit(previous_point, current_waypoint, next_point, ra
     direction = get_circle_direction_improved(previous_point, current_waypoint.coords, next_point)
     current_waypoint.is_clockwise = direction
     current_waypoint.centre_point = scan_percentages_for_solution(previous_point, current_waypoint.coords, next_point, boundary_resolution, boundary_points, radius, tolerance)
+    if current_waypoint.centre_point is None:
+        # If there was no solution found, return none for both entrance and exit.
+        print("=========================\n\tNO SOLUTION FOUND\n=========================")
+        return None, None
     entrance_point_angle, entrance_point_angle_mirror = calculate_dual_perpendicular_angles(current_waypoint.centre_point, previous_point, radius)
     exit_point_angle, exit_point_angle_mirror = calculate_dual_perpendicular_angles(current_waypoint.centre_point, next_point, radius)
     if direction:
-        current_waypoint.entrance = get_point_from_angle(entrance_point_angle_mirror, current_waypoint.centre_point, radius)
-        current_waypoint.exit = get_point_from_angle(exit_point_angle, current_waypoint.centre_point, radius)
+        entrance_point = get_point_from_angle(entrance_point_angle_mirror, current_waypoint.centre_point, radius)
+        exit_point = get_point_from_angle(exit_point_angle, current_waypoint.centre_point, radius)
     else:
-        current_waypoint.entrance = get_point_from_angle(entrance_point_angle, current_waypoint.centre_point, radius)
-        current_waypoint.exit = get_point_from_angle(exit_point_angle_mirror, current_waypoint.centre_point, radius)
+        entrance_point = get_point_from_angle(entrance_point_angle, current_waypoint.centre_point, radius)
+        exit_point = get_point_from_angle(exit_point_angle_mirror, current_waypoint.centre_point, radius)
+    return entrance_point, exit_point
 
 def are_points_equal(point_one=None, point_two=None, rounding_error=10):
     if round(point_one.x, rounding_error) != round(point_two.x, rounding_error):
@@ -282,8 +341,14 @@ def generate_entrances_and_exits(waypoints=None, radius_range=(1.0, 3.0), bounda
         previous_point = waypoints[index - 1].exit
         current_waypoint = waypoints[index]
         next_point = waypoints[index + 1].coords
-        calculate_entrance_and_exit(previous_point, current_waypoint, next_point, radius_range, boundary_points, boundary_resolution, tolerance)
+        entrance_point, exit_point = calculate_entrance_and_exit(previous_point, current_waypoint, next_point, radius_range, boundary_points, boundary_resolution, tolerance)
+        # Check to see if there wasn't a solution found
+        if entrance_point is None and exit_point is None:
+            return None
+        current_waypoint.entrance = entrance_point
+        current_waypoint.exit = exit_point
         if not are_points_equal(current_waypoint.entrance, current_waypoint.coords):
+
             for backwards_index in range(index - 1, 0, -1):
                 backwards_previous_waypoint = waypoints[backwards_index - 1]
                 backwards_current_waypoint = waypoints[backwards_index]
@@ -292,7 +357,6 @@ def generate_entrances_and_exits(waypoints=None, radius_range=(1.0, 3.0), bounda
                 radius_current = backwards_current_waypoint.radius
                 radius_next = backwards_next_waypoint.radius
 
-                # https://math.stackexchange.com/questions/1297189/calculate-tangent-points-of-two-circles
                 if radius_current == radius_next:
                     entrance_angle = math.atan2(backwards_next_waypoint.centre_point.y - backwards_current_waypoint.centre_point.y, backwards_next_waypoint.centre_point.x - backwards_current_waypoint.centre_point.x) + math.pi / 2
                     exit_angle = math.atan2(backwards_next_waypoint.centre_point.y - backwards_current_waypoint.centre_point.y, backwards_next_waypoint.centre_point.x - backwards_current_waypoint.centre_point.x) + math.pi / 2
@@ -306,7 +370,10 @@ def generate_entrances_and_exits(waypoints=None, radius_range=(1.0, 3.0), bounda
                 next_dir = get_circle_direction_improved(backwards_current_waypoint.exit, backwards_next_waypoint.coords, backwards_next_next_waypoint.coords)
 
                 if current_dir != next_dir:
+                    # https://math.stackexchange.com/questions/1297189/calculate-tangent-points-of-two-circles
                     exit_angle, entrance_angle = get_tangency_angle(backwards_current_waypoint, backwards_next_waypoint)
+                if exit_angle is None and entrance_angle is None:
+                    return None
                 backwards_current_waypoint.exit = get_point_from_angle(exit_angle, backwards_current_waypoint.centre_point, backwards_current_waypoint.radius)
                 backwards_next_waypoint.entrance = get_point_from_angle(entrance_angle, backwards_next_waypoint.centre_point, backwards_next_waypoint.radius)
 
@@ -410,10 +477,14 @@ def ignore_duplicate_points(waypoints=None):
 
 def generate_spline_including_boundary(waypoints=None, radius_range=(1.0, 3.0), boundary_points=None, boundary_resolution=10, tolerance=0.0, curve_resolution=3):
     output_entrances_and_exits = generate_entrances_and_exits(waypoints=waypoints, radius_range=radius_range, boundary_points=boundary_points, boundary_resolution=boundary_resolution, tolerance=tolerance)
-    print("TEST: PERPENDICULARITY:", test_perpendicularity(output_entrances_and_exits))
+    # Check if no solution was found.
+    if output_entrances_and_exits is None:
+        return None
+    print("TEST: PERPENDICULARITY BEFORE INTERPOLATION:", test_perpendicularity(output_entrances_and_exits))
     print("TEST: WAYPOINT WITHIN ENTRANCE AND EXIT:", test_valid_entrance_exit_locations(output_entrances_and_exits))
     output_duplicates_ignored = ignore_duplicate_points(output_entrances_and_exits)
     output_interpolated = interpolate_all_curves(output_duplicates_ignored, curve_resolution)
+    print("TEST: PERPENDICULARITY AFTER INTERPOLATION:", test_perpendicularity(output_interpolated))
     return output_interpolated
 
 def get_tangency_angle(waypoint_current, waypoint_next):
@@ -421,69 +492,28 @@ def get_tangency_angle(waypoint_current, waypoint_next):
     radius_next = waypoint_next.radius
     distance = distance_between_two_points(waypoint_current.centre_point, waypoint_next.centre_point)
     reference_angle = math.atan2(waypoint_next.centre_point.y - waypoint_current.centre_point.y, waypoint_next.centre_point.x - waypoint_current.centre_point.x)
-    angle_exit = math.acos((radius_current + radius_next) / distance) - reference_angle
-    angle_entrance = math.pi - angle_exit
+    # Check if circles are too close together
+    if distance_between_two_points(waypoint_current.centre_point, waypoint_next.centre_point) <= waypoint_current.radius + waypoint_next.radius:
+        print("====================================\n\tWAYPOINTS TOO CLOSE TOGETHER\n\tWaypoints:")
+        print("\t\t", waypoint_current.coords.x, waypoint_current.coords.y, "\n\t\t", waypoint_next.coords.x, waypoint_next.coords.y)
+        print("\tMinimum distance allowed:", waypoint_current.radius + waypoint_next.radius)
+        print("\tCurrent distance:", distance_between_two_points(waypoint_current.centre_point, waypoint_next.centre_point), "\n====================================")
+        return None, None
     # TODO Check if this is a fake solution using lots of test cases.
-    if waypoint_current.centre_point.y >= waypoint_next.centre_point.y:
+    if waypoint_current.is_clockwise:
+        angle_exit = math.acos((radius_current + radius_next) / distance) + reference_angle
+    else:
+        angle_exit = math.acos((radius_current + radius_next) / distance) - reference_angle
+    angle_entrance = math.pi - angle_exit
+    if waypoint_current.is_clockwise:
         return angle_exit, -angle_entrance
     else:
         return -angle_exit, angle_entrance
 
-def plot_waypoints_v3(waypoints=None, boundary_points=None, show_centres=True, show_original=True, show_boundary=True, show_points=True, save_fig=False, count=0):
-    x_vals = []
-    y_vals = []
-    for waypoint in waypoints:
-        if waypoint.entrance is not None:
-            x_vals.append(waypoint.entrance.x)
-            y_vals.append(waypoint.entrance.y)
-        if waypoint.interpolated_curve is not None:
-            for point in waypoint.interpolated_curve:
-                x_vals.append(point.x)
-                y_vals.append(point.y)
-        if waypoint.exit is not None:
-            x_vals.append(waypoint.exit.x)
-            y_vals.append(waypoint.exit.y)
-        if waypoint.entrance is None and waypoint.exit is None:
-            x_vals.append(waypoint.coords.x)
-            y_vals.append(waypoint.coords.y)
-    if show_points:
-        plt.plot(x_vals, y_vals, '-.o', color='k', markersize=4)
-    else:
-        plt.plot(x_vals, y_vals, '-.o', color='k', markersize=0)
-
-    x_orig = []
-    y_orig = []
-    if show_original:
-        if waypoints is not None:
-            for waypoint in waypoints:
-                x_orig.append(waypoint.coords.x)
-                y_orig.append(waypoint.coords.y)
-        plt.scatter(x_orig, y_orig, color='r', s=75)
-
-    x_cent = []
-    y_cent = []
-    if show_centres:
-        if waypoints is not None:
-            for waypoint in waypoints:
-                if waypoint.centre_point is not None:
-                    x_cent.append(waypoint.centre_point.x)
-                    y_cent.append(waypoint.centre_point.y)
-            plt.scatter(x_cent, y_cent, color='b')
-
-    if show_boundary:
-        if boundary_points is not None:
-            x_vals = [point.x for point in boundary_points]
-            y_vals = [point.y for point in boundary_points]
-            x_vals.append(boundary_points[0].x)
-            y_vals.append(boundary_points[0].y)
-            plt.plot(x_vals, y_vals, '--k')
-
-    plt.axis([-9, 9, -9, 9])
-    if save_fig:
-        plt.savefig('Spline_Demo' + str(count), dpi=300)
-    plt.show()
-
 def print_waypoints(waypoints=None):
+    if waypoints is None:
+        print("=============================\n\tNO WAYPOINTS TO PRINT\n=============================")
+        return None
     point_count = 1
     for waypoint_index in range(len(waypoints)):
         waypoint = waypoints[waypoint_index]
@@ -520,7 +550,7 @@ if "__main__" == __name__:
     # waypoints = [[2, 4], [2, 10], [5, 10], [5, 4], [8, 4], [8, 10], [11, 10], [11, 4], [14, 4], [14, 10]]
     # waypoints = [[-0.5, 0.5], [0, 2], [2, 2], [3, 0.5], [1, 1.4], [-0.25, 0.5]]
 
-    # global_waypoints = [Waypoint(1, 3.0), Waypoint(4.0, 3), Waypoint(5.0, 5.0), Waypoint(8.0, 5.0), Waypoint(9.0, 3.0), Waypoint(6.0, -1.0)]
+    global_waypoints = [Waypoint(1, 3.0), Waypoint(4.0, 3), Waypoint(5.0, 5.0), Waypoint(8.0, 5.0), Waypoint(9.0, 3.0), Waypoint(6.0, -1.0)]
     #
     # global_radius = 0.8
     # right_wall = 10
@@ -532,13 +562,13 @@ if "__main__" == __name__:
     # output = generate_spline_including_boundary(waypoints=global_waypoints, radius_range=(global_radius, 3.0), boundary_points=global_boundary_points, boundary_resolution=100, tolerance=0, curve_resolution=3)
     # plot_waypoints_v3(waypoints=global_waypoints, boundary_points=global_boundary_points, show_boundary=True, show_original=True, show_centres=True, show_points=True)
 
-    global_waypoints = [Waypoint(1, -2), Waypoint(-3, -2), Waypoint(-3, 5), Waypoint(4, 6), Waypoint(3, -6), Waypoint(-2, -6)]
+    # global_waypoints = [Waypoint(1, -2), Waypoint(-3, -2), Waypoint(-3, 5), Waypoint(4, 6), Waypoint(3, -6), Waypoint(-2, -6)]
 
-    global_radius = 1.5
-    right_wall = 6
+    global_radius = 0.8
+    right_wall = 9.5
     top_wall = 8
-    bottom_wall = -8
-    left_wall = -5
+    bottom_wall = -3
+    left_wall = 0
 
     global_boundary_points = [Point(left_wall, bottom_wall), Point(left_wall, top_wall), Point(right_wall, top_wall), Point(right_wall, bottom_wall)]
     path = SplineGenerator(waypoints=global_waypoints,
@@ -546,13 +576,13 @@ if "__main__" == __name__:
                            boundary_points=global_boundary_points,
                            boundary_resolution=100,
                            tolerance=0.0,
-                           curve_resolution=2)
+                           curve_resolution=3)
     
-    #testing remove and add waypoints
-    #path.add_waypoint(Waypoint(0, 2), 5)
+    # testing remove and add waypoints
+    path.add_waypoint(Waypoint(7, 3), 3)
     # path.remove_waypoint(5)
     # path.remove_waypoint(2)
-    path.generate_spline()
+    # path.generate_spline()
     path.plot_waypoints()
     print_waypoints(path.waypoints)
     
