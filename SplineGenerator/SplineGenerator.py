@@ -483,23 +483,28 @@ def plot_waypoints_v3(waypoints=None, boundary_points=None, show_centres=True, s
         plt.savefig('Spline_Demo' + str(count), dpi=300)
     plt.show()
 
-def print_waypoints(output=None):
-    starting_point = output[0].exit
-    print(starting_point.x, starting_point.y)
-    length = len(output) - 1
+def print_waypoints(waypoints=None):
+    point_count = 1
+    for waypoint_index in range(len(waypoints)):
+        waypoint = waypoints[waypoint_index]
+        if waypoint_index == 0 or waypoint_index == len(waypoints) - 1:
+            print("Point:", point_count, "|", waypoint.coords.x, waypoint.coords.y)
+            point_count += 1
+            continue
+        if waypoint.entrance is not None:
+            print("Point:", point_count, "|", waypoint.entrance.x, waypoint.entrance.y)
+            point_count += 1
+        if waypoint.centre_point is not None:
+            for curve_point in waypoint.interpolated_curve:
+                print("Point:", point_count, "|", curve_point.x, curve_point.y)
+                point_count += 1
+        else:
+            print("Point:", point_count, "|", waypoint.coords.x, waypoint.coords.y)
+            point_count += 1
+        if waypoint.exit is not None:
+            print("Point:", point_count, "|", waypoint.exit.x, waypoint.exit.y)
+            point_count += 1
 
-    for i in range(1, length):
-        entrance = output[i].entrance
-        print(entrance.x, entrance.y)
-
-        for j in output[i].interpolated_curve:
-            print(j.x, j.y)
-        exit = output[i].exit
-        print(exit.x, exit.y)
-
-    last_point = output[length].entrance
-    print(last_point)
-    print(last_point.x, last_point.y)
 
 if "__main__" == __name__:
     """
