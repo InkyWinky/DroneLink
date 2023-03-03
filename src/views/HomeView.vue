@@ -8,6 +8,9 @@
     <div id="notePad">
       <NotePad />
     </div>
+    <div id="batteryStats">
+      <BatteryStatistics />
+    </div>
   </div>
 </template>
 
@@ -18,6 +21,7 @@ import WaypointsList from "@/components/waypoints/WaypointsList.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
 import NotePad from "@/components/notePad/NotePad.vue";
+import BatteryStatistics from "@/components/batteryStats/BatteryStatistics.vue";
 
 // UIKit setup - should automatically propagate to the rest of the Vue app
 import UIkit from "uikit";
@@ -31,6 +35,7 @@ export default {
     ToggleBtn,
     SpeedIndicator,
     NotePad,
+    BatteryStatistics,
   },
 };
 </script>
@@ -68,5 +73,13 @@ div {
   height: 60%;
   top: 110px;
   z-index: 0;
+}
+
+#batteryStats {
+  position: absolute;
+  width: 29%;
+  left: 35.5%;
+  bottom: 30px;
+  height: 25%;
 }
 </style>
