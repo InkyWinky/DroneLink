@@ -35,7 +35,7 @@ const airspeedPercent = computed(() => {
   <!-- This is rendered as a UIKit card -->
   <div
     class="uk-card uk-card-default uk-card-body"
-    style="border-radius: 15px; padding: 20px"
+    style="border-radius: 15px; padding: 30px"
   >
     <h3>AIRSPEED</h3>
     <!-- We need a custom div here in order to show the speed gradient -->

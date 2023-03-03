@@ -69,12 +69,14 @@
       </form>
     </div>
     <label for="importBtn">
-      <i class="fa-solid fa-file-csv" id="importIcon"></i>
+      <i class="fa-solid fa-file-csv icon-btn-effect" id="importIcon"></i>
     </label>
     <input id="importBtn" type="file" accept=".csv" @change="readFile" hidden />
 
     <button class="transparentBtn" id="splineBtn" type="button">
-      <span class="material-symbols-outlined" id="splineIcon"> timeline </span>
+      <span class="material-symbols-outlined icon-btn-effect" id="splineIcon">
+        timeline
+      </span>
     </button>
   </div>
 </template>
@@ -253,7 +255,7 @@ h3 {
   font-family: "Aldrich", sans-serif;
 }
 #bg {
-  width: 25%;
+  width: 26%;
   height: 70%;
   background-color: white;
   padding: 1.5%;
@@ -355,9 +357,7 @@ label {
   color: grey;
   z-index: 9999;
 }
-#importIcon:hover {
-  color: #2c3e50;
-}
+
 .v-enter-active,
 .v-leave-active {
   transition: opacity 0.5s ease;
@@ -387,9 +387,6 @@ label {
   height: 40px;
 }
 
-#splineIcon:hover {
-  color: #2c3e50;
-}
 /* remove number input arrows */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -423,5 +420,10 @@ input::-webkit-inner-spin-button {
   font-size: 2em;
   font-weight: lighter;
   top: -5px;
+}
+.icon-btn-effect:hover {
+  color: #2c3e50 !important;
+  transform: scale(1.1); /* increase size by 20% */
+  transition: transform 0.1s ease-out; /* add a smooth transition */
 }
 </style>

@@ -3,7 +3,10 @@
     <WaypointsList />
     <div id="toggleBtn"><ToggleBtn /></div>
     <div id="speedIndicator">
-      <SpeedIndicator :airspeed="100" :max="150" :min="30" />
+      <SpeedIndicator :airspeed="0" :max="150" :min="0" />
+    </div>
+    <div id="notePad">
+      <NotePad />
     </div>
   </div>
 </template>
@@ -14,6 +17,7 @@
 import WaypointsList from "@/components/waypoints/WaypointsList.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
+import NotePad from "@/components/notePad/NotePad.vue";
 
 // UIKit setup - should automatically propagate to the rest of the Vue app
 import UIkit from "uikit";
@@ -26,6 +30,7 @@ export default {
     WaypointsList,
     ToggleBtn,
     SpeedIndicator,
+    NotePad,
   },
 };
 </script>
@@ -46,13 +51,22 @@ div {
   /* Same width as waypoints list */
 }
 #speedIndicator {
-  width: 27%;
+  width: 29%;
   height: 15%;
   position: absolute;
   right: 0;
   margin: 2%;
-  top: 80px;
+  top: 70px;
   border-radius: 15px;
+  z-index: 0;
+}
+
+#notePad {
+  position: absolute;
+  left: 35.5%;
+  width: 29%;
+  height: 60%;
+  top: 110px;
   z-index: 0;
 }
 </style>
