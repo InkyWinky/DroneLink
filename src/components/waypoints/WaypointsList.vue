@@ -56,7 +56,7 @@
           <i class="fa fa-check white-hover"></i>
         </button>
         <button
-          class="transparentBtn"
+          class="transparentBtn rightAlign"
           id="addByMapBtn"
           @click="showMap = !showMap"
           type="button"
@@ -82,11 +82,27 @@ let id = 0;
 const long = ref("");
 const lat = ref("");
 const alt = ref("");
+const MARKER_HEIGHT = 41;
 let map = ref();
 
 //And example of a waypoint object:
 //Instantiat array for containing waypoints
 const waypoints = ref([]);
+const coordinates = ref([]); //Coordinates for connecting lines on map
+
+// Create a GeoJSON feature collection for the line
+let lineFeature = {
+  type: "FeatureCollection",
+  features: [
+    {
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: [],
+      },
+    },
+  ],
+};
 
 function addWaypt() {
   //The function addWaypt adds a waypoint to the waypoint array
@@ -101,11 +117,14 @@ function addWaypt() {
     lat: lat.value,
     alt: alt.value,
   });
+  //Add coordinates to coordinate array
+  coordinates.value.push([long.value, lat.value]);
   addMarkerToMap(long.value, lat.value);
   //Clear out input boxes after adding waypoint
   long.value = "";
   lat.value = "";
   alt.value = "";
+  updateLine();
 }
 
 function removeWaypt(waypt) {
@@ -115,7 +134,7 @@ function removeWaypt(waypt) {
   waypoints.value = waypoints.value.filter((t) => t !== waypt);
 }
 function addMarkerToMap(long, lat) {
-  const marker = new mapboxgl.Marker({ anchor: "bottom" })
+  const marker = new mapboxgl.Marker({ offset: [0, -MARKER_HEIGHT / 2] })
     .setLngLat([long, lat])
     .addTo(map.value);
   console.log(marker);
@@ -134,6 +153,12 @@ function readFile(formInput) {
   reader.readAsText(file);
 }
 
+// Update the line when the list of waypoints changes
+function updateLine() {
+  lineFeature.features[0].geometry.coordinates = coordinates.value;
+  map.value.getSource("route").setData(lineFeature);
+}
+
 function addWaypointsFromTxt(csvText) {
   //The function addWaypointsFromTxt reads the input text and adds the waypoints to the waypoints array /to be displayed
   //Input: csvText is a string in the format "long, lat, alt\r\n, long, lat, alt\r\r\n..."
@@ -150,12 +175,15 @@ function addWaypointsFromTxt(csvText) {
       lat: coord[1],
       alt: coord[2],
     });
+    coordinates.value.push([coord[0], coord[1]]);
     addMarkerToMap(coord[0], coord[1]);
   }
   map.value.flyTo({
     center: [waypoints.value[0].long, waypoints.value[0].lat],
-    zoom: 14,
+    zoom: 16,
   }); //Center map to first waypoint in list
+
+  updateLine();
 }
 
 onMounted(() => {
@@ -187,6 +215,26 @@ onMounted(() => {
       JSON.stringify(e.point) + "<br />" + JSON.stringify(e.lngLat.wrap())
     );
   });
+
+  // Add the line to the map
+  map.value.on("load", function () {
+    map.value.addLayer({
+      id: "route",
+      type: "line",
+      source: {
+        type: "geojson",
+        data: lineFeature,
+      },
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+      paint: {
+        "line-color": "#888",
+        "line-width": 8,
+      },
+    });
+  });
 });
 </script>
 <style>
@@ -197,7 +245,7 @@ onMounted(() => {
   background-color: white;
   padding: 1.5%;
   margin: 2%;
-  border-radius: 15px;
+  border-radius: 20px;
   box-shadow: 5px 5px 5px grey;
   position: absolute;
   top: 13%;
