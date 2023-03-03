@@ -33,7 +33,7 @@ input[type="checkbox"] {
 #propellerImg {
   height: 80px;
   position: absolute;
-  top: 33px;
+  top: 38px;
   right: 5px;
   z-index: 1;
   pointer-events: none;
@@ -62,13 +62,13 @@ input[type="checkbox"] {
   position: relative;
   display: inline-block;
   font-size: 2em;
-  transform: translate(0px, -70px);
+  transform: translate(0px, -78px);
 }
 #armedText {
   position: relative;
   display: inline-block;
   font-size: 2em;
-  transform: translate(-15px, -70px);
+  transform: translate(-15px, -78px);
 }
 #toggleLabel:after {
   content: "";
