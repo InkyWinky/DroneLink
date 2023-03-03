@@ -7,7 +7,7 @@
     <div v-show="showMap" id="mapCon" />
   </Transition>
   <div id="bg">
-    <h2>Waypoints</h2>
+    <h3>WAYPOINTS</h3>
     <div id="listWrapper">
       <ul>
         <!-- Iterate through array of waypoints and show them on list -->
@@ -28,6 +28,7 @@
       <!-- Form for adding a waypoint: -->
       <!-- Prevent default behaviour of submitting form and add waypoint instead -->
       <form @submit.prevent="addWaypt">
+        <span id="plus-symbol">+</span>
         <label for="longitude">Long: </label>
         <input
           class="coordInput"
@@ -53,7 +54,7 @@
           v-model="alt"
         />
         <button class="transparentBtn" id="addWayptBtn">
-          <i class="fa fa-check white-hover"></i>
+          <i class="fa fa-check white-hover" id="tick-btn"></i>
         </button>
         <button
           class="transparentBtn rightAlign"
@@ -61,11 +62,20 @@
           @click="showMap = !showMap"
           type="button"
         >
-          <i class="fa-solid fa-location-dot white-hover"></i>
+          <span class="material-symbols-outlined white-hover">
+            add_location_alt
+          </span>
         </button>
       </form>
     </div>
-    <input id="importBtn" type="file" accept=".csv" @change="readFile" />
+    <label for="importBtn">
+      <i class="fa-solid fa-file-csv" id="importIcon"></i>
+    </label>
+    <input id="importBtn" type="file" accept=".csv" @change="readFile" hidden />
+
+    <button class="transparentBtn" id="splineBtn" type="button">
+      <span class="material-symbols-outlined" id="splineIcon"> timeline </span>
+    </button>
   </div>
 </template>
 
@@ -113,8 +123,8 @@ function addWaypt() {
   //Add waypoint to array
   waypoints.value.push({
     id: id++,
-    long: long.value,
-    lat: lat.value,
+    long: parseFloat(long.value).toFixed(8),
+    lat: parseFloat(lat.value).toFixed(8),
     alt: alt.value,
   });
   //Add coordinates to coordinate array
@@ -180,7 +190,7 @@ function addWaypointsFromTxt(csvText) {
   }
   map.value.flyTo({
     center: [waypoints.value[0].long, waypoints.value[0].lat],
-    zoom: 16,
+    zoom: 15,
   }); //Center map to first waypoint in list
 
   updateLine();
@@ -239,6 +249,9 @@ onMounted(() => {
 </script>
 <style>
 /* Background of waypoints panel */
+h3 {
+  font-family: "Aldrich", sans-serif;
+}
 #bg {
   width: 25%;
   height: 70%;
@@ -248,7 +261,7 @@ onMounted(() => {
   border-radius: 20px;
   box-shadow: 5px 5px 5px grey;
   position: absolute;
-  top: 13%;
+  top: 200px;
   z-index: 1;
 }
 .white-hover:hover {
@@ -314,7 +327,12 @@ label {
   font-size: 0.8em;
   margin: 5px;
 }
-
+#tick-btn {
+  font-size: 1.5em;
+  position: absolute;
+  right: 35px;
+  top: 8px;
+}
 .transparentBtn {
   background-color: transparent;
   border-style: none;
@@ -324,10 +342,21 @@ label {
   height: 80%;
   overflow: auto;
 }
-#importBtn {
+/* #importBtn {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
+  bottom: 15px;
+  left: 15px;
+} */
+#importIcon {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  font-size: 3em;
+  color: grey;
+  z-index: 9999;
+}
+#importIcon:hover {
+  color: #2c3e50;
 }
 .v-enter-active,
 .v-leave-active {
@@ -342,12 +371,25 @@ label {
   height: 100%;
   position: relative;
   overflow: hidden;
+  z-index: 1;
 }
 /* Hide inbuilt mapbox footer */
 .mapboxgl-ctrl-bottom-right {
   display: none;
 }
+#splineIcon {
+  position: absolute;
+  top: 95%;
+  right: 15px;
+  font-size: 3em;
+  color: grey;
+  padding: 0;
+  height: 40px;
+}
 
+#splineIcon:hover {
+  color: #2c3e50;
+}
 /* remove number input arrows */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -365,5 +407,21 @@ input::-webkit-inner-spin-button {
   margin: 0 !important;
   height: 41px !important;
 }
-/* .mapboxgl-marker-anchor-center */
+
+/* Add location icon */
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 48;
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  font-size: 1.5em;
+}
+
+#plus-symbol {
+  left: 15px;
+  position: absolute;
+  font-size: 2em;
+  font-weight: lighter;
+  top: -5px;
+}
 </style>

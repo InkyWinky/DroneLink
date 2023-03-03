@@ -41,7 +41,8 @@ div {
   text-align: center;
   width: 25%;
   position: absolute;
-  top: 5%;
+  top: 80px;
+  z-index: 0;
   /* Same width as waypoints list */
 }
 #speedIndicator {
@@ -50,6 +51,8 @@ div {
   position: absolute;
   right: 0;
   margin: 2%;
+  top: 80px;
   border-radius: 15px;
+  z-index: 0;
 }
 </style>

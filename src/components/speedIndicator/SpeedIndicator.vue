@@ -33,8 +33,11 @@ const airspeedPercent = computed(() => {
 <template>
   <!-- An airspeed indicator using a bar with a floating needle on top which moves horizontally to the right as the airspeed increases. -->
   <!-- This is rendered as a UIKit card -->
-  <div class="uk-card uk-card-default uk-card-body" style="border-radius: 15px">
-    <h3>Airspeed</h3>
+  <div
+    class="uk-card uk-card-default uk-card-body"
+    style="border-radius: 15px; padding: 20px"
+  >
+    <h3>AIRSPEED</h3>
     <!-- We need a custom div here in order to show the speed gradient -->
     <div class="speed-bar">
       <!-- Display min and max at either end of the bar -->
