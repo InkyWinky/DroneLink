@@ -4,8 +4,8 @@
       id="toggleLabel"
       for="switch"
     ></label>
-    <span v-if="!isChecked" id="disarmedText">Disarmed</span>
-    <span v-if="isChecked" id="armedText">Armed</span>
+    <span v-if="!isChecked" id="disarmedText">DISARMED</span>
+    <span v-if="isChecked" id="armedText">ARMED</span>
     <img
       v-if="isChecked"
       id="propellerImg"
@@ -62,13 +62,14 @@ input[type="checkbox"] {
   position: relative;
   display: inline-block;
   font-size: 2em;
-  transform: translate(0px, -78px);
+  transform: translate(10px, -78px);
+  color: black;
 }
 #armedText {
   position: relative;
   display: inline-block;
   font-size: 2em;
-  transform: translate(-15px, -78px);
+  transform: translate(-3px, -78px);
 }
 #toggleLabel:after {
   content: "";
