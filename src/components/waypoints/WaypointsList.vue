@@ -267,7 +267,7 @@ h3 {
 }
 #bg {
   width: 26%;
-  height: 69%;
+  height: 72%;
   background-color: white;
   padding: 1.5%;
   margin: 2%;

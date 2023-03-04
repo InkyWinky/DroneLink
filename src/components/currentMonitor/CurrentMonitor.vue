@@ -51,7 +51,7 @@ function increaseCurrent() {
   background-image: url("../../../public/currentMonitor.png");
   background-repeat: no-repeat;
   background-size: 50% 60%;
-  background-position: 50% 65%;
+  background-position: 50% 54%;
   /* set bg image to the current-display so that we can centre the current needle */
 }
 #min-current {
