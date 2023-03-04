@@ -53,7 +53,7 @@ input[type="checkbox"] {
   text-indent: -9999px;
   width: 100%;
   height: 100px;
-  background: grey;
+  background: #c3534d;
   display: block;
   border-radius: 100px;
   position: relative;
@@ -63,7 +63,7 @@ input[type="checkbox"] {
   display: inline-block;
   font-size: 2em;
   transform: translate(10px, -78px);
-  color: black;
+  color: rgb(61, 0, 0);
 }
 #armedText {
   position: relative;

@@ -14,19 +14,22 @@
     <div id="current-monitor">
       <CurrentMonitor />
     </div>
+
+    <div id="pwm-monitor">
+      <PwmMonitor />
+    </div>
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
-
 import WaypointsList from "@/components/waypoints/WaypointsList.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
 import NotePad from "@/components/notePad/NotePad.vue";
 import BatteryStatistics from "@/components/batteryStats/BatteryStatistics.vue";
 import CurrentMonitor from "@/components/currentMonitor/CurrentMonitor.vue";
-
+import PwmMonitor from "@/components/pwm/PwmMonitor.vue";
 // UIKit setup - should automatically propagate to the rest of the Vue app
 import UIkit from "uikit";
 import Icons from "uikit/dist/js/uikit-icons";
@@ -41,6 +44,7 @@ export default {
     NotePad,
     BatteryStatistics,
     CurrentMonitor,
+    PwmMonitor,
   },
 };
 </script>
@@ -54,10 +58,11 @@ div {
 }
 #toggleBtn {
   text-align: center;
-  width: 25%;
+  width: 22%;
   position: absolute;
   top: 80px;
   z-index: 0;
+  margin-left: 2%;
   /* Same width as waypoints list */
 }
 #speedIndicator {
@@ -75,7 +80,7 @@ div {
   position: absolute;
   left: 35.5%;
   width: 29%;
-  height: 60%;
+  height: 59%;
   top: 110px;
   z-index: 0;
 }
@@ -84,17 +89,28 @@ div {
   position: absolute;
   width: 29%;
   left: 35.5%;
-  bottom: 30px;
+  bottom: 4%;
   height: 25%;
 }
 
 #current-monitor {
   width: 29%;
-  height: 35%;
+  height: 30%;
   position: absolute;
   right: 0;
   margin: 2%;
-  top: 270px;
+  top: 23%;
+  border-radius: 15px;
+  z-index: 0;
+}
+
+#pwm-monitor {
+  width: 29%;
+  height: 37%;
+  position: absolute;
+  right: 0;
+  margin-right: 2%;
+  bottom: 4%;
   border-radius: 15px;
   z-index: 0;
 }

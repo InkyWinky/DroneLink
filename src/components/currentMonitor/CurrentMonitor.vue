@@ -4,7 +4,7 @@
     id="current-display"
     style="border-radius: 15px; padding: 30px"
   >
-    <h3>PCB MONITOR (A)</h3>
+    <h3>PCB CURRENT (A)</h3>
     <!-- Current needle -->
     <div class="current-needle" @click="increaseCurrent" @mouseup="stopCurrent">
       <div
@@ -50,24 +50,24 @@ function increaseCurrent() {
 #current-display {
   background-image: url("../../../public/currentMonitor.png");
   background-repeat: no-repeat;
-  background-size: 60% 60%;
-  background-position: center center;
+  background-size: 50% 60%;
+  background-position: 50% 65%;
   /* set bg image to the current-display so that we can centre the current needle */
 }
 #min-current {
   position: absolute;
-  bottom: 18%;
-  left: 20%;
+  bottom: 13%;
+  left: 25%;
 }
 
 #max-current {
   position: absolute;
-  bottom: 18%;
-  right: 20%;
+  bottom: 13%;
+  right: 25%;
 }
 
 #needle {
-  width: 10px;
+  width: 8px;
   height: 45%;
   background-color: black;
   border-radius: 5px;
@@ -76,10 +76,10 @@ function increaseCurrent() {
 
 #circle {
   color: black;
-  width: 73px;
-  height: 73px;
+  width: 65px;
+  height: 65px;
   background-color: white;
-  border: 10px solid black;
+  border: 8px solid black;
   border-radius: 50%;
   transform: translate(-50%, -73%);
   font-size: 2em;
@@ -93,7 +93,7 @@ function increaseCurrent() {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -30%);
+  transform: translate(-50%, -35%);
 }
 
 .current-needle {

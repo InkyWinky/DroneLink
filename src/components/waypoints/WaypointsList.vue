@@ -8,7 +8,7 @@
   </Transition>
   <div id="bg">
     <h3>WAYPOINTS</h3>
-    <div id="listWrapper">
+    <div id="listWrapper" ref="listContainer">
       <ul>
         <!-- Iterate through array of waypoints and show them on list -->
         <li v-for="waypt in waypoints" :key="waypt.id">
@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, nextTick } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { onMounted } from "vue";
@@ -101,7 +101,11 @@ let map = ref();
 //Instantiat array for containing waypoints
 const waypoints = ref([]);
 const coordinates = ref([]); //Coordinates for connecting lines on map
+const listContainer = ref(null);
 
+function scrollBottom() {
+  listContainer.value.scrollTop = listContainer.value.scrollHeight;
+}
 // Create a GeoJSON feature collection for the line
 let lineFeature = {
   type: "FeatureCollection",
@@ -137,6 +141,9 @@ function addWaypt() {
   lat.value = "";
   alt.value = "";
   updateLine();
+  nextTick(() => {
+    scrollBottom();
+  });
 }
 
 function removeWaypt(waypt) {
@@ -196,6 +203,10 @@ function addWaypointsFromTxt(csvText) {
   }); //Center map to first waypoint in list
 
   updateLine();
+  nextTick(() => {
+    //Keep scroll at bottom of list
+    scrollBottom();
+  });
 }
 
 onMounted(() => {
@@ -256,12 +267,12 @@ h3 {
 }
 #bg {
   width: 26%;
-  height: 70%;
+  height: 69%;
   background-color: white;
   padding: 1.5%;
   margin: 2%;
   border-radius: 20px;
-  box-shadow: 5px 5px 5px grey;
+  box-shadow: 0px 10px 8px -3px rgba(0, 0, 0, 0.1);
   position: absolute;
   top: 200px;
   z-index: 1;
@@ -341,7 +352,7 @@ label {
 }
 
 #listWrapper {
-  height: 80%;
+  height: 85%;
   overflow: auto;
 }
 /* #importBtn {
