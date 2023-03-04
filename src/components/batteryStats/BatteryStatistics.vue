@@ -1,4 +1,57 @@
 <!-- LiPo Voltage Calculator -->
+<template>
+  <div
+    class="uk-card uk-card-default uk-card-body"
+    style="border-radius: 20px; padding: 20px"
+  >
+    <h3>BATTERY STATISTICS</h3>
+    <div class="cell-calculator-container">
+      <div class="calculator-cell-count statistic">
+        <span class="stat-header">Cell Count</span>
+        <input
+          v-model="cellCount"
+          class="uk-input"
+          type="text"
+          placeholder="0"
+        />
+      </div>
+
+      <div class="live-stats-display">
+        <div class="battery-outline">
+          <!-- Need a div to center the stuff properly rather than having overlapping text -->
+          <div class="battery-stat-group">
+            <!-- <span class="battery-stat">{{
+              props.cellCurrentVoltage.toFixed(1) + "V"
+            }}</span> -->
+            <span class="battery-stat">{{ closestChargeFraction + "%" }}</span>
+          </div>
+        </div>
+        <div id="battery-terminal"></div>
+        <span id="time-remaining"
+          >{{ hoursRemaining }}hrs {{ minutesRemaining }}min remaining</span
+        >
+      </div>
+
+      <div class="computed-statistics">
+        <div class="statistic">
+          <span class="stat-header">Nominal voltage</span>
+          <p class="stat-display">{{ nominalVoltage.toFixed(1) + "V" }}</p>
+        </div>
+
+        <div class="statistic">
+          <span class="stat-header">Charged</span>
+          <p class="stat-display">{{ chargedVoltage.toFixed(1) + "V" }}</p>
+        </div>
+
+        <div class="statistic">
+          <span class="stat-header">50%</span>
+          <p class="stat-display">{{ halfChargeVoltage.toFixed(1) + "V" }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { defineProps, computed, ref } from "vue";
 // Will need to check these voltages but I think it should be OK to set some defaults for now
@@ -9,6 +62,12 @@ const props = defineProps({
     default: 3.84,
   },
 });
+let timeRemaining = ref(0); //Calculate time remaining in minutes based on current battery level
+let hoursRemaining = ref(0);
+let minutesRemaining = ref(0);
+hoursRemaining.value = Math.floor(timeRemaining.value / 60);
+minutesRemaining.value = timeRemaining.value % 60;
+
 // Taken from https://blog.ampow.com/lipo-voltage-chart/
 // Voltage is for a single cell in series; this is configurable and we can just multiply it by the cell count
 const cellCapacity = {
@@ -53,61 +112,6 @@ const halfChargeVoltage = computed(() => cellCount.value * cellCapacity[0.5]);
 const cellCount = ref(0);
 </script>
 
-<template>
-  <div
-    class="uk-card uk-card-default uk-card-body"
-    style="border-radius: 20px; padding: 20px"
-  >
-    <h3>BATTERY STATISTICS</h3>
-    <div class="cell-calculator-container">
-      <div class="calculator-cell-count statistic">
-        <span class="stat-header">Cell Count</span>
-        <input
-          v-model="cellCount"
-          class="uk-input"
-          type="text"
-          placeholder="0"
-        />
-      </div>
-
-      <div class="live-stats-display">
-        <div class="battery-outline">
-          <div class="battery-terminal negative-terminal">
-            <span class="terminal-text">-</span>
-          </div>
-          <div class="battery-terminal positive-terminal">
-            <span class="terminal-text">+</span>
-          </div>
-          <!-- Need a div to center the stuff properly rather than having overlapping text -->
-          <div class="battery-stat-group">
-            <span class="battery-stat">{{
-              props.cellCurrentVoltage.toFixed(1) + "V"
-            }}</span>
-            <span class="battery-stat">{{ closestChargeFraction + "%" }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="computed-statistics">
-        <div class="statistic">
-          <span class="stat-header">Nominal voltage</span>
-          <p class="stat-display">{{ nominalVoltage.toFixed(1) + "V" }}</p>
-        </div>
-
-        <div class="statistic">
-          <span class="stat-header">Charged</span>
-          <p class="stat-display">{{ chargedVoltage.toFixed(1) + "V" }}</p>
-        </div>
-
-        <div class="statistic">
-          <span class="stat-header">50%</span>
-          <p class="stat-display">{{ halfChargeVoltage.toFixed(1) + "V" }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <style scoped>
 /* Object stacks should have equal space between each other, but rely on the padding inherent to the container's parent */
 .cell-calculator-container {
@@ -127,58 +131,51 @@ const cellCount = ref(0);
   border-radius: 8px;
 }
 .live-stats-display {
-  height: 100%;
   flex-grow: 1;
-  margin: 0 8%;
-  padding: 0 5%;
+  margin: 8% 8%;
+  padding: 0;
   text-align: center;
   position: relative;
 }
 .battery-outline {
-  width: 100%;
-  height: 0;
-  margin-top: 20%;
-  padding-bottom: 65.6%;
-  border: 2px solid black;
+  width: 85%;
+  height: 45%;
+  border: 10px solid rgb(225, 62, 62);
+  border-radius: 8px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  margin-top: 5%;
 }
-.battery-terminal {
+#battery-terminal {
   position: absolute;
-  width: 15%;
-  height: 20%;
-  top: 0;
-  border: 2px solid black;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transform: translateY(-100%);
-}
-.negative-terminal {
-  left: 10%;
-}
-
-.positive-terminal {
-  right: 10%;
+  width: 6%;
+  height: 22%;
+  border-radius: 5px;
+  top: 20%;
+  right: 0;
+  background-color: rgb(225, 62, 62);
 }
 .battery-stat-group {
   display: block;
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-45%);
 }
 .battery-stat {
-  display: block;
+  font-size: 3em;
+  position: absolute;
+  top: 13%;
+  transform: translateX(-40%);
 }
 .computed-statistics {
   width: 20%;
   height: 50%;
   display: flex;
   flex-direction: column;
-  transform: translateY(-70%);
+  transform: translateY(-40%);
 }
 .statistic {
   margin: 0;
@@ -190,8 +187,14 @@ const cellCount = ref(0);
 .stat-display {
   margin: 0;
   padding: 0;
-  background-color: #ccc;
+  background-color: #ddd;
   border-radius: 5px;
   width: 100%;
+}
+#time-remaining {
+  position: absolute;
+  font-size: 1em;
+  left: 12%;
+  bottom: 30%;
 }
 </style>

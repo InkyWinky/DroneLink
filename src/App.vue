@@ -1,6 +1,7 @@
 <template>
   <nav>
     <router-link to="/">DroneLink</router-link>
+    <!-- <img id="logo-link" src="../public/logolink.png" alt="" /> -->
     <button class="transparentBtn" id="settings-btn">
       <i
         class="fa-sharp fa-solid fa-gears icon-btn-effect"
@@ -24,6 +25,12 @@
   color: #2c3e50;
   height: 100%;
 }
+#logo-link {
+  height: 2%;
+  width: 2%;
+  position: absolute;
+  left: 51.5%;
+}
 html {
   height: 100%;
 }
@@ -33,13 +40,14 @@ body {
 }
 nav {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
-  padding: 15px;
+  padding: 10px;
   margin: 0;
   text-decoration: none;
 }
 
 nav a {
-  font-weight: bold;
+  font-weight: normal;
+  font-size: 2.5em !important;
   color: #2c3e50;
   text-decoration: none;
 }
@@ -47,6 +55,7 @@ nav a {
 nav a.router-link-exact-active {
   color: white;
   font-size: 2em;
+  -webkit-font-smoothing: antialiased;
 }
 #settings-icon {
   color: white;
