@@ -124,11 +124,12 @@ const cellCount = ref(0);
   margin-top: 0.2rem;
   background-color: #ddd;
   text-align: center;
+  border-radius: 8px;
 }
 .live-stats-display {
   height: 100%;
   flex-grow: 1;
-  margin: 0 5%;
+  margin: 0 8%;
   padding: 0 5%;
   text-align: center;
   position: relative;
@@ -174,13 +175,14 @@ const cellCount = ref(0);
 }
 .computed-statistics {
   width: 20%;
+  height: 50%;
   display: flex;
   flex-direction: column;
+  transform: translateY(-70%);
 }
 .statistic {
   margin: 0;
   text-align: center;
-  padding: 0;
 }
 .stat-header {
   margin: 0;
@@ -189,6 +191,7 @@ const cellCount = ref(0);
   margin: 0;
   padding: 0;
   background-color: #ccc;
+  border-radius: 5px;
   width: 100%;
 }
 </style>

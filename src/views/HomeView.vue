@@ -11,6 +11,9 @@
     <div id="batteryStats">
       <BatteryStatistics />
     </div>
+    <div id="current-monitor">
+      <CurrentMonitor />
+    </div>
   </div>
 </template>
 
@@ -22,6 +25,7 @@ import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
 import NotePad from "@/components/notePad/NotePad.vue";
 import BatteryStatistics from "@/components/batteryStats/BatteryStatistics.vue";
+import CurrentMonitor from "@/components/currentMonitor/CurrentMonitor.vue";
 
 // UIKit setup - should automatically propagate to the rest of the Vue app
 import UIkit from "uikit";
@@ -36,6 +40,7 @@ export default {
     SpeedIndicator,
     NotePad,
     BatteryStatistics,
+    CurrentMonitor,
   },
 };
 </script>
@@ -81,5 +86,16 @@ div {
   left: 35.5%;
   bottom: 30px;
   height: 25%;
+}
+
+#current-monitor {
+  width: 29%;
+  height: 35%;
+  position: absolute;
+  right: 0;
+  margin: 2%;
+  top: 270px;
+  border-radius: 15px;
+  z-index: 0;
 }
 </style>
