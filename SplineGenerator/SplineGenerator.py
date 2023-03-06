@@ -217,6 +217,7 @@ def boundary_tolerance_respected(centre_point, boundary_points=None, distance=1.
     # If out of bounds if the circle of radius: radius from the centre point goes out of the boundary.
     for index in range(len(boundary_points) - 1):
         distance_to_line = distance_point_to_segment(centre_point, boundary_points[index], boundary_points[index + 1])
+        print(distance_to_line, distance, centre_point.x, centre_point.y, boundary_points[index].x, boundary_points[index].y)
         if distance_to_line < distance:
             return False
     # The line from the first point and last point. Connect the polygon
@@ -271,7 +272,7 @@ def get_centre_point_given_percentage(previous_waypoint=Point(), current_waypoin
     centre_point = Point(current_waypoint.x + radius * math.cos(angle_step), current_waypoint.y + radius * math.sin(angle_step))
     return centre_point
 
-def scan_percentages_for_solution(previous_waypoint=Point(), current_waypoint=Point(), next_waypoint=Point(), boundary_resolution=10, boundary_points=None, radius=1.0, tolerance=0.0):
+def scan_percentages_for_solution(previous_waypoint=None, current_waypoint=None, next_waypoint=None, boundary_resolution=None, boundary_points=None, radius=None, tolerance=None):
     # Loop through percentages as for loop
     centre_point_solution = None
     if boundary_points is None or boundary_resolution is None:
@@ -280,8 +281,15 @@ def scan_percentages_for_solution(previous_waypoint=Point(), current_waypoint=Po
         percentage = percentage_step / boundary_resolution
         possible_point_solution = get_centre_point_given_percentage(previous_waypoint, current_waypoint, next_waypoint, radius, percentage)
         # Check the centre point is valid
+        print("Bounds:", is_not_out_of_bounds(boundary_points, possible_point_solution))
         if is_not_out_of_bounds(boundary_points, possible_point_solution):
-            if boundary_tolerance_respected(possible_point_solution, boundary_points, radius + tolerance):
+            if tolerance is None:
+                distance_to_consider = radius
+            else:
+                distance_to_consider = radius + tolerance
+            print(distance_to_consider)
+            print("Tolerance:", boundary_tolerance_respected(possible_point_solution, boundary_points, distance_to_consider))
+            if boundary_tolerance_respected(possible_point_solution, boundary_points, distance_to_consider):
                 centre_point_solution = possible_point_solution
                 break
     return centre_point_solution
@@ -476,6 +484,9 @@ def ignore_duplicate_points(waypoints=None):
     return waypoints
 
 def generate_spline_including_boundary(waypoints=None, radius_range=(1.0, 3.0), boundary_points=None, boundary_resolution=10, tolerance=0.0, curve_resolution=3):
+    if waypoints is None:
+        print("No waypoints given...")
+        return None
     output_entrances_and_exits = generate_entrances_and_exits(waypoints=waypoints, radius_range=radius_range, boundary_points=boundary_points, boundary_resolution=boundary_resolution, tolerance=tolerance)
     # Check if no solution was found.
     if output_entrances_and_exits is None:
@@ -535,23 +546,46 @@ def print_waypoints(waypoints=None):
             print("Point:", point_count, "|", waypoint.exit.x, waypoint.exit.y)
             point_count += 1
 
+def plot_lists(list_one=None, list_two=None):
+    x_1 = [point.coords.x for point in list_one]
+    y_1 = [point.coords.y for point in list_one]
+    x_2 = [point.x for point in list_two]
+    y_2 = [point.y for point in list_two]
+    plt.plot(x_1, y_1, '-.k')
+    plt.plot(x_2, y_2, 'b')
+    plt.show()
+
 
 if "__main__" == __name__:
-    global_waypoints = [Waypoint(1, 3.0), Waypoint(4.0, 3), Waypoint(5.0, 5.0), Waypoint(8.0, 5.0), Waypoint(9.0, 3.0), Waypoint(6.0, -1.0)]
+    minimum_turn_radius_feet = 125
+    minimum_turn_radius_decimal_degrees = minimum_turn_radius_feet / 364567.2
+    suas_boundary = [Point(38.31729702009844, -76.55617670782419),
+                     Point(38.31594832826572, -76.55657341657302),
+                     Point(38.31546739500083, -76.55376201277696),
+                     Point(38.31470980862425, -76.54936361414539),
+                     Point(38.31424154692598, -76.54662761646904),
+                     Point(38.31369801280048, -76.54342380058223),
+                     Point(38.31331079191371, -76.54109648475954),
+                     Point(38.31529941346197, -76.54052104837133),
+                     Point(38.31587643291039, -76.54361305817427),
+                     Point(38.31861642463319, -76.54538594175376),
+                     Point(38.31862683616554, -76.55206138505936),
+                     Point(38.31703471119464, -76.55244787859773),
+                     Point(38.31674255749409, -76.55294546866578)]
 
-    global_radius = 0.72
-    right_wall = 9.5
-    top_wall = 8
-    bottom_wall = -3
-    left_wall = 0
+    suas_waypoints = [Waypoint(38.3145, -76.543),
+                      Waypoint(38.315, -76.546),
+                      Waypoint(38.3175, -76.548),
+                      Waypoint(38.316, -76.55)]
 
-    global_boundary_points = [Point(left_wall, bottom_wall), Point(left_wall, top_wall), Point(right_wall, top_wall), Point(right_wall, bottom_wall)]
-    path = SplineGenerator(waypoints=global_waypoints,
-                           radius_range=(global_radius, global_radius + 1),
-                           boundary_points=global_boundary_points,
+    plot_lists(suas_waypoints, suas_boundary)
+
+    path = SplineGenerator(waypoints=suas_waypoints,
+                           radius_range=(minimum_turn_radius_decimal_degrees, minimum_turn_radius_decimal_degrees + 1),
+                           boundary_points=suas_boundary,
                            boundary_resolution=100,
-                           tolerance=0.0,
-                           curve_resolution=3)
+                           tolerance=None,
+                           curve_resolution=1999)
     
     path.plot_waypoints()
-    # print_waypoints(path.waypoints)
+    print_waypoints(path.waypoints)
