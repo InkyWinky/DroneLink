@@ -217,11 +217,15 @@ def boundary_tolerance_respected(centre_point, boundary_points=None, distance=1.
     # If out of bounds if the circle of radius: radius from the centre point goes out of the boundary.
     for index in range(len(boundary_points) - 1):
         distance_to_line = distance_point_to_segment(centre_point, boundary_points[index], boundary_points[index + 1])
-        print(distance_to_line, distance, centre_point.x, centre_point.y, boundary_points[index].x, boundary_points[index].y)
         if distance_to_line < distance:
             return False
     # The line from the first point and last point. Connect the polygon
     distance_to_line = distance_point_to_segment(centre_point, boundary_points[-1], boundary_points[0])
+    print("Distance to line:", distance_to_line)
+    print("Distance max:", distance)
+    print("Center point:", centre_point.x, centre_point.y)
+    print("Boundary 1:", boundary_points[-1].x, boundary_points[-1].y)
+    print("Boundary 1:", boundary_points[0].x, boundary_points[0].y)
     if distance_to_line < distance:
         return False
     return True
@@ -251,11 +255,32 @@ def is_not_out_of_bounds(bounding_points=None, test_point=None):
     return False
 
 def distance_point_to_segment(point, line_point1, line_point2):
-    x_diff = line_point2.x - line_point1.x
-    y_diff = line_point2.y - line_point1.y
-    num = abs(y_diff * point.x - x_diff * point.y + line_point2.x * line_point1.y - line_point2.y * line_point1.x)
-    den = math.sqrt(y_diff ** 2 + x_diff ** 2)
-    return num / den
+    # https://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
+    a = point.x - line_point1.x
+    b = point.y - line_point1.y
+    c = line_point2.x - line_point1.x
+    d = line_point2.y - line_point1.y
+
+    dot = a * c + b * d
+    len_sq = c * c + d * d
+    param = -1
+    if len_sq != 0:
+        param = dot / len_sq
+
+    if param < 0:
+        xx = line_point1.x
+        yy = line_point1.y
+    elif param > 1:
+        xx = line_point2.x
+        yy = line_point2.y
+    else:
+        xx = line_point1.x + param * c
+        yy = line_point2.y + param * d
+
+    dx = point.x - xx
+    dy = point.y - yy
+
+    return math.sqrt(dx ** 2 + dy ** 2)
 
 def get_centre_point_given_percentage(previous_waypoint=Point(), current_waypoint=Point(), next_waypoint=Point(), radius=1.0, percentage=0.5):
     # Calculate limit lines angle
@@ -287,7 +312,6 @@ def scan_percentages_for_solution(previous_waypoint=None, current_waypoint=None,
                 distance_to_consider = radius
             else:
                 distance_to_consider = radius + tolerance
-            print(distance_to_consider)
             print("Tolerance:", boundary_tolerance_respected(possible_point_solution, boundary_points, distance_to_consider))
             if boundary_tolerance_respected(possible_point_solution, boundary_points, distance_to_consider):
                 centre_point_solution = possible_point_solution
@@ -468,8 +492,8 @@ def test_valid_entrance_exit_locations(waypoints=None):
         # TODO: Write something to return false is any of the waypoints have their coordinates outside the entrance and exit angles.
 
         if waypoint_angle < entrance_angle and waypoint_angle > exit_angle:
-                print("Point outside the angle of entrance or exit")
-                return False
+            print("Point outside the angle of entrance or exit")
+            return False
 
         # TODO END
     return True
@@ -546,19 +570,11 @@ def print_waypoints(waypoints=None):
             print("Point:", point_count, "|", waypoint.exit.x, waypoint.exit.y)
             point_count += 1
 
-def plot_lists(list_one=None, list_two=None):
-    x_1 = [point.coords.x for point in list_one]
-    y_1 = [point.coords.y for point in list_one]
-    x_2 = [point.x for point in list_two]
-    y_2 = [point.y for point in list_two]
-    plt.plot(x_1, y_1, '-.k')
-    plt.plot(x_2, y_2, 'b')
-    plt.show()
-
 
 if "__main__" == __name__:
     minimum_turn_radius_feet = 125
     minimum_turn_radius_decimal_degrees = minimum_turn_radius_feet / 364567.2
+
     suas_boundary = [Point(38.31729702009844, -76.55617670782419),
                      Point(38.31594832826572, -76.55657341657302),
                      Point(38.31546739500083, -76.55376201277696),
@@ -577,8 +593,6 @@ if "__main__" == __name__:
                       Waypoint(38.315, -76.546),
                       Waypoint(38.3175, -76.548),
                       Waypoint(38.316, -76.55)]
-
-    plot_lists(suas_waypoints, suas_boundary)
 
     path = SplineGenerator(waypoints=suas_waypoints,
                            radius_range=(minimum_turn_radius_decimal_degrees, minimum_turn_radius_decimal_degrees + 1),
