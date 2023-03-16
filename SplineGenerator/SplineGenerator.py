@@ -574,6 +574,13 @@ def print_waypoints(waypoints=None):
 if "__main__" == __name__:
     minimum_turn_radius_feet = 125
     minimum_turn_radius_decimal_degrees = minimum_turn_radius_feet / 364567.2
+    print(minimum_turn_radius_decimal_degrees)
+    minimum_turn_radius_metres = 38.1
+    minimum_turn_radius_decimal_degrees = minimum_turn_radius_metres / 111139
+    print(minimum_turn_radius_decimal_degrees)
+    waypoints_per_metre = 1
+    curve_resolution = waypoints_per_metre / 0.000009009
+    print(curve_resolution)
 
     suas_boundary = [Point(38.31729702009844, -76.55617670782419),
                      Point(38.31594832826572, -76.55657341657302),
@@ -592,14 +599,14 @@ if "__main__" == __name__:
     suas_waypoints = [Waypoint(38.3145, -76.543),
                       Waypoint(38.315, -76.546),
                       Waypoint(38.3175, -76.548),
-                      Waypoint(38.316, -76.55)]
+                      Waypoint(38.316, -76.550)]
 
     path = SplineGenerator(waypoints=suas_waypoints,
                            radius_range=(minimum_turn_radius_decimal_degrees, minimum_turn_radius_decimal_degrees + 1),
                            boundary_points=suas_boundary,
                            boundary_resolution=100,
                            tolerance=None,
-                           curve_resolution=1999)
+                           curve_resolution=curve_resolution)
     
     path.plot_waypoints()
     print_waypoints(path.waypoints)
