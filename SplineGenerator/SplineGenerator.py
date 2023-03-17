@@ -8,18 +8,23 @@ class SplineGenerator:
     spline between waypoints.
     """
 
-    def __init__(self, waypoints=None, radius_range=None, boundary_points=None, boundary_resolution=None, tolerance=None, curve_resolution=None):
+    def __init__(self, waypoints=None, radius_range=None, radius_units_metres=True, boundary_points=None, boundary_resolution=None, tolerance=None, curve_resolution=None):
         """
         Initialiser method
             This method can be used to initialise the class with or without the parameters
             listed below.
         """
         self.waypoints = waypoints
-        self.radius_range = radius_range
+        if radius_units_metres:
+            self.radius_range = radius_range / 111139
+            self.curve_resolution = curve_resolution / 0.000009009
+        else:
+            print("USE METRES INSTEAD OF FEET FOR RADIUS...")
+            self.radius_range = radius_range / 364567.2
+            self.curve_resolution = curve_resolution
         self.boundary_points = boundary_points
         self.boundary_resolution = boundary_resolution
         self.tolerance = tolerance
-        self.curve_resolution = curve_resolution
         self.generate_spline()
 
     def add_waypoint(self, new_waypoint=None, index=None):
@@ -100,6 +105,33 @@ class SplineGenerator:
         if save_fig:
             plt.savefig('Spline' + str(count), dpi=1000)
         plt.show()
+
+    def get_waypoint_in_dictionary(self):
+        output_longitudes = []
+        output_latitudes = []
+        output_altitudes = []
+        for waypoint in self.waypoints:
+            if waypoint.entrance is not None:
+                output_longitudes.append(waypoint.entrance.x)
+                output_latitudes.append(waypoint.entrance.y)
+                output_altitudes.append(100)
+            if waypoint.centre_point is not None:
+                for point in waypoint.interpolated_curve:
+                    output_longitudes.append(point.x)
+                    output_latitudes.append(point.y)
+                    output_altitudes.append(100)
+            if waypoint.exit is not None:
+                output_longitudes.append(waypoint.exit.x)
+                output_latitudes.append(waypoint.exit.y)
+                output_altitudes.append(100)
+
+        output_dict = {
+            "long": output_longitudes,
+            "lat": output_latitudes,
+            "alt": output_altitudes
+        }
+
+        return output_dict
 
 class Point:
     def __init__(self, x=None, y=None):
