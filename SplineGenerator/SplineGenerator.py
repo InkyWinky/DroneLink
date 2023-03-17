@@ -221,11 +221,6 @@ def boundary_tolerance_respected(centre_point, boundary_points=None, distance=1.
             return False
     # The line from the first point and last point. Connect the polygon
     distance_to_line = distance_point_to_segment(centre_point, boundary_points[-1], boundary_points[0])
-    print("Distance to line:", distance_to_line)
-    print("Distance max:", distance)
-    print("Center point:", centre_point.x, centre_point.y)
-    print("Boundary 1:", boundary_points[-1].x, boundary_points[-1].y)
-    print("Boundary 1:", boundary_points[0].x, boundary_points[0].y)
     if distance_to_line < distance:
         return False
     return True
@@ -306,13 +301,11 @@ def scan_percentages_for_solution(previous_waypoint=None, current_waypoint=None,
         percentage = percentage_step / boundary_resolution
         possible_point_solution = get_centre_point_given_percentage(previous_waypoint, current_waypoint, next_waypoint, radius, percentage)
         # Check the centre point is valid
-        print("Bounds:", is_not_out_of_bounds(boundary_points, possible_point_solution))
         if is_not_out_of_bounds(boundary_points, possible_point_solution):
             if tolerance is None:
                 distance_to_consider = radius
             else:
                 distance_to_consider = radius + tolerance
-            print("Tolerance:", boundary_tolerance_respected(possible_point_solution, boundary_points, distance_to_consider))
             if boundary_tolerance_respected(possible_point_solution, boundary_points, distance_to_consider):
                 centre_point_solution = possible_point_solution
                 break
@@ -491,7 +484,7 @@ def test_valid_entrance_exit_locations(waypoints=None):
         # If the waypoint angle is not between (inclusive) the entrance and exit angle, return false.
         # TODO: Write something to return false is any of the waypoints have their coordinates outside the entrance and exit angles.
 
-        if waypoint_angle < entrance_angle and waypoint_angle > exit_angle:
+        if entrance_angle > waypoint_angle > exit_angle:
             print("Point outside the angle of entrance or exit")
             return False
 
@@ -570,17 +563,22 @@ def print_waypoints(waypoints=None):
             print("Point:", point_count, "|", waypoint.exit.x, waypoint.exit.y)
             point_count += 1
 
+def generate_waypoints_from_list(waypoints=None):
+    # Function that takes in a list of long and lat arrays then outputs a list of Waypoint class instances
+    output_waypoints = []
+    for waypoint in waypoints:
+        new_waypoint = Waypoint(waypoint[0], waypoint[1])
+        output_waypoints.append(new_waypoint)
+    return output_waypoints
+
 
 if "__main__" == __name__:
     minimum_turn_radius_feet = 125
     minimum_turn_radius_decimal_degrees = minimum_turn_radius_feet / 364567.2
-    print(minimum_turn_radius_decimal_degrees)
     minimum_turn_radius_metres = 38.1
     minimum_turn_radius_decimal_degrees = minimum_turn_radius_metres / 111139
-    print(minimum_turn_radius_decimal_degrees)
     waypoints_per_metre = 1
     curve_resolution = waypoints_per_metre / 0.000009009
-    print(curve_resolution)
 
     suas_boundary = [Point(38.31729702009844, -76.55617670782419),
                      Point(38.31594832826572, -76.55657341657302),
