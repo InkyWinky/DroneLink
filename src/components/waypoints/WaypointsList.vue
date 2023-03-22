@@ -84,7 +84,7 @@
 <script setup>
 // eslint-disable-next-line no-unused-vars, prettier/prettier
 import { Ref } from "vue";
-import { ref, nextTick } from "vue";
+import { ref, nextTick, computed } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { onMounted } from "vue";
@@ -103,7 +103,9 @@ const map = ref();
 //And example of a waypoint object:
 //Instantiat array for containing waypoints
 const waypoints = ref([]);
-const coordinates = ref([]); //Coordinates for connecting lines on map
+const coordinates = computed(() =>
+  waypoints.value.map(({ long, lat }) => [long, lat])
+);
 const listContainer = ref(null);
 
 function scrollBottom() {
@@ -145,8 +147,8 @@ function drawLine() {
 }
 
 // Update the line when the list of waypoints changes
-function updateLine() {
-  map.value.getSource("route").setData(lineFeature(coordinates.value));
+function updateLine(coords) {
+  map.value.getSource("route").setData(lineFeature(coords));
 }
 
 function addWaypt() {
@@ -155,21 +157,20 @@ function addWaypt() {
   //Inputs:None
   //Outputs: Changed waypoints array
 
+  const marker = addMarkerToMap(long.value, lat.value);
   //Add waypoint to array
   waypoints.value.push({
     id: id++,
     long: parseFloat(long.value).toFixed(8),
     lat: parseFloat(lat.value).toFixed(8),
     alt: alt.value,
+    marker,
   });
-  //Add coordinates to coordinate array
-  coordinates.value.push([long.value, lat.value]);
-  addMarkerToMap(long.value, lat.value);
   //Clear out input boxes after adding waypoint
   long.value = "";
   lat.value = "";
   alt.value = "";
-  updateLine();
+  updateLine(coordinates.value);
   nextTick(() => {
     scrollBottom();
   });
@@ -179,13 +180,16 @@ function removeWaypt(waypt) {
   //The function removeWaypt removes waypoint from display and the waypoints array
   //Input: waypt to be removed
   //Output: Waypoints displayed and in array is decreased by the one to be removed
+  waypoints.value?.find((t) => t === waypt)?.marker?.remove();
   waypoints.value = waypoints.value.filter((t) => t !== waypt);
+  updateLine(coordinates.value);
 }
 function addMarkerToMap(long, lat) {
   const marker = new mapboxgl.Marker({ offset: [0, -MARKER_HEIGHT / 2] })
     .setLngLat([long, lat])
     .addTo(map.value);
   console.log(marker);
+  return marker;
 }
 function readFile(formInput) {
   //The function readFile reads the waypoiants from the csv file chosen in the input form and turns it into text
@@ -210,22 +214,22 @@ function addWaypointsFromTxt(csvText) {
   for (let i = 0; i < waypointsArr.length; i++) {
     //Iterate through the resulting array
     let coord = waypointsArr[i].split(","); //Create an array called coord and split each element so that long, lat and alt are elements of the coord array
+    const marker = addMarkerToMap(coord[0], coord[1]);
     waypoints.value.push({
       //Push each waypoint into the waypoints array
       id: id++,
       long: coord[0],
       lat: coord[1],
       alt: coord[2],
+      marker,
     });
-    coordinates.value.push([coord[0], coord[1]]);
-    addMarkerToMap(coord[0], coord[1]);
   }
   map.value.flyTo({
     center: [waypoints.value[0].long, waypoints.value[0].lat],
     zoom: 15,
   }); //Center map to first waypoint in list
 
-  updateLine();
+  updateLine(coordinates.value);
   nextTick(() => {
     //Keep scroll at bottom of list
     scrollBottom();
