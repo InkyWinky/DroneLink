@@ -82,20 +82,23 @@
 </template>
 
 <script setup>
+// eslint-disable-next-line no-unused-vars, prettier/prettier
+import { Ref } from "vue";
 import { ref, nextTick } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { onMounted } from "vue";
 
 // give each waypoint a unique id
-let showMap = ref(false);
+const showMap = ref(false);
 let id = 0;
 // Instantiate variables for coordinates
 const long = ref("");
 const lat = ref("");
 const alt = ref("");
 const MARKER_HEIGHT = 41;
-let map = ref();
+/** @type {Ref<mapboxgl.Map>} */
+const map = ref();
 
 //And example of a waypoint object:
 //Instantiat array for containing waypoints
@@ -107,18 +110,44 @@ function scrollBottom() {
   listContainer.value.scrollTop = listContainer.value.scrollHeight;
 }
 // Create a GeoJSON feature collection for the line
-let lineFeature = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      geometry: {
-        type: "LineString",
-        coordinates: [],
+function lineFeature(coordinates) {
+  return {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "LineString",
+          coordinates,
+        },
       },
+    ],
+  };
+}
+
+function drawLine() {
+  map.value.addLayer({
+    id: "route",
+    type: "line",
+    source: {
+      type: "geojson",
+      data: lineFeature(coordinates.value),
     },
-  ],
-};
+    layout: {
+      "line-join": "round",
+      "line-cap": "round",
+    },
+    paint: {
+      "line-color": "#888",
+      "line-width": 8,
+    },
+  });
+}
+
+// Update the line when the list of waypoints changes
+function updateLine() {
+  map.value.getSource("route").setData(lineFeature(coordinates.value));
+}
 
 function addWaypt() {
   //The function addWaypt adds a waypoint to the waypoint array
@@ -170,12 +199,6 @@ function readFile(formInput) {
   //After the reader has loaded, input the text result into the addWaypointsFromTxt function
   reader.onload = (e) => addWaypointsFromTxt(e.currentTarget.result);
   reader.readAsText(file);
-}
-
-// Update the line when the list of waypoints changes
-function updateLine() {
-  lineFeature.features[0].geometry.coordinates = coordinates.value;
-  map.value.getSource("route").setData(lineFeature);
 }
 
 function addWaypointsFromTxt(csvText) {
@@ -240,24 +263,7 @@ onMounted(() => {
   });
 
   // Add the line to the map
-  map.value.on("load", function () {
-    map.value.addLayer({
-      id: "route",
-      type: "line",
-      source: {
-        type: "geojson",
-        data: lineFeature,
-      },
-      layout: {
-        "line-join": "round",
-        "line-cap": "round",
-      },
-      paint: {
-        "line-color": "#888",
-        "line-width": 8,
-      },
-    });
-  });
+  map.value.on("load", drawLine);
 });
 </script>
 <style>
