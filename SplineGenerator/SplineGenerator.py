@@ -16,11 +16,11 @@ class SplineGenerator:
         """
         self.waypoints = waypoints
         if radius_units_metres:
-            self.radius_range = radius_range / 111139
+            self.radius_range = (radius_range[0] / 111139, radius_range[0] / 111139 + 1)
             self.curve_resolution = curve_resolution / 0.000009009
         else:
             print("USE METRES INSTEAD OF FEET FOR RADIUS...")
-            self.radius_range = radius_range / 364567.2
+            self.radius_range = (radius_range[0] / 364567.2, radius_range[0] / 364567.2 + 1)
             self.curve_resolution = curve_resolution
         self.boundary_points = boundary_points
         self.boundary_resolution = boundary_resolution
@@ -107,29 +107,19 @@ class SplineGenerator:
         plt.show()
 
     def get_waypoint_in_dictionary(self):
-        output_longitudes = []
-        output_latitudes = []
-        output_altitudes = []
+        output_dict = []
+        id_count = 0
         for waypoint in self.waypoints:
             if waypoint.entrance is not None:
-                output_longitudes.append(waypoint.entrance.x)
-                output_latitudes.append(waypoint.entrance.y)
-                output_altitudes.append(100)
+                output_dict.append(waypoint_dict(id_count, waypoint.entrance.x, waypoint.entrance.y, 100))
+                id_count += 1
             if waypoint.centre_point is not None:
                 for point in waypoint.interpolated_curve:
-                    output_longitudes.append(point.x)
-                    output_latitudes.append(point.y)
-                    output_altitudes.append(100)
+                    output_dict.append(waypoint_dict(id_count, point.x, point.y, 100))
+                    id_count += 1
             if waypoint.exit is not None:
-                output_longitudes.append(waypoint.exit.x)
-                output_latitudes.append(waypoint.exit.y)
-                output_altitudes.append(100)
-
-        output_dict = {
-            "long": output_longitudes,
-            "lat": output_latitudes,
-            "alt": output_altitudes
-        }
+                output_dict.append(waypoint_dict(id_count, waypoint.exit.x, waypoint.exit.y, 100))
+                id_count += 1
 
         return output_dict
 
@@ -155,6 +145,9 @@ class Waypoint:
 # GENERAL USE FUNCTIONS:
 # Below are some general functions the Spline class uses and ones users can use for testing or for the passing
 # of individual test cases. A lot of these functions are really just specialised math functions, that allow printing.
+
+def waypoint_dict(id=None, long=None, lat=None, alt=None):
+    return {"id:": id, "long": long, "lat": lat, "alt": alt}
 
 def distance_between_two_points(point_one=Point(), point_two=Point()):
     """
@@ -540,11 +533,11 @@ def generate_spline_including_boundary(waypoints=None, radius_range=(1.0, 3.0), 
     # Check if no solution was found.
     if output_entrances_and_exits is None:
         return None
-    print("TEST: PERPENDICULARITY BEFORE INTERPOLATION:", test_perpendicularity(output_entrances_and_exits))
-    print("TEST: WAYPOINT WITHIN ENTRANCE AND EXIT:", test_valid_entrance_exit_locations(output_entrances_and_exits))
+    # print("TEST: PERPENDICULARITY BEFORE INTERPOLATION:", test_perpendicularity(output_entrances_and_exits))
+    # print("TEST: WAYPOINT WITHIN ENTRANCE AND EXIT:", test_valid_entrance_exit_locations(output_entrances_and_exits))
     output_duplicates_ignored = ignore_duplicate_points(output_entrances_and_exits)
     output_interpolated = interpolate_all_curves(output_duplicates_ignored, curve_resolution)
-    print("TEST: PERPENDICULARITY AFTER INTERPOLATION:", test_perpendicularity(output_interpolated))
+    # print("TEST: PERPENDICULARITY AFTER INTERPOLATION:", test_perpendicularity(output_interpolated))
     return output_interpolated
 
 def get_tangency_angle(waypoint_current, waypoint_next):
