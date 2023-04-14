@@ -74,6 +74,7 @@ import { ref } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { onMounted } from "vue";
+import server from "../../server.js";
 
 // give each waypoint a unique id
 let showMap = ref(false);
@@ -157,6 +158,33 @@ function addWaypointsFromTxt(csvText) {
     zoom: 14,
   }); //Center map to first waypoint in list
 }
+async function testServer() {
+  let coordinateData = [
+    {
+      id: 0,
+      long: 12,
+      lat: 14,
+      alt: 20,
+    },
+    {
+      id: 1,
+      long: 13,
+      lat: 15,
+      alt: 20,
+    },
+    {
+      id: 2,
+      long: 14,
+      lat: 16,
+      alt: 20,
+    },
+  ];
+
+  console.log("Testing Server ...");
+  const splineData = await server.fetchSpline(coordinateData);
+  await server.getSpline(coordinateData, splineData);
+}
+testServer();
 
 onMounted(() => {
   mapboxgl.accessToken =
