@@ -9,16 +9,16 @@ On the left side, navigate to "Scripts" -> "Select Script" -> "Upload" ->
  -> "Run Script"
 """
 
-print("Importing Dependencies...")
-import socket
-import clr
-clr.AddReference("MissionPlanner")
-import MissionPlanner
-clr.AddReference("MissionPlanner.Utilities")
-from MissionPlanner.Utilities import Locationwp
-clr.AddReference("MAVLink")
-import MAVLink
-print("Starting Script...")
+# print("Importing Dependencies...")
+# import socket
+# import clr
+# clr.AddReference("MissionPlanner")
+# import MissionPlanner
+# clr.AddReference("MissionPlanner.Utilities")
+# from MissionPlanner.Utilities import Locationwp
+# clr.AddReference("MAVLink")
+# import MAVLink
+# print("Starting Script...")
 
 
 class MissionManager:
@@ -289,9 +289,3 @@ def waypoint_manager_test():
     mm.update()
 
 # NOTE: Script is run as a module and not as __main__.
-
-#waypoint_mavlink_test()
-waypoint_manager_test()
-
-print("Script Terminated!")
-
