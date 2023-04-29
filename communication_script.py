@@ -10,6 +10,8 @@ On the left side, navigate to "Scripts" -> "Select Script" -> "Upload" ->
 """
 
 print("Importing Dependencies...")
+# import sys
+# sys.path.append(r"c:/python27/lib")
 import socket
 import clr
 clr.AddReference("MissionPlanner")
@@ -288,10 +290,30 @@ def waypoint_manager_test():
     mm.append(wp5)
     mm.update()
 
+def socket_connection_test():
+    HOST = ""  # Open to all IP addresses. Can set to be a specific one.
+    PORT = 7766  # Ephemeral Port Number
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print("Waiting for a connection.")
+    s.bind((HOST, PORT))
+    s.listen(1)  # Listens for 1 connection
+    connection, addr = s.accept()
+    print("Connected by", addr)
+    while True:
+        data = connection.recv(1024)  # receive data in 1024 bit chunks
+        print(data)
+        if data == "quit": break  # if data given is exit command
+        connection.sendall(data)  # echo data back!
+        s.close()
+    print("Connection to ", addr, " was lost.")    
+    
+    
+
+
 # NOTE: Script is run as a module and not as __main__.
 
 #waypoint_mavlink_test()
 waypoint_manager_test()
-
+#socket_connection_test()
 print("Script Terminated!")
 
