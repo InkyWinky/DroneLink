@@ -86,6 +86,7 @@ import { ref, nextTick } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { onMounted } from "vue";
+import api from "../../api.js";
 
 // give each waypoint a unique id
 let showMap = ref(false);
@@ -158,6 +159,33 @@ function addMarkerToMap(long, lat) {
     .addTo(map.value);
   console.log(marker);
 }
+async function testApi() {
+  let coordinateData = [
+    {
+      id: 0,
+      long: 12,
+      lat: 14,
+      alt: 20,
+    },
+    {
+      id: 1,
+      long: 13,
+      lat: 15,
+      alt: 20,
+    },
+    {
+      id: 2,
+      long: 14,
+      lat: 16,
+      alt: 20,
+    },
+  ];
+  console.log("Testing Server ...");
+  const splineData = await api.fetchSpline(coordinateData);
+  await api.getSpline(coordinateData, splineData);
+}
+testApi();
+
 function readFile(formInput) {
   //The function readFile reads the waypoiants from the csv file chosen in the input form and turns it into text
   //Input: formInput is the file that was selected when you click "import waypoints from csv" button
