@@ -8,7 +8,7 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath("../documentation_src/communication_script"))
+sys.path.insert(0, os.path.abspath("../src"))
 
 project = 'Mission Planner Communication Script'
 copyright = '2023, Kevin Lu'

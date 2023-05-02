@@ -26,12 +26,11 @@ class MissionPlannerSocket():
         try:
             self.s.connect((self.HOST, self.PORT))
             # Create a new thread to handle the data sent and received.
-            mp_socket_thread = threading.Thread(target=self.input_data(), args = None)
+            mp_socket_thread = threading.Thread(target=mp_socket.input_data(), args = None)
             mp_socket_thread.start()
             mp_socket_thread.join()
         except Exception as e:
             print(e)
-            self.close()
         
 
     def close(self):
@@ -39,7 +38,7 @@ class MissionPlannerSocket():
         """
         self.s.close()  # close socket
         print(f"Connection to ({self.HOST}, {self.PORT}) was lost.")
-
+        
 
     def input_data(self):
         """Temporary handling of sending/receiving data (asks user to input data by keyboard). 
