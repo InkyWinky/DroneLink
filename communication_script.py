@@ -100,9 +100,7 @@ class MissionManager:
         # Append to class list and Mission planner
         self.waypoints.append(waypoint)
 
-    """ 
-    
-    """
+
     def insert(self, index, waypoint):
         """Inserts a waypoint at a certain index.
 
@@ -114,6 +112,25 @@ class MissionManager:
         self.waypoint_count += 1
         # Insert into class list and Mission Planner
         self.waypoints.insert(index, waypoint)
+
+
+    def remove(self, index):
+        """Removes a waypoint at a certain index.
+
+        Args:
+            index (int): The index to remove the waypoint at.
+        """
+        self.waypoints.remove(index)
+
+
+    def swap(self, index1, index2):
+        """Swaps waypoints at two indices.
+
+        Args:
+            index1 (_type_): The first waypoint to swap with.
+            index2 (_type_): The second waypoint to swap with.
+        """
+        self.waypoints[index1], self.waypoints[index2] = self.waypoints[index2], self.waypoints[index1]
 
 
     def update(self):
@@ -242,6 +259,14 @@ def waypoint_mavlink_test():
     MAV.doCommand(MAVLink.MAV_CMD.DO_SET_HOME, 0, 0, 0, 0, -37.8238872, 145.0538635, 0)
 
 
+def get_ip():
+    """Gets the IPs of the current device and prints them.
+    """
+    hostname = socket.getfqdn()
+    addr = socket.gethostbyname_ex(hostname)[2]
+    print("Hostname: " + hostname + "\nAddresses: " + str(addr))
+
+
 def waypoint_manager_test():
     """Adds hard-coded waypoints to the current mission using the Mission Manager Class.
     """
@@ -290,6 +315,34 @@ def waypoint_manager_test():
     mm.append(wp5)
     mm.update()
 
+def change_during_mission_test():
+    mm = MissionManager(sync=False)
+
+    home = mm.create_wp(-37.8165647, 145.0475121, 0)
+
+    takeoff = Locationwp()
+    Locationwp.id.SetValue(takeoff, int(MAVLink.MAV_CMD.TAKEOFF))
+    Locationwp.p1.SetValue(takeoff, 15)
+    Locationwp.alt.SetValue(takeoff, 50)
+
+    wp1 = mm.create_wp(-37.8257516, 145.0566316, 100)
+    wp2 = mm.create_wp(-37.8256669, 145.0507522, 100)
+
+    mm.append(home)
+    mm.append(takeoff)
+    mm.append(wp1)
+    mm.append(wp2)
+    mm.update()
+    print("Waiting to change waypoints in 15 seconds!")
+    Script.Sleep(15000) # sleep for 15 seconds
+    print("Changing Mission Waypoints")
+    mm.set_waypoint(-37.8184632, 145.0365257, 100, 3)
+    wp3 = mm.create_wp(-37.8124624, 145.0408602, 100)
+    mm.append(wp3)
+    mm.update()
+
+
+
 def socket_connection_test():
     HOST = ""  # Open to all IP addresses. Can set to be a specific one.
     PORT = 7766  # Ephemeral Port Number
@@ -298,22 +351,21 @@ def socket_connection_test():
     s.bind((HOST, PORT))
     s.listen(1)  # Listens for 1 connection
     connection, addr = s.accept()
-    print("Connected by", addr)
+    print("Connected by " + str(addr))
     while True:
         data = connection.recv(1024)  # receive data in 1024 bit chunks
         print(data)
         if data == "quit": break  # if data given is exit command
         connection.sendall(data)  # echo data back!
         s.close()
-    print("Connection to ", addr, " was lost.")    
-    
-    
-
+    print("Connection to " + str(addr) + " was lost.")
 
 # NOTE: Script is run as a module and not as __main__.
-
+get_ip()  # Print out the IPs of the device running Mission Planner.
 #waypoint_mavlink_test()
-waypoint_manager_test()
-#socket_connection_test()
+#waypoint_manager_test()
+#change_during_mission_test()
+socket_connection_test()
+
 print("Script Terminated!")
 
