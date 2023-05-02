@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>communication_script.communication_script &mdash; Mission Planner Communication Script 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Mission Planner Communication Script
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Mission Planner Communication Script</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">communication_script.communication_script</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for communication_script.communication_script</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Mission Planner Communication Script</span>
+<span class="sd">Creates a communication link between the Backend Server and Mission Planner.</span>
+<span class="sd">Utilises MavLink and is run as a Mission Planner Script.</span>
+
+<span class="sd">Script Usage</span>
+<span class="sd">From Mission Planner Home, navigate to &quot;Simulation&quot; -&gt; &quot;Plane&quot; -&gt; &quot;Stable&quot;.</span>
+<span class="sd">On the left side, navigate to &quot;Scripts&quot; -&gt; &quot;Select Script&quot; -&gt; &quot;Upload&quot; -&gt;</span>
+<span class="sd"> -&gt; &quot;Run Script&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">##print(&quot;Importing Dependencies...&quot;)</span>
+<span class="c1">### import sys</span>
+<span class="c1">### sys.path.append(r&quot;c:/python27/lib&quot;)</span>
+<span class="c1">##import socket</span>
+<span class="c1">##import clr</span>
+<span class="c1">##clr.AddReference(&quot;MissionPlanner&quot;)</span>
+<span class="c1">##import MissionPlanner</span>
+<span class="c1">##clr.AddReference(&quot;MissionPlanner.Utilities&quot;)</span>
+<span class="c1">##from MissionPlanner.Utilities import Locationwp</span>
+<span class="c1">##clr.AddReference(&quot;MAVLink&quot;)</span>
+<span class="c1">##import MAVLink</span>
+<span class="c1">##print(&quot;Starting Script...&quot;)</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+
+<div class="viewcode-block" id="MissionManager"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager">[docs]</a><span class="k">class</span> <span class="nc">MissionManager</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The Mission Manager Class interfaces with Mission Planner/MAVLink to dynamically change waypoints during a mission.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sync (bool, optional): decideds if we get the waypoints from Mission Planner on startup. Defaults to True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_CMD</span><span class="o">.</span><span class="n">WAYPOINT</span><span class="p">)</span>  <span class="c1"># id_mav_cmd for waypoints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoint_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">sync</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span>  <span class="c1"># get initial waypoints from mission planner</span>
+
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Custom print str. Called by using &#39;print(MissionManager())&#39; </span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            string: A string that contains the lat, lng and alt of all waypoints.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypoint_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Waypoints ---&gt; Empty&quot;</span>
+        
+        <span class="n">txt</span> <span class="o">=</span> <span class="s2">&quot;----------------------------------------------</span><span class="se">\n</span><span class="s2">Waypoints</span><span class="se">\n</span><span class="s2"> [num]. latitude, longitude, altitude</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoint_count</span><span class="p">):</span>
+            <span class="n">wp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">txt</span> <span class="o">+=</span> <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]. &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">wp</span><span class="o">.</span><span class="n">lat</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">wp</span><span class="o">.</span><span class="n">lng</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">wp</span><span class="o">.</span><span class="n">alt</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">txt</span> <span class="o">+</span> <span class="s2">&quot;----------------------------------------------&quot;</span>
+    
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Custom get item. Is called by using &#39;wp = MissionManager()[index]&#39;.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index to get the waypoint at.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Locationwp: The waypoint at the specified index, or None if it does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypoint_count</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">waypoint</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Custom set item. Is called by using &#39;MissionManager()[index] = waypoint&#39;.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index to set the waypoint at.</span>
+<span class="sd">            waypoint (Locationwp): The waypoint to be set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypoint_count</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">waypoint</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: Setting Waypoint at index &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; was out of bounds.&quot;</span><span class="p">)</span>
+    
+
+<div class="viewcode-block" id="MissionManager.sync"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.sync">[docs]</a>    <span class="k">def</span> <span class="nf">sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Syncs all the waypoints in Mission Planner to waypoints list (overrides any previous changes if update was not called)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoint_count</span> <span class="o">=</span> <span class="n">MAV</span><span class="o">.</span><span class="n">getWPCount</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span> <span class="o">=</span> <span class="p">[</span><span class="n">MAV</span><span class="o">.</span><span class="n">getWP</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAV</span><span class="o">.</span><span class="n">getWPCount</span><span class="p">())]</span></div>
+
+
+<div class="viewcode-block" id="MissionManager.append"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waypoint</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adds a waypoint to the end of the mission/list</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            waypoint (Locationwp): The waypoint to be appended into the list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Update waypoint count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoint_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># Append to class list and Mission planner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">waypoint</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissionManager.insert"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">waypoint</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inserts a waypoint at a certain index.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index to insert the waypoint at.</span>
+<span class="sd">            waypoint (Locationwp): The waypoint to be inserted into the list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Update waypoint count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoint_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># Insert into class list and Mission Planner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">waypoint</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissionManager.remove"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Removes a waypoint at a certain index.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index to remove the waypoint at.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissionManager.swap"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.swap">[docs]</a>    <span class="k">def</span> <span class="nf">swap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index1</span><span class="p">,</span> <span class="n">index2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Swaps waypoints at two indices.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index1 (_type_): The first waypoint to swap with.</span>
+<span class="sd">            index2 (_type_): The second waypoint to swap with.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">index1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">index2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">index2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">index1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="MissionManager.update"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Updates Mission Planner on the modified waypoints</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">MAV</span><span class="o">.</span><span class="n">setWPTotal</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">)):</span>
+            <span class="n">MAV</span><span class="o">.</span><span class="n">setWP</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_FRAME</span><span class="o">.</span><span class="n">GLOBAL_RELATIVE_ALT</span><span class="p">)</span>
+
+        <span class="n">MAV</span><span class="o">.</span><span class="n">setWPACK</span><span class="p">()</span>  <span class="c1"># Send waypoint ACK</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_home</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># Set the home waypoint as the first waypoint</span></div>
+    
+
+<div class="viewcode-block" id="MissionManager.create_wp"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.create_wp">[docs]</a>    <span class="k">def</span> <span class="nf">create_wp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lng</span><span class="p">,</span> <span class="n">alt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Creates a waypoint</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lat (float): The latitude in degrees.</span>
+<span class="sd">            lng (float): longitude in degrees.</span>
+<span class="sd">            alt (float): The altitude in meters.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Locationwp: The Locationwp object which contains the lat, lng and alt. This is an object from of MAVLink/Mission Planner.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Locationwp</span><span class="p">()</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lng</span><span class="p">,</span> <span class="n">alt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+    
+
+<div class="viewcode-block" id="MissionManager.set_waypoint"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.set_waypoint">[docs]</a>    <span class="k">def</span> <span class="nf">set_waypoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lng</span><span class="p">,</span> <span class="n">alt</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alters latitude, longitude and altitude of a waypoint via index and sets it into Mission Planner</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lat (float): The latitude to be set in degrees.</span>
+<span class="sd">            lng (float): longitude to be set in degrees.</span>
+<span class="sd">            alt (float): The altitude to be set in meters.</span>
+<span class="sd">            index (int): The index of the waypoint that will have its values changed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">wp</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">Locationwp</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="n">lat</span><span class="p">)</span>
+        <span class="n">Locationwp</span><span class="o">.</span><span class="n">lng</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="n">lng</span><span class="p">)</span>
+        <span class="n">Locationwp</span><span class="o">.</span><span class="n">alt</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="n">alt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">wp</span></div>
+
+    
+<div class="viewcode-block" id="MissionManager.set_lat"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.set_lat">[docs]</a>    <span class="k">def</span> <span class="nf">set_lat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alters latitude of a waypoint via index and sets it into Mission Planner.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index of the waypoint to set the latitude.</span>
+<span class="sd">            value (float): The latitude to be set in degrees.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">wp</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">Locationwp</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">wp</span></div>
+
+
+<div class="viewcode-block" id="MissionManager.set_lng"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.set_lng">[docs]</a>    <span class="k">def</span> <span class="nf">set_lng</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alters longitude of a waypoint via index and sets it into Mission Planner.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index of the waypoint to set the longitude.</span>
+<span class="sd">            value (float): The longitude to be set in degrees.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">wp</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">Locationwp</span><span class="o">.</span><span class="n">lng</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">wp</span></div>
+
+
+<div class="viewcode-block" id="MissionManager.set_alt"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.set_alt">[docs]</a>    <span class="k">def</span> <span class="nf">set_alt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Alters altitude of a waypoint via index and sets it into Mission Planner.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index of the waypoint to set the altitude.</span>
+<span class="sd">            value (float): The altitude to be set in meters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">wp</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">Locationwp</span><span class="o">.</span><span class="n">alt</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">wp</span></div>
+    
+
+<div class="viewcode-block" id="MissionManager.target_waypoint"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.MissionManager.target_waypoint">[docs]</a>    <span class="k">def</span> <span class="nf">target_waypoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the waypoint to go to in guided mode.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index of the waypoint to set as target.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">MAV</span><span class="o">.</span><span class="n">setGuidedModeWP</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">index</span><span class="p">])</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__set_home</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waypoint</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets the home waypoint (NOTE: THIS SHOULD BE INDEX=0 IN THE WAYPOINTS LIST).</span>
+<span class="sd">        This is a private function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            waypoint (Locationwp): The waypoint to be set as the home.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">MAV</span><span class="o">.</span><span class="n">doCommand</span><span class="p">(</span><span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_CMD</span><span class="o">.</span><span class="n">DO_SET_HOME</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">waypoint</span><span class="o">.</span><span class="n">lat</span><span class="p">,</span> <span class="n">waypoint</span><span class="o">.</span><span class="n">lng</span><span class="p">,</span> <span class="n">waypoint</span><span class="o">.</span><span class="n">alt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">waypoint</span></div>
+
+
+<div class="viewcode-block" id="waypoint_mavlink_test"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.waypoint_mavlink_test">[docs]</a><span class="k">def</span> <span class="nf">waypoint_mavlink_test</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sets the current mission to hard-coded waypoints using MAVLink functions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_CMD</span><span class="o">.</span><span class="n">WAYPOINT</span><span class="p">)</span> <span class="c1"># id_mav_cmd for waypoints</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">doCommand</span>
+    <span class="n">home</span> <span class="o">=</span> <span class="n">Locationwp</span><span class="p">()</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8238872</span><span class="p">,</span> <span class="mf">145.0538635</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+
+    <span class="n">takeoff</span> <span class="o">=</span> <span class="n">Locationwp</span><span class="p">()</span>
+    <span class="n">Locationwp</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">takeoff</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_CMD</span><span class="o">.</span><span class="n">TAKEOFF</span><span class="p">))</span>
+    <span class="n">Locationwp</span><span class="o">.</span><span class="n">p1</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">takeoff</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="n">Locationwp</span><span class="o">.</span><span class="n">alt</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">takeoff</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+
+    <span class="n">wp1</span> <span class="o">=</span> <span class="n">Locationwp</span><span class="p">()</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8408347</span><span class="p">,</span> <span class="mf">145.2241516</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+    <span class="n">wp2</span> <span class="o">=</span> <span class="n">Locationwp</span><span class="p">()</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8411058</span><span class="p">,</span> <span class="mf">145.2569389</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+    <span class="n">wp3</span> <span class="o">=</span> <span class="n">Locationwp</span><span class="p">()</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8657742</span><span class="p">,</span> <span class="mf">145.2680969</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+    <span class="n">wp4</span> <span class="o">=</span> <span class="n">Locationwp</span><span class="p">()</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8818991</span><span class="p">,</span> <span class="mf">145.2234650</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+
+    <span class="n">MAV</span><span class="o">.</span><span class="n">setWPTotal</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">setWP</span><span class="p">(</span><span class="n">home</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_FRAME</span><span class="o">.</span><span class="n">GLOBAL_RELATIVE_ALT</span><span class="p">)</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">setWP</span><span class="p">(</span><span class="n">takeoff</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_FRAME</span><span class="o">.</span><span class="n">GLOBAL_RELATIVE_ALT</span><span class="p">)</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">setWP</span><span class="p">(</span><span class="n">wp1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_FRAME</span><span class="o">.</span><span class="n">GLOBAL_RELATIVE_ALT</span><span class="p">)</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">setWP</span><span class="p">(</span><span class="n">wp2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_FRAME</span><span class="o">.</span><span class="n">GLOBAL_RELATIVE_ALT</span><span class="p">)</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">setWP</span><span class="p">(</span><span class="n">wp3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_FRAME</span><span class="o">.</span><span class="n">GLOBAL_RELATIVE_ALT</span><span class="p">)</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">setWP</span><span class="p">(</span><span class="n">wp4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_FRAME</span><span class="o">.</span><span class="n">GLOBAL_RELATIVE_ALT</span><span class="p">)</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">setWPACK</span><span class="p">()</span>
+
+    <span class="c1"># Set Home waypoint</span>
+    <span class="n">MAV</span><span class="o">.</span><span class="n">doCommand</span><span class="p">(</span><span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_CMD</span><span class="o">.</span><span class="n">DO_SET_HOME</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">37.8238872</span><span class="p">,</span> <span class="mf">145.0538635</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_ip"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.get_ip">[docs]</a><span class="k">def</span> <span class="nf">get_ip</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gets the IPs of the current device and prints them.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hostname</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">()</span>
+    <span class="n">addr</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname_ex</span><span class="p">(</span><span class="n">hostname</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hostname: &quot;</span> <span class="o">+</span> <span class="n">hostname</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Addresses: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="waypoint_manager_test"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.waypoint_manager_test">[docs]</a><span class="k">def</span> <span class="nf">waypoint_manager_test</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds hard-coded waypoints to the current mission using the Mission Manager Class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mm</span> <span class="o">=</span> <span class="n">MissionManager</span><span class="p">(</span><span class="n">sync</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Sync is set to False so that we can overwrite existing waypoints</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;After Syncing&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">mm</span><span class="p">)</span>
+    <span class="n">home</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">create_wp</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8238872</span><span class="p">,</span> <span class="mf">145.0538635</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">takeoff</span> <span class="o">=</span> <span class="n">Locationwp</span><span class="p">()</span>
+    <span class="n">Locationwp</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">takeoff</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">MAVLink</span><span class="o">.</span><span class="n">MAV_CMD</span><span class="o">.</span><span class="n">TAKEOFF</span><span class="p">))</span>
+    <span class="n">Locationwp</span><span class="o">.</span><span class="n">p1</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">takeoff</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="n">Locationwp</span><span class="o">.</span><span class="n">alt</span><span class="o">.</span><span class="n">SetValue</span><span class="p">(</span><span class="n">takeoff</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+
+    <span class="n">wp1</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">create_wp</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8408347</span><span class="p">,</span> <span class="mf">145.2241516</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">wp2</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">create_wp</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8411058</span><span class="p">,</span> <span class="mf">145.2569389</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">wp3</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">create_wp</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8657742</span><span class="p">,</span> <span class="mf">145.2680969</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">wp4</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">create_wp</span><span class="p">(</span><span class="o">-</span><span class="mf">37.8818991</span><span class="p">,</span> <span class="mf">145.2234650</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+
+    <span class="n">mm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">home</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">takeoff</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wp1</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wp2</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wp3</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wp4</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;After Adding&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">mm</span><span class="p">)</span>
+
+    <span class="c1"># Sleep for 5 seconds before editing waypoint 2</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sleeping for 5 seconds&quot;</span><span class="p">)</span>
+    <span class="n">Script</span><span class="o">.</span><span class="n">Sleep</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Changing waypoint 2&quot;</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">set_waypoint</span><span class="p">(</span><span class="o">-</span><span class="mf">37.7202198</span><span class="p">,</span> <span class="mf">145.1486206</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="c1">#</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Set Guided Mode Waypoint to: wp3 (index 4)&quot;</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">target_waypoint</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+    
+    <span class="c1"># Sleep for 5 seconds before adding a new waypoint</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sleeping for 5 seconds&quot;</span><span class="p">)</span>
+    <span class="n">Script</span><span class="o">.</span><span class="n">Sleep</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Adding a waypoint&quot;</span><span class="p">)</span>
+    <span class="n">wp5</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">create_wp</span><span class="p">(</span><span class="o">-</span><span class="mf">37.9154926</span><span class="p">,</span> <span class="mf">145.1170349</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wp5</span><span class="p">)</span>
+    <span class="n">mm</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="socket_connection_test"><a class="viewcode-back" href="../../communication_script.html#communication_script.communication_script.socket_connection_test">[docs]</a><span class="k">def</span> <span class="nf">socket_connection_test</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Creates a connection for the backend server to connect to (THIS IS A TEST, final function should be within mission manager class).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">HOST</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># Open to all IP addresses. Can set to be a specific one.</span>
+    <span class="n">PORT</span> <span class="o">=</span> <span class="mi">7766</span>  <span class="c1"># Ephemeral Port Number</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Waiting for a connection.&quot;</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="n">HOST</span><span class="p">,</span> <span class="n">PORT</span><span class="p">))</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Listens for 1 connection</span>
+        <span class="n">connection</span><span class="p">,</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Connected by &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>  <span class="c1"># receive data in 1024 bit chunks</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="o">==</span> <span class="s2">&quot;quit&quot;</span><span class="p">:</span> <span class="k">break</span>  <span class="c1"># if data given is exit command</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># echo data back!</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Connection to &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; was lost.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+        
+<span class="c1"># NOTE: Script is run as a module and not as __main__.</span>
+<span class="c1">#get_ip()  # Print out the IPs of the device running Mission Planner.</span>
+<span class="c1">#waypoint_mavlink_test()</span>
+<span class="c1">#waypoint_manager_test()</span>
+<span class="c1">#socket_connection_test()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Script Terminated!&quot;</span><span class="p">)</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Kevin Lu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

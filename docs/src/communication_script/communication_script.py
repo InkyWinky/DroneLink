@@ -9,17 +9,19 @@ On the left side, navigate to "Scripts" -> "Select Script" -> "Upload" ->
  -> "Run Script"
 """
 
-# print("Importing Dependencies...")
-# import socket
-# import clr
-# clr.AddReference("MissionPlanner")
-# import MissionPlanner
-# clr.AddReference("MissionPlanner.Utilities")
-# from MissionPlanner.Utilities import Locationwp
-# clr.AddReference("MAVLink")
-# import MAVLink
-# print("Starting Script...")
-
+##print("Importing Dependencies...")
+### import sys
+### sys.path.append(r"c:/python27/lib")
+##import socket
+##import clr
+##clr.AddReference("MissionPlanner")
+##import MissionPlanner
+##clr.AddReference("MissionPlanner.Utilities")
+##from MissionPlanner.Utilities import Locationwp
+##clr.AddReference("MAVLink")
+##import MAVLink
+##print("Starting Script...")
+import socket
 
 class MissionManager:
     """The Mission Manager Class interfaces with Mission Planner/MAVLink to dynamically change waypoints during a mission.
@@ -98,9 +100,7 @@ class MissionManager:
         # Append to class list and Mission planner
         self.waypoints.append(waypoint)
 
-    """ 
-    
-    """
+
     def insert(self, index, waypoint):
         """Inserts a waypoint at a certain index.
 
@@ -112,6 +112,25 @@ class MissionManager:
         self.waypoint_count += 1
         # Insert into class list and Mission Planner
         self.waypoints.insert(index, waypoint)
+
+
+    def remove(self, index):
+        """Removes a waypoint at a certain index.
+
+        Args:
+            index (int): The index to remove the waypoint at.
+        """
+        self.waypoints.remove(index)
+
+
+    def swap(self, index1, index2):
+        """Swaps waypoints at two indices.
+
+        Args:
+            index1 (_type_): The first waypoint to swap with.
+            index2 (_type_): The second waypoint to swap with.
+        """
+        self.waypoints[index1], self.waypoints[index2] = self.waypoints[index2], self.waypoints[index1]
 
 
     def update(self):
@@ -240,6 +259,14 @@ def waypoint_mavlink_test():
     MAV.doCommand(MAVLink.MAV_CMD.DO_SET_HOME, 0, 0, 0, 0, -37.8238872, 145.0538635, 0)
 
 
+def get_ip():
+    """Gets the IPs of the current device and prints them.
+    """
+    hostname = socket.getfqdn()
+    addr = socket.gethostbyname_ex(hostname)[2]
+    print("Hostname: " + hostname + "\nAddresses: " + str(addr))
+
+
 def waypoint_manager_test():
     """Adds hard-coded waypoints to the current mission using the Mission Manager Class.
     """
@@ -288,4 +315,36 @@ def waypoint_manager_test():
     mm.append(wp5)
     mm.update()
 
+
+def socket_connection_test():
+    """ Creates a connection for the backend server to connect to (THIS IS A TEST, final function should be within mission manager class).
+    """
+    HOST = ""  # Open to all IP addresses. Can set to be a specific one.
+    PORT = 7766  # Ephemeral Port Number
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        print("Waiting for a connection.")
+        s.bind((HOST, PORT))
+        s.listen(1)  # Listens for 1 connection
+        connection, addr = s.accept()
+        print("Connected by " + str(addr))
+        while True:
+            data = connection.recv(1024)  # receive data in 1024 bit chunks
+            print(data)
+            if data == "quit": break  # if data given is exit command
+            connection.sendall(data)  # echo data back!
+            s.close()
+        print("Connection to " + str(addr) + " was lost.")
+    except Exception as e:
+        print(e)
+        s.close()
+
+        
 # NOTE: Script is run as a module and not as __main__.
+#get_ip()  # Print out the IPs of the device running Mission Planner.
+#waypoint_mavlink_test()
+#waypoint_manager_test()
+#socket_connection_test()
+
+print("Script Terminated!")
+

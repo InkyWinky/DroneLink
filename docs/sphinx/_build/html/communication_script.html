@@ -17,7 +17,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="communication_script" href="modules.html" /> 
+    <link rel="prev" title="MissionPlannerSocket package" href="MissionPlannerSocket.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -41,16 +41,19 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">communication_script</a><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">src</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="MissionPlannerSocket.html">MissionPlannerSocket package</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">communication_script package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#communication-script-communication-script-module">communication_script.communication_script module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-communication_script">Module contents</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#communication_script.MissionManager"><code class="docutils literal notranslate"><span class="pre">MissionManager</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#communication_script.waypoint_manager_test"><code class="docutils literal notranslate"><span class="pre">waypoint_manager_test()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#communication_script.waypoint_mavlink_test"><code class="docutils literal notranslate"><span class="pre">waypoint_mavlink_test()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-communication_script.communication_script">communication_script.communication_script module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#communication_script.communication_script.MissionManager"><code class="docutils literal notranslate"><span class="pre">MissionManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#communication_script.communication_script.get_ip"><code class="docutils literal notranslate"><span class="pre">get_ip()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#communication_script.communication_script.socket_connection_test"><code class="docutils literal notranslate"><span class="pre">socket_connection_test()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#communication_script.communication_script.waypoint_manager_test"><code class="docutils literal notranslate"><span class="pre">waypoint_manager_test()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#communication_script.communication_script.waypoint_mavlink_test"><code class="docutils literal notranslate"><span class="pre">waypoint_mavlink_test()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#module-communication_script">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -71,7 +74,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">communication_script</a></li>
+          <li class="breadcrumb-item"><a href="modules.html">src</a></li>
       <li class="breadcrumb-item active">communication_script package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/communication_script.rst.txt" rel="nofollow"> View page source</a>
@@ -87,11 +90,8 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
 </section>
-<section id="communication-script-communication-script-module">
-<h2>communication_script.communication_script module<a class="headerlink" href="#communication-script-communication-script-module" title="Permalink to this heading"></a></h2>
-</section>
-<section id="module-communication_script">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-communication_script" title="Permalink to this heading"></a></h2>
+<section id="module-communication_script.communication_script">
+<span id="communication-script-communication-script-module"></span><h2>communication_script.communication_script module<a class="headerlink" href="#module-communication_script.communication_script" title="Permalink to this heading"></a></h2>
 <p>Mission Planner Communication Script
 Creates a communication link between the Backend Server and Mission Planner.
 Utilises MavLink and is run as a Mission Planner Script.</p>
@@ -102,13 +102,13 @@ On the left side, navigate to “Scripts” -&gt; “Select Script” -&gt; “U
 <div><p>-&gt; “Run Script”</p>
 </div></blockquote>
 <dl class="py class">
-<dt class="sig sig-object py" id="communication_script.MissionManager">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">communication_script.</span></span><span class="sig-name descname"><span class="pre">MissionManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sync</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">communication_script.communication_script.</span></span><span class="sig-name descname"><span class="pre">MissionManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sync</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The Mission Manager Class interfaces with Mission Planner/MAVLink to dynamically change waypoints during a mission.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.append">
-<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waypoint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.append" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.append">
+<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waypoint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.append" title="Permalink to this definition"></a></dt>
 <dd><p>Adds a waypoint to the end of the mission/list</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>waypoint (Locationwp): The waypoint to be appended into the list.</p>
@@ -117,8 +117,8 @@ On the left side, navigate to “Scripts” -&gt; “Select Script” -&gt; “U
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.create_wp">
-<span class="sig-name descname"><span class="pre">create_wp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.create_wp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.create_wp" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.create_wp">
+<span class="sig-name descname"><span class="pre">create_wp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.create_wp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.create_wp" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a waypoint</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>lat (float): The latitude in degrees.
@@ -131,8 +131,8 @@ alt (float): The altitude in meters.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.insert">
-<span class="sig-name descname"><span class="pre">insert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waypoint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.insert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.insert" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.insert">
+<span class="sig-name descname"><span class="pre">insert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waypoint</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.insert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.insert" title="Permalink to this definition"></a></dt>
 <dd><p>Inserts a waypoint at a certain index.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>index (int): The index to insert the waypoint at.
@@ -142,8 +142,18 @@ waypoint (Locationwp): The waypoint to be inserted into the list.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.set_alt">
-<span class="sig-name descname"><span class="pre">set_alt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.set_alt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.set_alt" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.remove">
+<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.remove"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.remove" title="Permalink to this definition"></a></dt>
+<dd><p>Removes a waypoint at a certain index.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>index (int): The index to remove the waypoint at.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.set_alt">
+<span class="sig-name descname"><span class="pre">set_alt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.set_alt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.set_alt" title="Permalink to this definition"></a></dt>
 <dd><p>Alters altitude of a waypoint via index and sets it into Mission Planner.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>index (int): The index of the waypoint to set the altitude.
@@ -153,8 +163,8 @@ value (float): The altitude to be set in meters.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.set_lat">
-<span class="sig-name descname"><span class="pre">set_lat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.set_lat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.set_lat" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.set_lat">
+<span class="sig-name descname"><span class="pre">set_lat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.set_lat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.set_lat" title="Permalink to this definition"></a></dt>
 <dd><p>Alters latitude of a waypoint via index and sets it into Mission Planner.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>index (int): The index of the waypoint to set the latitude.
@@ -164,8 +174,8 @@ value (float): The latitude to be set in degrees.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.set_lng">
-<span class="sig-name descname"><span class="pre">set_lng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.set_lng"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.set_lng" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.set_lng">
+<span class="sig-name descname"><span class="pre">set_lng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.set_lng"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.set_lng" title="Permalink to this definition"></a></dt>
 <dd><p>Alters longitude of a waypoint via index and sets it into Mission Planner.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>index (int): The index of the waypoint to set the longitude.
@@ -175,8 +185,8 @@ value (float): The longitude to be set in degrees.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.set_waypoint">
-<span class="sig-name descname"><span class="pre">set_waypoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.set_waypoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.set_waypoint" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.set_waypoint">
+<span class="sig-name descname"><span class="pre">set_waypoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lng</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.set_waypoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.set_waypoint" title="Permalink to this definition"></a></dt>
 <dd><p>Alters latitude, longitude and altitude of a waypoint via index and sets it into Mission Planner</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>lat (float): The latitude to be set in degrees.
@@ -188,14 +198,25 @@ index (int): The index of the waypoint that will have its values changed.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.sync">
-<span class="sig-name descname"><span class="pre">sync</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.sync"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.sync" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.swap">
+<span class="sig-name descname"><span class="pre">swap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.swap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.swap" title="Permalink to this definition"></a></dt>
+<dd><p>Swaps waypoints at two indices.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>index1 (_type_): The first waypoint to swap with.
+index2 (_type_): The second waypoint to swap with.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.sync">
+<span class="sig-name descname"><span class="pre">sync</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.sync"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.sync" title="Permalink to this definition"></a></dt>
 <dd><p>Syncs all the waypoints in Mission Planner to waypoints list (overrides any previous changes if update was not called)</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.target_waypoint">
-<span class="sig-name descname"><span class="pre">target_waypoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.target_waypoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.target_waypoint" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.target_waypoint">
+<span class="sig-name descname"><span class="pre">target_waypoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.target_waypoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.target_waypoint" title="Permalink to this definition"></a></dt>
 <dd><p>Sets the waypoint to go to in guided mode.
 Args:</p>
 <blockquote>
@@ -204,25 +225,40 @@ Args:</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="communication_script.MissionManager.update">
-<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#MissionManager.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.MissionManager.update" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.MissionManager.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#MissionManager.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.MissionManager.update" title="Permalink to this definition"></a></dt>
 <dd><p>Updates Mission Planner on the modified waypoints</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="communication_script.waypoint_manager_test">
-<span class="sig-prename descclassname"><span class="pre">communication_script.</span></span><span class="sig-name descname"><span class="pre">waypoint_manager_test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#waypoint_manager_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.waypoint_manager_test" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.get_ip">
+<span class="sig-prename descclassname"><span class="pre">communication_script.communication_script.</span></span><span class="sig-name descname"><span class="pre">get_ip</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#get_ip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.get_ip" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the IPs of the current device and prints them.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="communication_script.communication_script.socket_connection_test">
+<span class="sig-prename descclassname"><span class="pre">communication_script.communication_script.</span></span><span class="sig-name descname"><span class="pre">socket_connection_test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#socket_connection_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.socket_connection_test" title="Permalink to this definition"></a></dt>
+<dd><p>Creates a connection for the backend server to connect to (THIS IS A TEST, final function should be within mission manager class).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="communication_script.communication_script.waypoint_manager_test">
+<span class="sig-prename descclassname"><span class="pre">communication_script.communication_script.</span></span><span class="sig-name descname"><span class="pre">waypoint_manager_test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#waypoint_manager_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.waypoint_manager_test" title="Permalink to this definition"></a></dt>
 <dd><p>Adds hard-coded waypoints to the current mission using the Mission Manager Class.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="communication_script.waypoint_mavlink_test">
-<span class="sig-prename descclassname"><span class="pre">communication_script.</span></span><span class="sig-name descname"><span class="pre">waypoint_mavlink_test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script.html#waypoint_mavlink_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.waypoint_mavlink_test" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="communication_script.communication_script.waypoint_mavlink_test">
+<span class="sig-prename descclassname"><span class="pre">communication_script.communication_script.</span></span><span class="sig-name descname"><span class="pre">waypoint_mavlink_test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/communication_script/communication_script.html#waypoint_mavlink_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#communication_script.communication_script.waypoint_mavlink_test" title="Permalink to this definition"></a></dt>
 <dd><p>Sets the current mission to hard-coded waypoints using MAVLink functions.</p>
 </dd></dl>
 
+</section>
+<section id="module-communication_script">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-communication_script" title="Permalink to this heading"></a></h2>
 </section>
 </section>
 
@@ -230,7 +266,7 @@ Args:</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="modules.html" class="btn btn-neutral float-left" title="communication_script" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="MissionPlannerSocket.html" class="btn btn-neutral float-left" title="MissionPlannerSocket package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

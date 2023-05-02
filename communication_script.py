@@ -315,56 +315,35 @@ def waypoint_manager_test():
     mm.append(wp5)
     mm.update()
 
-def change_during_mission_test():
-    mm = MissionManager(sync=False)
-
-    home = mm.create_wp(-37.8165647, 145.0475121, 0)
-
-    takeoff = Locationwp()
-    Locationwp.id.SetValue(takeoff, int(MAVLink.MAV_CMD.TAKEOFF))
-    Locationwp.p1.SetValue(takeoff, 15)
-    Locationwp.alt.SetValue(takeoff, 50)
-
-    wp1 = mm.create_wp(-37.8257516, 145.0566316, 100)
-    wp2 = mm.create_wp(-37.8256669, 145.0507522, 100)
-
-    mm.append(home)
-    mm.append(takeoff)
-    mm.append(wp1)
-    mm.append(wp2)
-    mm.update()
-    print("Waiting to change waypoints in 15 seconds!")
-    Script.Sleep(15000) # sleep for 15 seconds
-    print("Changing Mission Waypoints")
-    mm.set_waypoint(-37.8184632, 145.0365257, 100, 3)
-    wp3 = mm.create_wp(-37.8124624, 145.0408602, 100)
-    mm.append(wp3)
-    mm.update()
-
-
 
 def socket_connection_test():
+    """ Creates a connection for the backend server to connect to (THIS IS A TEST, final function should be within mission manager class).
+    """
     HOST = ""  # Open to all IP addresses. Can set to be a specific one.
     PORT = 7766  # Ephemeral Port Number
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("Waiting for a connection.")
-    s.bind((HOST, PORT))
-    s.listen(1)  # Listens for 1 connection
-    connection, addr = s.accept()
-    print("Connected by " + str(addr))
-    while True:
-        data = connection.recv(1024)  # receive data in 1024 bit chunks
-        print(data)
-        if data == "quit": break  # if data given is exit command
-        connection.sendall(data)  # echo data back!
+    try:
+        print("Waiting for a connection.")
+        s.bind((HOST, PORT))
+        s.listen(1)  # Listens for 1 connection
+        connection, addr = s.accept()
+        print("Connected by " + str(addr))
+        while True:
+            data = connection.recv(1024)  # receive data in 1024 bit chunks
+            print(data)
+            if data == "quit": break  # if data given is exit command
+            connection.sendall(data)  # echo data back!
+            s.close()
+        print("Connection to " + str(addr) + " was lost.")
+    except Exception as e:
+        print(e)
         s.close()
-    print("Connection to " + str(addr) + " was lost.")
 
+        
 # NOTE: Script is run as a module and not as __main__.
 get_ip()  # Print out the IPs of the device running Mission Planner.
 #waypoint_mavlink_test()
 #waypoint_manager_test()
-#change_during_mission_test()
 socket_connection_test()
 
 print("Script Terminated!")
