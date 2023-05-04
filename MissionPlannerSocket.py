@@ -55,6 +55,33 @@ class MissionPlannerSocket():
         self.close()
 
 
+# These Point and Waypoint classes exists in the Spline Generator Backend Server. AND should not be added when integrating this file into the backend server.
+class Point:
+    """A Point refers to a longitude and latitude position on the earth.
+    This is a class that exists in the Spline Generator Backend Server.
+    """
+    def __init__(self, x=None, y=None):
+        self.x = x
+        self.y = y
+
+
+class Waypoint:
+    """
+    A Waypoint refers to one of the original points the plane has to go through. The class has curve entrances and exits, circle centres and radius within.
+    It also has a list for the interpolated points of the curve.
+    This is a class that exists in the Spline Generator Backend Server.
+    """
+    def __init__(self, x=None, y=None):
+        self.coords = Point(x, y)
+        self.entrance = None
+        self.exit = None
+        self.centre_point = None
+        self.radius = None
+        self.interpolated_curve = None
+        self.is_clockwise = None
+
+
+
 if __name__ == "__main__":
     host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
     PORT = 7766  # port number of the connection.
