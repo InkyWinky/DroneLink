@@ -259,6 +259,32 @@ def waypoint_mavlink_test():
     MAV.doCommand(MAVLink.MAV_CMD.DO_SET_HOME, 0, 0, 0, 0, -37.8238872, 145.0538635, 0)
 
 
+class Point:
+    """A Point refers to a longitude and latitude position on the earth.
+    This is a class that exists in the Spline Generator Backend Server.
+    """
+    def __init__(self, x=None, y=None):
+        self.x = x
+        self.y = y
+
+
+class Waypoint:
+    """
+    A Waypoint refers to one of the original points the plane has to go through. The class has curve entrances and exits, circle centres and radius within.
+    It also has a list for the interpolated points of the curve.
+    This is a class that exists in the Spline Generator Backend Server.
+    """
+    def __init__(self, x=None, y=None):
+        self.coords = Point(x, y)
+        self.entrance = None
+        self.exit = None
+        self.centre_point = None
+        self.radius = None
+        self.interpolated_curve = None
+        self.is_clockwise = None
+
+
+
 def get_ip():
     """Gets the IPs of the current device and prints them.
     """
