@@ -13,6 +13,7 @@ print("Importing Dependencies...")
 # import sys
 # sys.path.append(r"c:/python27/lib")
 import socket
+#import pickle
 import clr
 clr.AddReference("MissionPlanner")
 import MissionPlanner
@@ -26,17 +27,28 @@ print("Starting Script...")
 class MissionManager:
     """The Mission Manager Class interfaces with Mission Planner/MAVLink to dynamically change waypoints during a mission.
     """
-    def __init__(self, sync=True):
+    def __init__(self, sync=True, chunk_size=1024, port=7766):
         """Constructor
 
         Args:
             sync (bool, optional): decideds if we get the waypoints from Mission Planner on startup. Defaults to True.
         """
+        # Attributes for Waypoint access from Mission Planner.
         self.id = int(MAVLink.MAV_CMD.WAYPOINT)  # id_mav_cmd for waypoints
-        self.waypoint_count = 0
-        self.waypoints = []
+        self.waypoint_count = 0  # The number of waypoints
+        self.waypoints = []  # list of the waypoints
+
+        # By default, the class will sync the waypoints from mission planner.
         if sync:
-            self.sync()  # get initial waypoints from mission planner
+            self.sync()
+        
+        # Attributes for Socket connection.
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # The Python Socket class.
+        self.connection = None  # The Socket Connection that was received
+        self.addr = None  # The Address of the received Socket Connection
+        self.PORT = port  # The port number that the application is running on (default 7766)
+        self.chunk_size = chunk_size  # The chunk size of the data sent a received (default 1024)
+        self.__establish_connection()  # open the connection
 
 
     def __str__(self):
@@ -227,6 +239,37 @@ class MissionManager:
         """
         MAV.doCommand(MAVLink.MAV_CMD.DO_SET_HOME, 0, 0, 0, 0, waypoint.lat, waypoint.lng, waypoint.alt)
         self.waypoints[0] = waypoint
+    
+
+    def __establish_connection(self):
+        """Creates an open socket connection for the backend to connect to.
+        This function is private.
+        """
+        HOST = ""  # Open to all IP addresses. Can set to be a specific one.
+        try:
+            print("Waiting for a connection.")
+            self.s.bind((HOST, self.PORT))
+            self.s.listen(1)  # Listens for 1 connection
+            self.connection, self.addr = self.s.accept()
+            print("Connected by " + str(self.addr))
+            while True:
+                data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                print(data)
+                if data == "quit": break  # if data given is exit command
+                self.connection.sendall(data)  # echo data back!
+            self.close_connection()
+        except Exception as e:
+            # Close connection and print out error.
+            self.close_connection()
+            print(e)
+
+    
+    def close_connection(self):
+        """Safely closes the Socket Connection.
+        """
+        self.s.close()
+        print("Connection to " + str(self.addr) + " was lost.")
+
 
 
 def waypoint_mavlink_test():
@@ -341,36 +384,12 @@ def waypoint_manager_test():
     mm.append(wp5)
     mm.update()
 
-
-def socket_connection_test():
-    """ Creates a connection for the backend server to connect to (THIS IS A TEST, final function should be within mission manager class).
-    """
-    HOST = ""  # Open to all IP addresses. Can set to be a specific one.
-    PORT = 7766  # Ephemeral Port Number
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        print("Waiting for a connection.")
-        s.bind((HOST, PORT))
-        s.listen(1)  # Listens for 1 connection
-        connection, addr = s.accept()
-        print("Connected by " + str(addr))
-        while True:
-            data = connection.recv(1024)  # receive data in 1024 bit chunks
-            print(data)
-            if data == "quit": break  # if data given is exit command
-            connection.sendall(data)  # echo data back!
-            s.close()
-        print("Connection to " + str(addr) + " was lost.")
-    except Exception as e:
-        print(e)
-        s.close()
-
         
 # NOTE: Script is run as a module and not as __main__.
-get_ip()  # Print out the IPs of the device running Mission Planner.
 #waypoint_mavlink_test()
 #waypoint_manager_test()
-socket_connection_test()
 
+get_ip()  # Print out the IPs of the device running Mission Planner.
+mm = MissionManager()  # Create a mission manager class.
 print("Script Terminated!")
 

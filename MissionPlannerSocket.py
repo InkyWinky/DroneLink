@@ -17,6 +17,7 @@ class MissionPlannerSocket():
         self.PORT = port
         # Create Socket and connect to address
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.chunk_size = 1024
         self.connect()
     
     def connect(self):
@@ -50,7 +51,7 @@ class MissionPlannerSocket():
             self.s.sendall(bytes(txt_to_send, 'utf-8'))
             if txt_to_send == "quit":
                 break
-            data = self.s.recv(1024)
+            data = self.s.recv(self.chunk_size)
             print("Data Echoed Back: ", data)
         self.close()
 
