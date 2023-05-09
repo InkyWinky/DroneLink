@@ -1,5 +1,6 @@
 import socket
 import threading
+import json
 
 class MissionPlannerSocket():
     """MissionPlannerSocket maintains the connection between the Backend Server and the Mission Planner device.
@@ -27,9 +28,9 @@ class MissionPlannerSocket():
         try:
             self.s.connect((self.HOST, self.PORT))
             # Create a new thread to handle the data sent and received.
-            mp_socket_thread = threading.Thread(target=self.input_data(), args = None)
-            mp_socket_thread.start()
-            mp_socket_thread.join()
+            #mp_socket_thread = threading.Thread(target=self.input_data(), args = None)
+            #mp_socket_thread.start()
+            #mp_socket_thread.join()
         except Exception as e:
             print(e)
             self.close()
@@ -56,30 +57,61 @@ class MissionPlannerSocket():
         self.close()
 
 
-# These Point and Waypoint classes exists in the Spline Generator Backend Server. AND should not be added when integrating this file into the backend server.
-class Point:
-    """A Point refers to a longitude and latitude position on the earth.
-    This is a class that exists in the Spline Generator Backend Server.
-    """
-    def __init__(self, x=None, y=None):
-        self.x = x
-        self.y = y
+    def override_waypoints(self, waypoints):
+        """Sends an Action to overwrite all the waypoints in mission planner.
+
+        Args:
+            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+        """
+        action = Commands.override(waypoints)
+        self.s.sendall(bytes(action.serialize(), 'utf-8'))
 
 
-class Waypoint:
+class Action:
+    """The class that is sent from the backend connection to execute commands on the mission planner script.
     """
-    A Waypoint refers to one of the original points the plane has to go through. The class has curve entrances and exits, circle centres and radius within.
-    It also has a list for the interpolated points of the curve.
-    This is a class that exists in the Spline Generator Backend Server.
+    def __init__(self, command):
+        self.command = command
+        self.waypoints = None
+    
+    def serialize(self):
+        """Serializes the Action into a json string to be sent over the socket.
+
+        Returns:
+            str: The Action in string format. {"command":command, "waypoints":waypoints}
+        """
+        return json.dumps({"command":self.command, "waypoints":self.waypoints})
+    
+    def deserialize(self, data):
+        """Deserializes the json string back into an Action class.
+
+        Args:
+            data (str): The string of the json to be converted back into a list of dictionaries.
+        """
+        decoded = json.loads(data)
+        decoded_action = Action(decoded["command"])
+        decoded_action.waypoints = decoded["waypoints"]
+        return decoded_action
+
+
+class Commands:
+    """An ENUM containing all the commands that the backend server can send for execution on mission planner.
+    The functions in this class will return an Action class that will be sent over the socket connection.
     """
-    def __init__(self, x=None, y=None):
-        self.coords = Point(x, y)
-        self.entrance = None
-        self.exit = None
-        self.centre_point = None
-        self.radius = None
-        self.interpolated_curve = None
-        self.is_clockwise = None
+    OVERRIDE = "OVERRIDE"
+
+    def override(waypoints):
+        """Creates an action that is to be sent to overrides all the waypoints in mission planner.
+
+        Args:
+            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+
+        Returns:
+            Action: An override action with the waypoints to override with.
+        """
+        action = Action(Commands.OVERRIDE)
+        action.waypoints = waypoints
+        return action
 
 
 
@@ -87,4 +119,19 @@ if __name__ == "__main__":
     host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
     PORT = 7766  # port number of the connection.
     mp_socket = MissionPlannerSocket(host, PORT)
+
+    # TESTING
+    input("Press Enter to Override Waypoints!")
+    test_waypoints = [{"lat":-37.8238872, "long":145.0538635, "alt":0},
+                        {"lat":-37.8408347, "long":145.2241516, "alt":100},
+                        {"lat":-37.8411058, "long":145.2569389, "alt":100},
+                        {"lat":-37.8657742, "long":145.2680969, "alt":100},
+                        {"lat":-37.8818991, "long":145.2234650, "alt":100}]
+    
+    mp_socket.override_waypoints(test_waypoints)
+    input("Press Enter to Stop the Test and disconnect the connection.")
+    mp_socket.close()
+
+
+
     

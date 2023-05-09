@@ -13,7 +13,7 @@ print("Importing Dependencies...")
 # import sys
 # sys.path.append(r"c:/python27/lib")
 import socket
-#import pickle
+import json
 import clr
 clr.AddReference("MissionPlanner")
 import MissionPlanner
@@ -27,11 +27,14 @@ print("Starting Script...")
 class MissionManager:
     """The Mission Manager Class interfaces with Mission Planner/MAVLink to dynamically change waypoints during a mission.
     """
-    def __init__(self, sync=True, chunk_size=1024, port=7766):
+    def __init__(self, sync=True, connect=True, chunk_size=1024, port=7766):
         """Constructor
 
         Args:
-            sync (bool, optional): decideds if we get the waypoints from Mission Planner on startup. Defaults to True.
+            sync (bool, optional): decides if we get the waypoints from Mission Planner on startup. Defaults to True.
+            connect (bool, optional): decides if the connection to the backend server is opened on startup. Defaults to True
+            chunk_size (int, optional): Defines the packet size of each TCP packet. Defaults to 1024
+            port (int, optional): The ephemeral port number that the connection to the backend server will run on. 
         """
         # Attributes for Waypoint access from Mission Planner.
         self.id = int(MAVLink.MAV_CMD.WAYPOINT)  # id_mav_cmd for waypoints
@@ -48,7 +51,8 @@ class MissionManager:
         self.addr = None  # The Address of the received Socket Connection
         self.PORT = port  # The port number that the application is running on (default 7766)
         self.chunk_size = chunk_size  # The chunk size of the data sent a received (default 1024)
-        self.__establish_connection()  # open the connection
+        if connect:
+            self.__establish_connection()  # open the connection
 
 
     def __str__(self):
@@ -254,7 +258,9 @@ class MissionManager:
             print("Connected by " + str(self.addr))
             while True:
                 data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                print("RAW DATA RECEIVED:")
                 print(data)
+                self.handle_command(data)
                 if data == "quit": break  # if data given is exit command
                 self.connection.sendall(data)  # echo data back!
             self.close_connection()
@@ -269,7 +275,48 @@ class MissionManager:
         """
         self.s.close()
         print("Connection to " + str(self.addr) + " was lost.")
+    
+    def handle_command(self, data):
+        """This function handles any commands sent from the backend server.
 
+        Args:
+            data (bytes): The byte stream from the socket connection that is the data of the command.
+        """
+        decoded_data = json.loads(data)
+        command = decoded_data["command"]
+        waypoints = decoded_data["waypoints"]
+        # If the command is to OVERRIDE the Waypoints
+        if command == Commands.OVERRIDE:
+            mp_waypoints = self.convert_to_locationwp(waypoints)
+            self.waypoints = mp_waypoints
+            self.waypoint_count = len(mp_waypoints)
+            self.update()
+            print("OVERRIDE Waypoint Command Executed")
+        else:
+            print("Unknown Command Was Given")
+
+
+    def convert_to_locationwp(self, waypoints):
+        """Converts a list of dictionaries to the waypoints that mission planner uses.
+
+        Args:
+            waypoints (list[dict]): A list of dictionaries containing waypoints.
+
+        Returns:
+            list[Locationwp]: The list of Locationwp for Mission Planner to use.
+        """
+        n = len(waypoints)  # number of waypoints
+        res = [None for _ in range(n)]  # initialize list
+        for i in range(n):
+            res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"])
+        return res
+
+
+class Commands:
+    """An ENUM containing all the commands that the backend server can send for execution on mission planner.
+    The functions in this class will return an Action class that will be sent over the socket connection.
+    """
+    OVERRIDE = "OVERRIDE"
 
 
 def waypoint_mavlink_test():
@@ -300,39 +347,14 @@ def waypoint_mavlink_test():
 
     # Set Home waypoint
     MAV.doCommand(MAVLink.MAV_CMD.DO_SET_HOME, 0, 0, 0, 0, -37.8238872, 145.0538635, 0)
-
-
-class Point:
-    """A Point refers to a longitude and latitude position on the earth.
-    This is a class that exists in the Spline Generator Backend Server.
-    """
-    def __init__(self, x=None, y=None):
-        self.x = x
-        self.y = y
-
-
-class Waypoint:
-    """
-    A Waypoint refers to one of the original points the plane has to go through. The class has curve entrances and exits, circle centres and radius within.
-    It also has a list for the interpolated points of the curve.
-    This is a class that exists in the Spline Generator Backend Server.
-    """
-    def __init__(self, x=None, y=None):
-        self.coords = Point(x, y)
-        self.entrance = None
-        self.exit = None
-        self.centre_point = None
-        self.radius = None
-        self.interpolated_curve = None
-        self.is_clockwise = None
-
+    
 
 
 def get_ip():
     """Gets the IPs of the current device and prints them.
     """
-    hostname = socket.getfqdn()
-    addr = socket.gethostbyname_ex(hostname)[2]
+    hostname = socket.gethostname()
+    addr = socket.gethostbyname(hostname)
     print("Hostname: " + hostname + "\nAddresses: " + str(addr))
 
 
@@ -390,6 +412,8 @@ def waypoint_manager_test():
 #waypoint_manager_test()
 
 get_ip()  # Print out the IPs of the device running Mission Planner.
+
 mm = MissionManager()  # Create a mission manager class.
+mm.close_connection()
 print("Script Terminated!")
 
