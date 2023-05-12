@@ -56,6 +56,14 @@ Upon initialisation of the SplineGenerator class, the spline will automatically 
 ```
 waypoints_dictionary = spliner.get_waypoint_in_dictionary()
 ```
+Dictionary will be in the following format:
+```
+[
+    {"id": 0, "long": 124.54, "lat": 63.23, "alt": 101.2},
+    {"id": 1, "long": 137.21, "lat": 53.74, "alt": 101.2}
+]
+```
+
 <b>Plot waypoints</b>
 ```
 spliner.plot_waypoints(show_points=True, show_original=True, show_centres=True, show_boundary=True, save_fig=False, count=None)
