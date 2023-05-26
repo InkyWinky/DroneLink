@@ -1,6 +1,6 @@
 from __future__ import division, print_function
 import matplotlib.pyplot as plt
-import math
+
 class Polygon:
     def __init__(self, vertices=None):
         self.vertices = vertices
