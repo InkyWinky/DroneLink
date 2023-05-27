@@ -65,7 +65,15 @@ class MissionPlannerSocket():
         """
         action = Commands.override(waypoints)
         self.s.sendall(bytes(action.serialize(), 'utf-8'))
+    
+    def override_flightplanner_waypoints(self, waypoints):
+        """Sends an Action to overwrite all the waypoints in the flight planner GUI.
 
+        Args:
+            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+        """
+        action = Commands.override_flightplanner(waypoints)
+        self.s.sendall(bytes(action.serialize(), 'utf-8'))
 
 class Action:
     """The class that is sent from the backend connection to execute commands on the mission planner script.
@@ -74,6 +82,7 @@ class Action:
         self.command = command
         self.waypoints = None
     
+
     def serialize(self):
         """Serializes the Action into a json string to be sent over the socket.
 
@@ -81,7 +90,8 @@ class Action:
             str: The Action in string format. {"command":command, "waypoints":waypoints}
         """
         return json.dumps({"command":self.command, "waypoints":self.waypoints})
-    
+
+
     def deserialize(self, data):
         """Deserializes the json string back into an Action class.
 
@@ -99,6 +109,7 @@ class Commands:
     The functions in this class will return an Action class that will be sent over the socket connection.
     """
     OVERRIDE = "OVERRIDE"
+    OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
 
     def override(waypoints):
         """Creates an action that is to be sent to overrides all the waypoints in mission planner.
@@ -112,11 +123,25 @@ class Commands:
         action = Action(Commands.OVERRIDE)
         action.waypoints = waypoints
         return action
+    
+    def override_flightplanner(waypoints):
+        """Creates an action that is to be sent to overrides all the waypoints in the flight planner GUI.
 
+        Args:
+            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+
+        Returns:
+            Action: An override_flightplanner action with the waypoints to override with.
+        """
+        action = Action(Commands.OVERRIDE_FLIGHTPLANNER)
+        action.waypoints = waypoints
+        return action
+        
 
 
 if __name__ == "__main__":
     host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
+    host = "172.23.80.1"
     PORT = 7766  # port number of the connection.
     mp_socket = MissionPlannerSocket(host, PORT)
 
@@ -128,7 +153,11 @@ if __name__ == "__main__":
                         {"lat":-37.8657742, "long":145.2680969, "alt":100},
                         {"lat":-37.8818991, "long":145.2234650, "alt":100}]
     
-    mp_socket.override_waypoints(test_waypoints)
+    # mp_socket.override_waypoints(test_waypoints)
+    # mp_socket.start_mission()
+    # mp_socket.go_to_waypoint()
+    # mp_socket.start_mission_from_waypoint(3)
+    mp_socket.override_flightplanner_waypoints(test_waypoints)
     input("Press Enter to Stop the Test and disconnect the connection.")
     mp_socket.close()
 

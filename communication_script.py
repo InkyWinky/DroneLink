@@ -10,17 +10,25 @@ On the left side, navigate to "Scripts" -> "Select Script" -> "Upload" ->
 """
 
 print("Importing Dependencies...")
+
+# Importing Python dependencies
 # import sys
 # sys.path.append(r"c:/python27/lib")
 import socket
 import json
 import clr
+
+# Importing MissionPlanner dependencies
 clr.AddReference("MissionPlanner")
 import MissionPlanner
 clr.AddReference("MissionPlanner.Utilities")
-from MissionPlanner.Utilities import Locationwp
+from MissionPlanner.Utilities import Locationwp, WaypointFile
 clr.AddReference("MAVLink")
 import MAVLink
+
+# Importing C# List primitive dependency 
+clr.AddReference('System')
+from System.Collections.Generic import List
 print("Starting Script...")
 
 
@@ -40,6 +48,9 @@ class MissionManager:
         self.id = int(MAVLink.MAV_CMD.WAYPOINT)  # id_mav_cmd for waypoints
         self.waypoint_count = 0  # The number of waypoints
         self.waypoints = []  # list of the waypoints
+
+        # Attribute to control FlightPlanner in MissionPlanner
+        self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
 
         # By default, the class will sync the waypoints from mission planner.
         if sync:
@@ -276,25 +287,6 @@ class MissionManager:
         self.s.close()
         print("Connection to " + str(self.addr) + " was lost.")
     
-    def handle_command(self, data):
-        """This function handles any commands sent from the backend server.
-
-        Args:
-            data (bytes): The byte stream from the socket connection that is the data of the command.
-        """
-        decoded_data = json.loads(data)
-        command = decoded_data["command"]
-        waypoints = decoded_data["waypoints"]
-        # If the command is to OVERRIDE the Waypoints
-        if command == Commands.OVERRIDE:
-            mp_waypoints = self.convert_to_locationwp(waypoints)
-            self.waypoints = mp_waypoints
-            self.waypoint_count = len(mp_waypoints)
-            self.update()
-            print("OVERRIDE Waypoint Command Executed")
-        else:
-            print("Unknown Command Was Given")
-
 
     def convert_to_locationwp(self, waypoints):
         """Converts a list of dictionaries to the waypoints that mission planner uses.
@@ -310,6 +302,26 @@ class MissionManager:
         for i in range(n):
             res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"])
         return res
+    
+
+    def handle_command(self, data):
+        """This function handles any commands sent from the backend server.
+
+        Args:
+            data (bytes): The byte stream from the socket connection that is the data of the command.
+        """
+        decoded_data = json.loads(data)
+        command = decoded_data["command"]
+        
+        # Used in place of a switch-case as IronPython does not implement it.
+        command_dict = {Commands.OVERRIDE: Commands.override, 
+                        Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner}  
+        
+        # If the command exists, run the command
+        if command in command_dict:
+            command_dict[command](Commands(), self, decoded_data)
+        else:
+            print("Unknown Command Was Given")
 
 
 class Commands:
@@ -317,6 +329,47 @@ class Commands:
     The functions in this class will return an Action class that will be sent over the socket connection.
     """
     OVERRIDE = "OVERRIDE"
+    OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
+
+
+    def override(self, mission_manager, decoded_data):
+        """Overrides all the waypoints in mission planner.
+
+        Args:
+            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+
+        Returns:
+            Action: An override action with the waypoints to override with.
+        """
+        try:
+            waypoints = decoded_data["waypoints"]
+            mp_waypoints = mission_manager.convert_to_locationwp(waypoints)
+            mission_manager.waypoints = mp_waypoints
+            mission_manager.waypoint_count = len(mp_waypoints)
+            mission_manager.update()
+            print("OVERRIDE Waypoint Command Executed")
+        except Exception as e:
+            print(e)
+            print("ERROR: Handling OVERRIDE COMMAND: Waypoints sent from backend does not exist")
+        
+
+    def override_flightplanner(self, mission_manager, decoded_data):
+        """Overrides all the waypoints in the flight planner GUI.
+
+        Args:
+            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+
+        Returns:
+            Action: An override_flightplanner action with the waypoints to override with.
+        """
+        try:
+            waypoints = decoded_data["waypoints"]
+            recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
+            mission_manager.FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
+            print("OVERRIDE FlightPlanner Waypoint Command Executed")
+        except Exception as e:
+            print(e)
+            print("ERROR: Handling OVERRIDE_FLIGHTPLANNER COMMAND")
 
 
 def waypoint_mavlink_test():
@@ -415,5 +468,28 @@ get_ip()  # Print out the IPs of the device running Mission Planner.
 
 mm = MissionManager()  # Create a mission manager class.
 mm.close_connection()
+
+# id = int(MAVLink.MAV_CMD.WAYPOINT)
+# wp1 = Locationwp().Set(-37.8408347, 145.2241516, 100, id)
+# wp2 = Locationwp().Set(-37.8411058, 145.2569389, 100, id)
+# wp3 = Locationwp().Set(-37.8657742, 145.2680969, 100, id)
+# wp4 = Locationwp().Set(-37.8818991, 145.2234650, 100, id)
+
+# FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
+# FlightPlanner.WPtoScreen(List[Locationwp]([wp1, wp2, wp3, wp4]))
+# FlightPlanner().AddWPToMap(-37.8408347, 145.2241516, 100)
+# print(flightPlanner.GetCommandList())
+# MissionPlanner.MainV2.FlightPlanner.WPtoScreen(List[Locationwp]([wp1, wp2, wp3, wp4]))
+# MissionPlanner.MainV2.instance.FlightPlanner.AddWPToMap(-37.8408347, 145.2241516, 100)
+# MissionPlanner.MainV2.instance.FlightPlanner.AddWPToMap(-37.8411058, 145.2569389, 100)
+# flightPlanner.readQGC110wpfile('./test.waypoints')
+
+# MissionPlanner.MainV2.instance.FlightPlanner.GetCommandList()
+# MissionPlanner.MainV2.instance.FlightPlanner.AddWPToMap(lat, lng, alt)
+# MissionPlanner.MainV2.instance.FlightPlanner.AddCommand(cmd, p1, p2, p3, p4, x, y, z, tag=null)
+# MissionPlanner.MainV2.instance.FlightPlanner.InsertCommand(index, cmd, p1, p2, p3, p4, x, u, z, tag)
+# MissionPlanner.MainV2.instance.FlightPlanner.readQGC110wpfile('file location')
+# MissionPlanner.MainV2.instance.FlightPlanner.WPtoScreen(List[Locationwp]([wp1, wp1, wp2, wp3, wp4]))
+
 print("Script Terminated!")
 
