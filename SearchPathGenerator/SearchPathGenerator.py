@@ -78,13 +78,16 @@ class SearchPathGenerator:
         # Find the axis of orientation that returns the fewest amount of waypoints (turns)
         # Method 1: Loop over multiple axes of orientation and calculate the path for each then compare which has the least turns and shortest flight time
         # Method 2: Try to estimate the number of turns and flight time for each angle then pick the most desirable
-        axis_of_orientation = calculate_axis_of_orientation_method_2()
+        axis_of_orientation = self.calculate_axis_of_orientation_method_2()
 
         # Find the first coordinate of the grid search. This will depend on the take-off position of the Albatross
 
         # Calculate points that once connected, will "search" the entire grid along with desired overlap percentage
 
         # Update the self.waypoints will the search grid waypoints
+
+        # Okay so here I'm doing a run where the best orientation has already been found, or that the user has input a specific angle
+        # 1. Find the closest point
 
     def calculate_axis_of_orientation_method_1(self):
         # Loop through all orientation steps
