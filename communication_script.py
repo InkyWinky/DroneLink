@@ -51,6 +51,9 @@ class MissionManager:
 
         # Attribute to control FlightPlanner in MissionPlanner
         self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
+        # check if flight planner exists
+        if not self.FlightPlanner:
+            print("Flight Planner instance not Found")
 
         # By default, the class will sync the waypoints from mission planner.
         if sync:
@@ -112,8 +115,13 @@ class MissionManager:
     def sync(self):
         """Syncs all the waypoints in Mission Planner to waypoints list (overrides any previous changes if update was not called)
         """
-        self.waypoint_count = MAV.getWPCount()
-        self.waypoints = [MAV.getWP(index) for index in range(MAV.getWPCount())]
+        try:
+            print("Syncing Live Waypoints...")
+            self.waypoint_count = MAV.getWPCount()
+            self.waypoints = [MAV.getWP(index) for index in range(MAV.getWPCount())]
+            print("Syncing Live Waypoints Successful")
+        except:
+            print("Syncing Live Waypoints Failed! The drone may not be connected.")
 
 
     def append(self, waypoint):
@@ -262,14 +270,14 @@ class MissionManager:
         """
         HOST = ""  # Open to all IP addresses. Can set to be a specific one.
         try:
-            print("Waiting for a connection.")
+            print("Waiting for a backend connection...")
             self.s.bind((HOST, self.PORT))
             self.s.listen(1)  # Listens for 1 connection
             self.connection, self.addr = self.s.accept()
             print("Connected by " + str(self.addr))
             while True:
                 data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
-                print("RAW DATA RECEIVED:")
+                print("Received Data:")
                 print(data)
                 self.handle_command(data)
                 if data == "quit": break  # if data given is exit command
@@ -313,9 +321,11 @@ class MissionManager:
         decoded_data = json.loads(data)
         command = decoded_data["command"]
         
-        # Used in place of a switch-case as IronPython does not implement it.
+        # Used in place of a switch-case as IronPython does not implement it. 
+        # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
         command_dict = {Commands.OVERRIDE: Commands.override, 
-                        Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner}  
+                        Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
+                        Commands.SYNC_SCRIPT: Commands.sync_script}  
         
         # If the command exists, run the command
         if command in command_dict:
@@ -330,6 +340,7 @@ class Commands:
     """
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
+    SYNC_SCRIPT = "SYNC_SCRIPT"
 
 
     def override(self, mission_manager, decoded_data):
@@ -372,6 +383,23 @@ class Commands:
             print("ERROR: Handling OVERRIDE_FLIGHTPLANNER COMMAND")
 
 
+    def sync_script(self, mission_manager, decoded_data):
+        """Overrides all the waypoints in the flight planner GUI.
+
+        Args:
+            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+
+        Returns:
+            Action: An override_flightplanner action with the waypoints to override with.
+        """
+        try:
+            mission_manager.sync()
+            print("SYNC SCRIPT Command Executed")
+        except Exception as e:
+            print(e)
+            print("ERROR: Handling SYNC_SCRIPT COMMAND")
+
+
 def waypoint_mavlink_test():
     """Sets the current mission to hard-coded waypoints using MAVLink functions.
     """
@@ -408,7 +436,7 @@ def get_ip():
     """
     hostname = socket.gethostname()
     addr = socket.gethostbyname(hostname)
-    print("Hostname: " + hostname + "\nAddresses: " + str(addr))
+    print("Hostname: " + hostname + "\nAddress(es): " + str(addr))
 
 
 def waypoint_manager_test():

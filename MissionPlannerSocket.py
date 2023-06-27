@@ -75,6 +75,11 @@ class MissionPlannerSocket():
         action = Commands.override_flightplanner(waypoints)
         self.s.sendall(bytes(action.serialize(), 'utf-8'))
 
+    def sync_script(self):
+        """Sends an Action to sync all the waypoints in the flight planner to the mission planner script.
+        """
+        action = Commands.sync_script()
+        self.s.sendall(bytes(action.serialize(), 'utf-8'))
 class Action:
     """The class that is sent from the backend connection to execute commands on the mission planner script.
     """
@@ -110,6 +115,7 @@ class Commands:
     """
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
+    SYNC_SCRIPT = "SYNC_SCRIPT"
 
     def override(waypoints):
         """Creates an action that is to be sent to overrides all the waypoints in mission planner.
@@ -136,30 +142,67 @@ class Commands:
         action = Action(Commands.OVERRIDE_FLIGHTPLANNER)
         action.waypoints = waypoints
         return action
+    
+    def sync_script():
+        """Creates an action that is to be send to sync all the waypoints in the flight planner to the mission planner script.
+        Returns:
+            Action: A sync script action.
+
+        Returns:
+            _type_: _description_
+        """
+        action = Action(Commands.SYNC_SCRIPT)
+        return action
         
 
 
 if __name__ == "__main__":
-    host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
-    host = "172.23.80.1"
-    PORT = 7766  # port number of the connection.
-    mp_socket = MissionPlannerSocket(host, PORT)
+    try:
+        # host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
+        # host = "172.23.80.1"
+        host = input("Enter IP to connect to: ")
+        
+        PORT = 7766  # port number of the connection.
+        mp_socket = MissionPlannerSocket(host, PORT)
 
-    # TESTING
-    input("Press Enter to Override Waypoints!")
-    test_waypoints = [{"lat":-37.8238872, "long":145.0538635, "alt":0},
-                        {"lat":-37.8408347, "long":145.2241516, "alt":100},
-                        {"lat":-37.8411058, "long":145.2569389, "alt":100},
-                        {"lat":-37.8657742, "long":145.2680969, "alt":100},
-                        {"lat":-37.8818991, "long":145.2234650, "alt":100}]
-    
-    # mp_socket.override_waypoints(test_waypoints)
-    # mp_socket.start_mission()
-    # mp_socket.go_to_waypoint()
-    # mp_socket.start_mission_from_waypoint(3)
-    mp_socket.override_flightplanner_waypoints(test_waypoints)
-    input("Press Enter to Stop the Test and disconnect the connection.")
-    mp_socket.close()
+        # TESTING
+        test_waypoints = [{"lat":-37.8238872, "long":145.0538635, "alt":0},
+                            {"lat":-37.8408347, "long":145.2241516, "alt":100},
+                            {"lat":-37.8411058, "long":145.2569389, "alt":100},
+                            {"lat":-37.8657742, "long":145.2680969, "alt":100},
+                            {"lat":-37.8818991, "long":145.2234650, "alt":100}]
+        
+        # mp_socket.override_waypoints(test_waypoints)
+        # mp_socket.start_mission()
+        # mp_socket.go_to_waypoint()
+        # mp_socket.start_mission_from_waypoint(3)
+        option = None
+        while True:
+            print("--------------------------------------------------------------------------------------")
+            print("[Command Selection Menu]")
+            print("These Commands will be sent and executed on the Mission Planner Communication Script!")
+            print("--------------------------------------------------------------------------------------")
+            print("[ 1 ]. OVERRIDE FLIGHTPLANNER WAYPOINTS (Hardcoded Waypoints)")
+            print("[ 2 ]. SYNC SCRIPT")
+            print("[ q ]. Quit")
+            print("--------------------------------------------------------------------------------------")
+
+            option = input("Select Command To Execute (Enter 'q' to Quit): ")
+
+            match option:
+                case '1':
+                    mp_socket.override_flightplanner_waypoints(test_waypoints)
+                case '2':
+                    mp_socket.sync_script()
+                case 'q':
+                    break
+                case default:
+                    print("Invalid Option.")
+
+        mp_socket.close()
+    except Exception as e:
+        print(e)
+
 
 
 
