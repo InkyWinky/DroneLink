@@ -184,6 +184,7 @@ if __name__ == "__main__":
             print("--------------------------------------------------------------------------------------")
             print("[ 1 ]. OVERRIDE FLIGHTPLANNER WAYPOINTS (Hardcoded Waypoints)")
             print("[ 2 ]. SYNC SCRIPT")
+            print("[ 3 ]. OVERRIDE WAYPOINTS on Live Drone (Hardcoded waypoints)")
             print("[ q ]. Quit")
             print("--------------------------------------------------------------------------------------")
 
@@ -194,6 +195,8 @@ if __name__ == "__main__":
                     mp_socket.override_flightplanner_waypoints(test_waypoints)
                 case '2':
                     mp_socket.sync_script()
+                case '3':
+                    mp_socket.override_waypoints(test_waypoints)
                 case 'q':
                     break
                 case default:
