@@ -24,6 +24,20 @@ class Point:
         self.x = x  # Longitude
         self.y = y  # Latitude
 
+    def magnitude(self, point=None):
+        if point is None:
+            return math.sqrt(self.x ** 2 + self.y ** 2)
+        else:
+            return math.sqrt(point.x ** 2 + point.y ** 2)
+
+    def dot(self, point_2):
+        return self.x * point_2.x + self.y * point_2.y
+
+
+def calculate_distance_between_points(point_1=None, point_2=None):
+    return math.sqrt((point_1.x - point_2.x) ** 2 + (point_1.y - point_2.y) ** 2)
+
+
 class SearchPathGenerator:
     def __init__(self):
         pass
@@ -101,6 +115,55 @@ class SearchPathGenerator:
         # Start point is a point that is reached when the Albatross flies from the start location to the closest search area segment then a little further, paint radius
         # Find the closest point of the search area boundary from the start location
         search_area_closest_point = self.calculate_closest_search_area_boundary_point()
+        overlap_radius = self.paint_radius * (1 - self.paint_overlap)
+        direction_from_start = Point(search_area_closest_point.x - self.start_point.x, search_area_closest_point.y - self.start_point.y)
+        magnitude = math.sqrt(direction_from_start.x + direction_from_start.y)
+        unit_direction = Point(direction_from_start.x / magnitude, direction_from_start.y / magnitude)
+        amount_to_add = Point(unit_direction.x * overlap_radius, unit_direction.y * overlap_radius)
+        starting_point = Point(search_area_closest_point.x + amount_to_add.x, search_area_closest_point.y + amount_to_add.y)
+        # Figure out how many turns there will be given the starting location, search area, axis of orientation, paint radius, paint overlap
+        number_of_turns, est_flight_time = self.calculate_turns_and_flight_time(starting_point)
+
+    def calculate_turns_and_flight_time(self, starting_point):
+        minimum_raycast = self.paint_radius * (1 - self.paint_overlap)
+        calculated_points = [starting_point]
+        # Go in the direction of axis of orientation and map out the potential points
+        number_of_blocks = 0
+        direction = "forward"
+        while number_of_blocks < 2:
+            raycast_point = self.raycast_to_polygon(calculated_points[-1], self.orientation_input, self.search_area)
+            reverse_raycast = Point(calculated_points[-1].x - raycast_point.x, calculated_points[-1].y - raycast_point.y)
+            magnitude = math.sqrt(reverse_raycast.x ** 2 + reverse_raycast.y ** 2)
+            unit_reverse_raycast = Point(reverse_raycast.x / magnitude, reverse_raycast.y / magnitude)
+            adjusted_raycast_point = Point(raycast_point.x + unit_reverse_raycast.x * minimum_raycast, raycast_point.y + unit_reverse_raycast.y * minimum_raycast)
+            # Check if point is backwards after adjusting
+            if adjusted_raycast_point.dot(calculated_points[-1]) <= 0:
+                number_of_blocks += 1
+                if direction == "forward":
+                    direction = "left"
+                if direction == "forward left":
+                    direction = "backward"
+                if direction == "backward left":
+                    direction = "forward"
+                if direction == "backward":
+                    direction = "left"
+            else:
+                number_of_blocks = 0
+                calculated_points.append(adjusted_raycast_point)
+
+        # Go in reverse direction of axis of orientation and map out the rest of the point
+
+
+    def raycast_to_polygon(self, origin=None, direction=None, polygon=None, max_dist=None):
+        """
+        Perform a raycast from an origin point until it collides with a polygon. If it does, return the point it collides with.
+        Will cast for max_dist if specified.
+        :param origin: Point the raycast starts at
+        :param polygon: Polygon to check if the ray hits it
+        :param max_dist: Maximum distance to cast the ray. This is optional
+        :return: Returns a point where the raycast hits the polygon or None if nothing was hit after max_dist.
+        """
+        pass
 
     def calculate_closest_search_area_boundary_point(self):
         # Loop over each segment of search area
@@ -109,16 +172,12 @@ class SearchPathGenerator:
         for index in range(len(self.search_area.vertices)):
             segment_point_1 = self.search_area.vertices[index]
             segment_point_2 = self.search_area.vertices[(index + 1) % len(self.search_area.vertices)]
-            # Find closest point on segment to starrt location
-            if closest_point is None:
-                closest_point = self.calculate_closest_point_on_segment_to_point(segment_point_1, segment_point_2, self.start_point)
-
-    def calculate_closest_point_on_segment_to_point(self, segment_start=None, segment_end=None, reference_point=None):
-        segment_vector = Point(segment_end.x - segment_start.x, segment_end.y - segment_start.y)
-        segment_to_reference = Point(reference_point.x - segment_start.x, reference_point.y - segment_start.y)
-        percentage_along_segment = (segment_to_reference.x * segment_vector.x + segment_to_reference.y * segment_vector.y) / (segment_vector.x ** 2 + segment_vector.y ** 2)
-        percentage_along_segment = max(0, min(percentage_along_segment, 1))
-        closest_point = Point(segment_start.x + percentage_along_segment * segment_vector.x, segment_start.y + percentage_along_segment * segment_vector.y)
+            # Find the closest point on segment to start location
+            new_closest_point = calculate_closest_point_on_segment_to_point(segment_point_1, segment_point_2, self.start_point)
+            new_closest_distance = calculate_distance_between_points(closest_point, self.start_point)
+            if closest_point is None or new_closest_distance < closest_distance:
+                closest_point = new_closest_point
+                closest_distance = new_closest_distance
         return closest_point
 
     def do_validation_checks(self):
@@ -170,6 +229,19 @@ class SearchPathGenerator:
 
     def calculate_waypoints(self):
         pass
+
+
+"""
+Functions. Mostly just math functions.
+"""
+
+def calculate_closest_point_on_segment_to_point(segment_start=None, segment_end=None, reference_point=None):
+    segment_vector = Point(segment_end.x - segment_start.x, segment_end.y - segment_start.y)
+    segment_to_reference = Point(reference_point.x - segment_start.x, reference_point.y - segment_start.y)
+    percentage_along_segment = (segment_to_reference.x * segment_vector.x + segment_to_reference.y * segment_vector.y) / (segment_vector.x ** 2 + segment_vector.y ** 2)
+    percentage_along_segment = max(0, min(percentage_along_segment, 1))
+    closest_point = Point(segment_start.x + percentage_along_segment * segment_vector.x, segment_start.y + percentage_along_segment * segment_vector.y)
+    return closest_point
 
 def main_function(self):
     raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
