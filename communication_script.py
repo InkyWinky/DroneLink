@@ -9,7 +9,7 @@ On the left side, navigate to "Scripts" -> "Select Script" -> "Upload" ->
  -> "Run Script"
 """
 
-print("Importing Dependencies...")
+print("[INFO] Importing Dependencies...")
 
 # Importing Python dependencies
 # import sys
@@ -17,6 +17,7 @@ print("Importing Dependencies...")
 import socket
 import json
 import clr
+import threading
 
 # Importing MissionPlanner dependencies
 clr.AddReference("MissionPlanner")
@@ -29,7 +30,7 @@ import MAVLink
 # Importing C# List primitive dependency 
 clr.AddReference('System')
 from System.Collections.Generic import List
-print("Starting Script...")
+print("[INFO] Starting Script...")
 
 
 class MissionManager:
@@ -51,13 +52,6 @@ class MissionManager:
 
         # Attribute to control FlightPlanner in MissionPlanner
         self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
-        # check if flight planner exists
-        if not self.FlightPlanner:
-            print("Flight Planner instance not Found")
-
-        # By default, the class will sync the waypoints from mission planner.
-        if sync:
-            self.sync()
         
         # Attributes for Socket connection.
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # The Python Socket class.
@@ -65,8 +59,19 @@ class MissionManager:
         self.addr = None  # The Address of the received Socket Connection
         self.PORT = port  # The port number that the application is running on (default 7766)
         self.chunk_size = chunk_size  # The chunk size of the data sent a received (default 1024)
+
+        # Attributes for Receive thread
+        self.command_queue = [] # A queue of commands that were received
+        self.command_queue_mutex = threading.Lock() # Mutex for command_queue
+        self.quit = False # Allows for threads to terminate correctly
+
+        # By default, the class will sync the waypoints from mission planner.
+        if sync:
+            self.sync()
+        # Start connection to backend
         if connect:
             self.__establish_connection()  # open the connection
+        print("[TERMINATION] Communication Script has successfully Terminated.")
 
 
     def __str__(self):
@@ -109,19 +114,19 @@ class MissionManager:
         if index < self.waypoint_count:
             self.waypoints[index] = waypoint
         else:
-            print("ERROR: Setting Waypoint at index " + str(index) + " was out of bounds.")
+            print("[ERROR] Setting Waypoint at index " + str(index) + " was out of bounds.")
     
 
     def sync(self):
         """Syncs all the waypoints in Mission Planner to waypoints list (overrides any previous changes if update was not called)
         """
         try:
-            print("Syncing Live Waypoints...")
+            print("[INFO] Syncing Live Waypoints...")
             self.waypoint_count = MAV.getWPCount()
             self.waypoints = [MAV.getWP(index) for index in range(MAV.getWPCount())]
-            print("Syncing Live Waypoints Successful")
+            print("[INFO] Syncing Live Waypoints Successful")
         except:
-            print("Syncing Live Waypoints Failed! The drone may not be connected.")
+            print("[INFO] Syncing Live Waypoints Failed! The drone may not be connected.")
 
 
     def append(self, waypoint):
@@ -270,30 +275,81 @@ class MissionManager:
         """
         HOST = ""  # Open to all IP addresses. Can set to be a specific one.
         try:
-            print("Waiting for a backend connection...")
+            print("[INFO] Waiting for a backend connection...")
             self.s.bind((HOST, self.PORT))
             self.s.listen(1)  # Listens for 1 connection
             self.connection, self.addr = self.s.accept()
-            print("Connected by " + str(self.addr))
-            while True:
-                data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
-                print("Received Data:")
-                print(data)
-                self.handle_command(data)
-                if data == "quit": break  # if data given is exit command
-                self.connection.sendall(data)  # echo data back!
+            print("[INFO] Connected by " + str(self.addr))
+
+            # start receive thread
+            receive_thread = threading.Thread(target=self.__receive, name="receive_thread")
+            receive_thread.start()
+            # Handle commands received
+            while not self.quit:
+                # If there is a command
+                if len(self.command_queue) > 0:
+                    self.command_queue_mutex.acquire()
+                    data = self.command_queue.pop(0)
+                    self.command_queue_mutex.release()
+
+                    if data == "quit": break  # if data given is exit command
+                    self.handle_command(data)
+                    # self.connection.sendall('jsonify the data')  # echo data back!
+            self.quit = True # stop the receive thread
+            receive_thread.join()
             self.close_connection()
         except Exception as e:
             # Close connection and print out error.
             self.close_connection()
-            print(e)
+            print("[ERROR] " + str(e))
 
-    
+
+    def __receive(self):
+        """Performs the receiving of the data from the backend.
+        """
+        self.s.setblocking(0)
+        while not self.quit:
+            data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
+            # Check if data exists (polling due to non-blocking)
+            if data:
+                if data == 'quit': break
+                decoded_data = json.loads(data)
+                # Lock queue and insert new command
+                print('[INFO] Received Command: ' + decoded_data['command'])
+                self.command_queue_mutex.acquire()
+                self.command_queue.append(decoded_data)
+                self.command_queue_mutex.release()
+                # print('[INFO] command_queue', self.command_queue)
+        self.quit = True
+        print("[TERMINATION] receive_thread has successfully terminated.")
+
+    def handle_command(self, decoded_data):
+        """This function handles any commands sent from the backend server.
+
+        Args:
+            data (bytes): The byte stream from the socket connection that is the data of the command.
+        """
+        command = decoded_data["command"]
+        
+        # Used in place of a switch-case as IronPython does not implement it. 
+        # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
+        command_dict = {Commands.OVERRIDE: Commands.override, 
+                        Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
+                        Commands.SYNC_SCRIPT: Commands.sync_script}  
+        
+        # run the command
+        try:
+            command_dict[command](Commands(), self, decoded_data)
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Unknown Command Was Given.")
+
+
     def close_connection(self):
         """Safely closes the Socket Connection.
         """
         self.s.close()
-        print("Connection to " + str(self.addr) + " was lost.")
+        print("[TERMINATION] Connection to " + str(self.addr) + " was lost.")
     
 
     def convert_to_locationwp(self, waypoints):
@@ -311,27 +367,6 @@ class MissionManager:
             res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"])
         return res
     
-
-    def handle_command(self, data):
-        """This function handles any commands sent from the backend server.
-
-        Args:
-            data (bytes): The byte stream from the socket connection that is the data of the command.
-        """
-        decoded_data = json.loads(data)
-        command = decoded_data["command"]
-        
-        # Used in place of a switch-case as IronPython does not implement it. 
-        # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
-        command_dict = {Commands.OVERRIDE: Commands.override, 
-                        Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
-                        Commands.SYNC_SCRIPT: Commands.sync_script}  
-        
-        # If the command exists, run the command
-        if command in command_dict:
-            command_dict[command](Commands(), self, decoded_data)
-        else:
-            print("Unknown Command Was Given")
 
 
 class Commands:
@@ -358,10 +393,10 @@ class Commands:
             mission_manager.waypoints = mp_waypoints
             mission_manager.waypoint_count = len(mp_waypoints)
             mission_manager.update()
-            print("OVERRIDE Waypoint Command Executed")
+            print("[COMMAND] OVERRIDE Waypoint Command Executed.")
         except Exception as e:
-            print(e)
-            print("ERROR: Handling OVERRIDE COMMAND: Waypoints sent from backend does not exist")
+            print('ERROR: ' + str(e))
+            print("[COMMAND] ERROR: Handling OVERRIDE COMMAND: Waypoints sent from backend does not exist or a Live Drone is not connected.")
         
 
     def override_flightplanner(self, mission_manager, decoded_data):
@@ -377,10 +412,10 @@ class Commands:
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
             mission_manager.FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
-            print("OVERRIDE FlightPlanner Waypoint Command Executed")
+            print("[COMMAND] OVERRIDE FlightPlanner Waypoint Command Executed.")
         except Exception as e:
-            print(e)
-            print("ERROR: Handling OVERRIDE_FLIGHTPLANNER COMMAND")
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling OVERRIDE_FLIGHTPLANNER COMMAND.")
 
 
     def sync_script(self, mission_manager, decoded_data):
@@ -394,10 +429,10 @@ class Commands:
         """
         try:
             mission_manager.sync()
-            print("SYNC SCRIPT Command Executed")
+            print("[COMMAND] SYNC SCRIPT Command Executed.")
         except Exception as e:
-            print(e)
-            print("ERROR: Handling SYNC_SCRIPT COMMAND")
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling SYNC_SCRIPT COMMAND.")
 
 
 def waypoint_mavlink_test():
@@ -436,7 +471,7 @@ def get_ip():
     """
     hostname = socket.gethostname()
     addr = socket.gethostbyname(hostname)
-    print("Hostname: " + hostname + "\nAddress(es): " + str(addr))
+    print("[INFO] Hostname: " + hostname + "\n[INFO] Address(es): " + str(addr))
 
 
 def waypoint_manager_test():
@@ -495,7 +530,6 @@ def waypoint_manager_test():
 get_ip()  # Print out the IPs of the device running Mission Planner.
 
 mm = MissionManager()  # Create a mission manager class.
-mm.close_connection()
 
 # id = int(MAVLink.MAV_CMD.WAYPOINT)
 # wp1 = Locationwp().Set(-37.8408347, 145.2241516, 100, id)
@@ -519,5 +553,5 @@ mm.close_connection()
 # MissionPlanner.MainV2.instance.FlightPlanner.readQGC110wpfile('file location')
 # MissionPlanner.MainV2.instance.FlightPlanner.WPtoScreen(List[Locationwp]([wp1, wp1, wp2, wp3, wp4]))
 
-print("Script Terminated!")
+print("[TERMINATION] Script Terminated!")
 
