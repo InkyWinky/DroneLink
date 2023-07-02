@@ -24,7 +24,7 @@ class MissionPlannerSocket():
     def connect(self):
         """Connects the Socket to the host and port, if successful, a new thread will be created to handle sends and receives.
         """
-        print(f"Attempting to connect to ({self.HOST}, {self.PORT})")
+        print("Attempting to connect to (" + self.HOST + ":" + str(self.PORT) + ")")
         try:
             self.s.connect((self.HOST, self.PORT))
             # Create a new thread to handle the data sent and received.
@@ -41,7 +41,7 @@ class MissionPlannerSocket():
         """
         self.s.sendall(bytes("quit", 'utf-8'))
         self.s.close()  # close socket
-        print(f"Connection to ({self.HOST}, {self.PORT}) was lost.")
+        print("Connection to (" + self.HOST + ":" + str(self.PORT) + ") was lost.")
 
 
     def input_data(self):
@@ -54,7 +54,7 @@ class MissionPlannerSocket():
             if txt_to_send == "quit":
                 break
             data = self.s.recv(self.chunk_size)
-            print("Data Echoed Back: ", data)
+            print("Data Echoed Back: " + data)
         self.close()
 
 
@@ -190,19 +190,16 @@ if __name__ == "__main__":
             print("--------------------------------------------------------------------------------------")
 
             option = input("Select Command To Execute (Enter 'q' to Quit): ")
-
-            match option:
-                case '1':
-                    mp_socket.override_flightplanner_waypoints(test_waypoints)
-                case '2':
-                    mp_socket.sync_script()
-                case '3':
-                    mp_socket.override_waypoints(test_waypoints)
-                case 'q':
-                    break
-                case default:
-                    print("Invalid Option.")
-
+            if option == '1':
+                mp_socket.override_flightplanner_waypoints(test_waypoints)
+            elif option == '2':
+                mp_socket.sync_script()
+            elif option == '3':
+                mp_socket.override_waypoints(test_waypoints)
+            elif option == 'q':
+                break
+            else:
+                print("Invalid Option.")
         mp_socket.close()
     except Exception as e:
         print(e)
