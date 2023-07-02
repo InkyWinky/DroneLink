@@ -3,6 +3,10 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import json
 import SplineGenerator.SplineGenerator as spline
 import time
+import sys
+import os
+sys.path.append(os.path.abspath("./CommunicationScript"))
+from MissionPlannerSocket import MissionPlannerSocket
 
 
 class ServerHandler(BaseHTTPRequestHandler):
@@ -57,7 +61,10 @@ if __name__ == "__main__":
     PORT = 8000
     IP = "127.0.0.1"
     server_address = (IP, PORT)
-
+    MP_HOST = raw_input("Enter IP to connect to: ")
+    # print(MP_HOST + type(MP_HOST))
+    MP_PORT = 7766
+    mp_socket = MissionPlannerSocket(MP_HOST, MP_PORT)
     server = HTTPServer(server_address, ServerHandler)
     print("Server started on IP address:", IP, "and port:", PORT, "...")
 
