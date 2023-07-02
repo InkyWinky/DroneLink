@@ -1,0 +1,21 @@
+mission\_planner\_socket package
+================================
+
+Submodules
+----------
+
+mission\_planner\_socket.MissionPlannerSocket module
+----------------------------------------------------
+
+.. automodule:: mission_planner_socket.MissionPlannerSocket
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: mission_planner_socket
+   :members:
+   :undoc-members:
+   :show-inheritance:
