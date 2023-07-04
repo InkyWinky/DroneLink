@@ -5,7 +5,7 @@ import SplineGenerator.SplineGenerator as spline
 import time
 import sys
 import os
-sys.path.append(os.path.abspath("./CommunicationScript"))
+sys.path.append(os.path.abspath("./CommunicationScript/"))
 from MissionPlannerSocket import MissionPlannerSocket
 
 
