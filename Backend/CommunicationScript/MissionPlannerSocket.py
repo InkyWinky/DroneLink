@@ -161,7 +161,7 @@ if __name__ == "__main__":
     try:
         # host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
         # host = "172.23.80.1"
-        host = input("Enter IP to connect to: ")
+        host = raw_input("Enter IP to connect to: ")
         
         PORT = 7766  # port number of the connection.
         mp_socket = MissionPlannerSocket(host, PORT)
