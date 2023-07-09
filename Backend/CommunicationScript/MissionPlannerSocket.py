@@ -16,9 +16,10 @@ class MissionPlannerSocket():
         """
         self.HOST = host
         self.PORT = port
+        self.COMMANDS = Commands()
         # Create Socket and connect to address
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.chunk_size = 1024
+        self.chunk_size = 1024 
         self.connect()
     
     def connect(self):
@@ -44,18 +45,27 @@ class MissionPlannerSocket():
         print("Connection to (" + self.HOST + ":" + str(self.PORT) + ") was lost.")
 
 
-    def input_data(self):
-        """Temporary handling of sending/receiving data (asks user to input data by keyboard). 
+    def handle_command(self, decoded_data):
+        """This function handles any commands sent from the mission planner script.
+
+        Args:
+            data (bytes): The byte stream from the socket connection that is the data of the command.
         """
-        txt_to_send = ""
-        while True:
-            txt_to_send = input("Enter Text to Send: ")
-            self.s.sendall(bytes(txt_to_send, 'utf-8'))
-            if txt_to_send == "quit":
-                break
-            data = self.s.recv(self.chunk_size)
-            print("Data Echoed Back: " + data)
-        self.close()
+        command = decoded_data["command"]
+        
+        # Used in place of a switch-case as IronPython does not implement it. 
+        # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
+        command_dict = {Commands.OVERRIDE: Commands.override, 
+                        Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
+                        Commands.SYNC_SCRIPT: Commands.sync_script,
+                        Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints}
+        
+        # run the command
+        try:
+            command_dict[command](Commands(), self, decoded_data)
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Unknown Command Was Given.")
 
 
     def override_waypoints(self, waypoints):
@@ -64,23 +74,29 @@ class MissionPlannerSocket():
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
-        action = Commands.override(waypoints)
-        self.s.sendall(bytes(action.serialize(), 'utf-8'))
+        action = self.COMMANDS.override(waypoints)
+        self.s.sendall(bytes(action.serialize()))
     
+
     def override_flightplanner_waypoints(self, waypoints):
         """Sends an Action to overwrite all the waypoints in the flight planner GUI.
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
-        action = Commands.override_flightplanner(waypoints)
-        self.s.sendall(bytes(action.serialize(), 'utf-8'))
+        action = self.COMMANDS.override_flightplanner(waypoints)
+        self.s.sendall(bytes(action.serialize()))
+
 
     def sync_script(self):
         """Sends an Action to sync all the waypoints in the flight planner to the mission planner script.
         """
-        action = Commands.sync_script()
-        self.s.sendall(bytes(action.serialize(), 'utf-8'))
+        action = self.COMMANDS.sync_script()
+        self.s.sendall(bytes(action.serialize()))
+
+
+    
+
 class Action:
     """The class that is sent from the backend connection to execute commands on the mission planner script.
     """
@@ -117,8 +133,10 @@ class Commands:
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
+    GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
 
-    def override(waypoints):
+
+    def override(self, waypoints):
         """Creates an action that is to be sent to overrides all the waypoints in mission planner.
 
         Args:
@@ -131,7 +149,7 @@ class Commands:
         action.waypoints = waypoints
         return action
     
-    def override_flightplanner(waypoints):
+    def override_flightplanner(self, waypoints):
         """Creates an action that is to be sent to overrides all the waypoints in the flight planner GUI.
 
         Args:
@@ -144,7 +162,7 @@ class Commands:
         action.waypoints = waypoints
         return action
     
-    def sync_script():
+    def sync_script(self):
         """Creates an action that is to be send to sync all the waypoints in the flight planner to the mission planner script.
         Returns:
             Action: A sync script action.
@@ -155,10 +173,19 @@ class Commands:
         action = Action(Commands.SYNC_SCRIPT)
         return action
         
+    
+    def get_flightplanner_waypoints(self):
+        """Requests for the waypoints from the Flightplanner tab on the connected mission planner.
+
+        Returns:
+            Action: A get_flightplanner_waypoints action.
+        """
+        action = Action(Commands.get_flightplanner_waypoints)
+        return action
 
 
 if __name__ == "__main__":
-    try:
+    # try:
         # host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
         # host = "172.23.80.1"
         host = raw_input("Enter IP to connect to: ")
@@ -186,23 +213,26 @@ if __name__ == "__main__":
             print("[ 1 ]. OVERRIDE FLIGHTPLANNER WAYPOINTS (Hardcoded Waypoints)")
             print("[ 2 ]. SYNC SCRIPT")
             print("[ 3 ]. OVERRIDE WAYPOINTS on Live Drone (Hardcoded waypoints)")
+            print("[ 4 ]. GET FLIGHTPLANNER WAYPOINTS")
             print("[ q ]. Quit")
             print("--------------------------------------------------------------------------------------")
 
-            option = input("Select Command To Execute (Enter 'q' to Quit): ")
+            option = raw_input("Select Command To Execute (Enter 'q' to Quit): ")
             if option == '1':
                 mp_socket.override_flightplanner_waypoints(test_waypoints)
             elif option == '2':
                 mp_socket.sync_script()
             elif option == '3':
                 mp_socket.override_waypoints(test_waypoints)
+            elif option == '4':
+                mp_socket.get_flightplanner_waypoints()
             elif option == 'q':
                 break
             else:
                 print("Invalid Option.")
         mp_socket.close()
-    except Exception as e:
-        print(e)
+    # except Exception as e:
+    #     print(e)
 
 
 
