@@ -40,7 +40,7 @@ class MissionPlannerSocket():
     def close(self):
         """Safely closes the Socket.
         """
-        self.s.sendall(bytes("quit", 'utf-8'))
+        self.s.sendall(bytes("quit"))
         self.s.close()  # close socket
         print("Connection to (" + self.HOST + ":" + str(self.PORT) + ") was lost.")
 
