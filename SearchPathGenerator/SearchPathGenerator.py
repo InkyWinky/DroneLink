@@ -291,23 +291,23 @@ class SearchPathGenerator:
         return "All g", "All g"
 
     def validation_path_segment_overlap(self, waypoints):
+        # TODO: Fix this function. It is incorrectly declaring two segments as intersecting when they do not
         for index1 in range(len(waypoints) - 1):
             vertex1 = waypoints[index1]
             vertex2 = waypoints[index1 + 1]
             edge1 = Segment(vertex1, vertex2)
-            for index2 in range(len(waypoints) - 1):
-                if index2 != index1 and index2 + 1 != index1 and index2 - 1 != index1:
-                    vertex3 = waypoints[index2]
-                    vertex4 = waypoints[index2 + 1]
-                    edge2 = Segment(vertex3, vertex4)
+            for index2 in range(index1 + 2, len(waypoints) - 1):
+                vertex3 = waypoints[index2]
+                vertex4 = waypoints[index2 + 1]
+                edge2 = Segment(vertex3, vertex4)
 
-                    # Check for collision
-                    if do_segments_intersect(edge1, edge2):
-                        print("INTERSECTION:", edge1.start.x, edge1.start.y)
-                        print("INTERSECTION:", edge1.end.x, edge1.end.y)
-                        print("INTERSECTION:", edge2.start.x, edge2.start.y)
-                        print("INTERSECTION:", edge2.end.x, edge2.end.y)
-                        return None, "Two path segments intersect"
+                # Check for collision
+                if do_segments_intersect(edge1, edge2):
+                    print("INTERSECTION:", edge1.start.x, edge1.start.y)
+                    print("INTERSECTION:", edge1.end.x, edge1.end.y)
+                    print("INTERSECTION:", edge2.start.x, edge2.start.y)
+                    print("INTERSECTION:", edge2.end.x, edge2.end.y)
+                    return None, "Two path segments intersect"
 
         return "All g", "All g"
 
@@ -421,9 +421,6 @@ def raycast_to_polygon(origin=None, direction=None, polygon=None):
 
     return None
 
-def ccw(A, B, C):
-    return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x)
-
 def onSegment(p, q, r):
     if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
             (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
@@ -431,31 +428,23 @@ def onSegment(p, q, r):
     return False
 
 def orientation(p, q, r):
-    # to find the orientation of an ordered triplet (p,q,r)
-    # function returns the following values:
-    # 0 : Collinear points
-    # 1 : Clockwise points
-    # 2 : Counterclockwise
+    # To find the orientation of an ordered triplet (p,q,r)
 
     val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
     if val > 0:
-
         # Clockwise orientation
         return 1
     elif val < 0:
-
         # Counterclockwise orientation
         return 2
     else:
-
         # Collinear orientation
         return 0
 
-def do_segments_intersect_efficient(segment1=None, segment2=None):
-    p1 = segment1.start
-    q1 = segment1.end
-    p2 = segment2.start
-    q2 = segment2.end
+def do_segments_intersect(segment1=None, segment2=None):
+    p1, q1 = segment1.start, segment1.end
+    p2, q2 = segment2.start, segment2.end
+
     # Find the 4 orientations required for
     # the general and special cases
     o1 = orientation(p1, q1, p2)
@@ -487,24 +476,6 @@ def do_segments_intersect_efficient(segment1=None, segment2=None):
 
     # If none of the cases
     return False
-
-def do_segments_intersect(segment1=None, segment2=None):
-    A = segment1.start
-    B = segment1.end
-    C = segment2.start
-    D = segment2.end
-
-    # Determine if segments are collinear
-    angle_segment1 = calculate_angle_from_points(segment1.start, segment1.end)
-    angle_segment2 = calculate_angle_from_points(segment2.start, segment2.end)
-
-    angle_diff = abs(angle_segment1 - angle_segment2)
-    if round(angle_diff, 5) == 0 or round(angle_diff, 5) == round(pi, 5):
-        # Check proximity (if points are on the same line)
-        if round((segment1.end.y - segment1.start.y) * (segment2.end.x - segment2.start.x), 15) == round((segment2.end.y - segment2.start.y) * (segment1.end.x - segment1.start.x), 15) == round((segment2.end.y - segment1.start.y) * (segment1.end.x - segment1.start.x), 15):
-            return False
-
-    return ccw(A, C, D) != ccw(B, C, D) and ccw(A, B, C) != ccw(A, B, D)
 
 def calculate_layer_distance(viewing_radius=None, paint_overlap=None):
     return viewing_radius * (1 - paint_overlap)
@@ -866,6 +837,10 @@ def main_function():
     # path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
     #
     # path_generator.generate_path(do_plot=True)
+
+    # seg1 = Segment(Point(-2.08866870491, 9.28946293651), Point(1.1445183324, 5.47809715246))
+    # seg2 = Segment(Point(4.37770536971, 1.66673136842), Point(7.61089240702, -2.14463441562))
+    # print(do_segments_intersect(seg1, seg2))
 
 
 if __name__ == "__main__":
