@@ -94,15 +94,21 @@ class MissionPlannerSocket():
         action = self.COMMANDS.sync_script()
         self.s.sendall(bytes(action.serialize()))
 
+    def arm_aircraft(self):
+        action = self.COMMANDS.arm_aircraft()
+        self.s.sendall(bytes(action.serialize()))
+
 
     
 
 class Action:
     """The class that is sent from the backend connection to execute commands on the mission planner script.
     """
-    def __init__(self, command):
+    def __init__(self, command, arm=None):
         self.command = command
         self.waypoints = None
+        self.arm = arm
+        
     
 
     def serialize(self):
@@ -111,7 +117,7 @@ class Action:
         Returns:
             str: The Action in string format. {"command":command, "waypoints":waypoints}
         """
-        return json.dumps({"command":self.command, "waypoints":self.waypoints})
+        return json.dumps({"command":self.command, "waypoints":self.waypoints, "arm":self.arm})
 
 
     def deserialize(self, data):
@@ -134,6 +140,7 @@ class Commands:
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
+    ARM = "ARM"
 
 
     def override(self, waypoints):
@@ -149,6 +156,7 @@ class Commands:
         action.waypoints = waypoints
         return action
     
+
     def override_flightplanner(self, waypoints):
         """Creates an action that is to be sent to overrides all the waypoints in the flight planner GUI.
 
@@ -162,6 +170,7 @@ class Commands:
         action.waypoints = waypoints
         return action
     
+
     def sync_script(self):
         """Creates an action that is to be send to sync all the waypoints in the flight planner to the mission planner script.
         Returns:
@@ -182,7 +191,11 @@ class Commands:
         """
         action = Action(Commands.get_flightplanner_waypoints)
         return action
+    
 
+    def arm_aircraft(self):
+        action = Action(Commands.ARM, arm=True)
+        return action
 
 if __name__ == "__main__":
     # try:
@@ -213,6 +226,7 @@ if __name__ == "__main__":
             print("[ 1 ]. OVERRIDE FLIGHTPLANNER WAYPOINTS (Hardcoded Waypoints)")
             print("[ 2 ]. SYNC SCRIPT")
             print("[ 3 ]. OVERRIDE WAYPOINTS on Live Drone (Hardcoded waypoints)")
+            print("[ 4 ]. ARM/DISARM AIRCRAFT")
             print("[ q ]. Quit")
             print("--------------------------------------------------------------------------------------")
 
@@ -223,6 +237,8 @@ if __name__ == "__main__":
                 mp_socket.sync_script()
             elif option == '3':
                 mp_socket.override_waypoints(test_waypoints)
+            elif option == '4':
+                mp_socket.arm_aircraft()
             elif option == 'q':
                 break
             else:

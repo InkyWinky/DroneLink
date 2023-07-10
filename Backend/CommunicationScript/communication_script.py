@@ -269,6 +269,11 @@ class MissionManager:
         self.waypoints[0] = waypoint
     
 
+    def arm_aircraft(self):
+        MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
+        MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
+        #MAV.doARM(True, True) -- FORCE ARMING THE AIRCRAFT (NOT IDEAL)
+
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
         This function is private.
@@ -335,7 +340,8 @@ class MissionManager:
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
         command_dict = {Commands.OVERRIDE: Commands.override, 
                         Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
-                        Commands.SYNC_SCRIPT: Commands.sync_script
+                        Commands.SYNC_SCRIPT: Commands.sync_script,
+                        Commands.ARM: Commands.arm_aircraft
                         }  
         
         # run the command
@@ -378,6 +384,8 @@ class Commands:
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
+    ARM = "ARM"
+
 
     def override(self, mission_manager, decoded_data):
         """Overrides all the waypoints in mission planner.
@@ -435,9 +443,14 @@ class Commands:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling SYNC_SCRIPT COMMAND.")
 
-
-    
-
+  
+    def arm_aircraft(self, misson_manager, decoded_data):
+        try:
+            misson_manager.arm_aircraft()
+            print("[COMMAND] ARM Command Executed.")
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling ARM COMMAND.")
 
 # ------------------------------------ End Classes ------------------------------------
 # def waypoint_mavlink_test():
