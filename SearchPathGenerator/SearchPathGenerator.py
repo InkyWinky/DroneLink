@@ -14,6 +14,18 @@ class Polygon:
         self.maximum = self.calculate_maximum_length()
         self.segments = self.calculate_segments()
         self.count = self.calculate_count()
+        self.centroid = self.calculate_centroid()
+
+    def calculate_centroid(self):
+        x_sum = 0
+        y_sum = 0
+        for vertex in self.vertices:
+            x_sum += vertex.x
+            y_sum += vertex.y
+        x_avg = x_sum / self.count
+        y_avg = y_sum / self.count
+        centroid = Point(x_avg, y_avg)
+        return centroid
 
     def calculate_maximum_length(self):
         max_length = 0
@@ -145,7 +157,6 @@ class SearchPathGenerator:
     paint_radius = None  # The radius in metres around the plane that the cameras can see / paint
     layer_distance = None
 
-    first_point = None
     error = False
 
     # Output Data
@@ -203,10 +214,23 @@ class SearchPathGenerator:
 
         # Complete post-calculation data validation checks
         validation, error_message = self.do_post_validation_checks(waypoints=rough_points)
-        if do_plot or validation is None:
-            self.error = True
-            # self.print_waypoints(rough_points)
+        if do_plot:
+            self.print_waypoints(rough_points)
             self.plot_waypoints(waypoints=rough_points, polygon=self.search_area)
+        elif validation is None:
+            self.error = error_message
+            self.print_debug()
+            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area)
+
+    def print_debug(self):
+        print("ERROR:", self.error)
+        print("\tSearch Area:")
+        for vertex in self.search_area.vertices:
+            print("\t\t", vertex.x, vertex.y)
+        print("\tStart Point:")
+        print("\t\t", self.start_point.x, self.start_point.y)
+        print("\tLayer Distance:")
+        print("\t\t", self.layer_distance)
 
     def smooth_rough_points(self):
         pass
@@ -216,6 +240,15 @@ class SearchPathGenerator:
             print(index, " | ", waypoint.x, waypoint.y)
 
     def plot_waypoints(self, waypoints=None, polygon=None, equal_axis=True):
+        poly_x = []
+        poly_y = []
+        for point in polygon.vertices:
+            poly_x.append(point.x)
+            poly_y.append(point.y)
+        poly_x.append(polygon.vertices[0].x)
+        poly_y.append(polygon.vertices[0].y)
+        plt.plot(poly_x, poly_y)
+
         x_vals = []
         y_vals = []
         for point in waypoints:
@@ -226,20 +259,11 @@ class SearchPathGenerator:
 
         plt.scatter(waypoints[0].x, waypoints[0].y, color='red')
         plt.annotate("First waypoint", (waypoints[0].x, waypoints[0].y), textcoords="offset points", xytext=(0, 10), ha='center')
-        plt.scatter(self.first_point.x, self.first_point.y, color='purple')
-        plt.annotate("Centre of calculations", (self.first_point.x, self.first_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
+        plt.scatter(self.search_area.centroid.x, self.search_area.centroid.y, color='purple')
+        plt.annotate("Centre of calculations", (self.search_area.centroid.x, self.search_area.centroid.y), textcoords="offset points", xytext=(0, 10), ha='center')
         plt.scatter(self.start_point.x, self.start_point.y, marker='^', color='black')
         plt.annotate("Takeoff", (self.start_point.x, self.start_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
 
-        poly_x = []
-        poly_y = []
-        for point in polygon.vertices:
-            poly_x.append(point.x)
-            poly_y.append(point.y)
-        poly_x.append(polygon.vertices[0].x)
-        poly_y.append(polygon.vertices[0].y)
-
-        plt.plot(poly_x, poly_y)
         if equal_axis:
             plt.axis('equal')
 
@@ -248,23 +272,64 @@ class SearchPathGenerator:
         plt.show()
 
     def do_post_validation_checks(self, waypoints=None):
+        # Check if any points lie outside the polygon
+        validation_flag, error_message = self.validation_point_outside_polygon(waypoints)
+        if validation_flag is None:
+            return validation_flag, error_message
+
+        # Check if any path segments overlap with each other
+        validation_flag, error_message = self.validation_path_segment_overlap(waypoints)
+        if validation_flag is None:
+            return validation_flag, error_message
+
+        return "All g", "All g"
+
+    def validation_point_outside_polygon(self, waypoints):
         for point in waypoints:
             if not self.search_area.contains(point) and len(waypoints) > 1:
                 return None, "A point is not in the search area"
         return "All g", "All g"
 
+    def validation_path_segment_overlap(self, waypoints):
+        for index1 in range(len(waypoints) - 1):
+            vertex1 = waypoints[index1]
+            vertex2 = waypoints[index1 + 1]
+            edge1 = Segment(vertex1, vertex2)
+            for index2 in range(len(waypoints) - 1):
+                if index2 != index1 and index2 + 1 != index1 and index2 - 1 != index1:
+                    vertex3 = waypoints[index2]
+                    vertex4 = waypoints[index2 + 1]
+                    edge2 = Segment(vertex3, vertex4)
+
+                    # Check for collision
+                    if do_segments_intersect(edge1, edge2):
+                        print("INTERSECTION:", edge1.start.x, edge1.start.y)
+                        print("INTERSECTION:", edge1.end.x, edge1.end.y)
+                        print("INTERSECTION:", edge2.start.x, edge2.start.y)
+                        print("INTERSECTION:", edge2.end.x, edge2.end.y)
+                        return None, "Two path segments intersect"
+
+        return "All g", "All g"
+
     def generate_points(self):
         # Generate the first point depending on where the plane starts
-        first_point = self.generate_first_point()
-        self.first_point = first_point
-        forwards_waypoints = calculate_points_along_polygon_distanced(start_point=first_point, polygon=self.search_area, orientation=self.orientation, layer_distance=self.layer_distance)
-        backwards_waypoints = calculate_points_along_polygon_distanced(start_point=first_point, polygon=self.search_area, orientation=self.orientation + pi, layer_distance=self.layer_distance)
+        centroid = self.search_area.centroid
+        forwards_waypoints = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation, layer_distance=self.layer_distance, direction="forward")
+        forwards_waypoints.pop(0)  # Remove the path start point
+        backwards_waypoints = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation + pi, layer_distance=self.layer_distance, direction="backward")
         backwards_waypoints.pop(0)  # Remove the path start point
-
         backwards_waypoints.reverse()
+
         rough_waypoints = []
         rough_waypoints.extend(backwards_waypoints)
         rough_waypoints.extend(forwards_waypoints)
+
+        # Find which end of the path is closest to the take-off location. Make the closest one the zeroth index by reversing if necessary
+        distance_start = calculate_distance_between_points(self.start_point, rough_waypoints[0])
+        distance_end = calculate_distance_between_points(self.start_point, rough_waypoints[-1])
+        if distance_end < distance_start:
+            rough_waypoints.reverse()
+
         return rough_waypoints
 
     def generate_first_point(self):
@@ -359,11 +424,86 @@ def raycast_to_polygon(origin=None, direction=None, polygon=None):
 def ccw(A, B, C):
     return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x)
 
+def onSegment(p, q, r):
+    if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
+            (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
+        return True
+    return False
+
+def orientation(p, q, r):
+    # to find the orientation of an ordered triplet (p,q,r)
+    # function returns the following values:
+    # 0 : Collinear points
+    # 1 : Clockwise points
+    # 2 : Counterclockwise
+
+    val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
+    if val > 0:
+
+        # Clockwise orientation
+        return 1
+    elif val < 0:
+
+        # Counterclockwise orientation
+        return 2
+    else:
+
+        # Collinear orientation
+        return 0
+
+def do_segments_intersect_efficient(segment1=None, segment2=None):
+    p1 = segment1.start
+    q1 = segment1.end
+    p2 = segment2.start
+    q2 = segment2.end
+    # Find the 4 orientations required for
+    # the general and special cases
+    o1 = orientation(p1, q1, p2)
+    o2 = orientation(p1, q1, q2)
+    o3 = orientation(p2, q2, p1)
+    o4 = orientation(p2, q2, q1)
+
+    # General case
+    if (o1 != o2) and (o3 != o4):
+        return True
+
+    # Special Cases
+
+    # p1 , q1 and p2 are collinear and p2 lies on segment p1q1
+    if (o1 == 0) and onSegment(p1, p2, q1):
+        return True
+
+    # p1 , q1 and q2 are collinear and q2 lies on segment p1q1
+    if (o2 == 0) and onSegment(p1, q2, q1):
+        return True
+
+    # p2 , q2 and p1 are collinear and p1 lies on segment p2q2
+    if (o3 == 0) and onSegment(p2, p1, q2):
+        return True
+
+    # p2 , q2 and q1 are collinear and q1 lies on segment p2q2
+    if (o4 == 0) and onSegment(p2, q1, q2):
+        return True
+
+    # If none of the cases
+    return False
+
 def do_segments_intersect(segment1=None, segment2=None):
     A = segment1.start
     B = segment1.end
     C = segment2.start
     D = segment2.end
+
+    # Determine if segments are collinear
+    angle_segment1 = calculate_angle_from_points(segment1.start, segment1.end)
+    angle_segment2 = calculate_angle_from_points(segment2.start, segment2.end)
+
+    angle_diff = abs(angle_segment1 - angle_segment2)
+    if round(angle_diff, 5) == 0 or round(angle_diff, 5) == round(pi, 5):
+        # Check proximity (if points are on the same line)
+        if round((segment1.end.y - segment1.start.y) * (segment2.end.x - segment2.start.x), 15) == round((segment2.end.y - segment2.start.y) * (segment1.end.x - segment1.start.x), 15) == round((segment2.end.y - segment1.start.y) * (segment1.end.x - segment1.start.x), 15):
+            return False
+
     return ccw(A, C, D) != ccw(B, C, D) and ccw(A, B, C) != ccw(A, B, D)
 
 def calculate_layer_distance(viewing_radius=None, paint_overlap=None):
@@ -430,22 +570,17 @@ def angle_between_points(pointA=None, pointB=None, pointC=None):
     return angle + pi
 
 def calculate_bisection_angle(point_A=None, point_B=None, point_C=None, acute=True):
-    # TODO: Make this function work
     angle_to_A = math.atan2(point_A.y - point_B.y, point_A.x - point_B.x)
     angle_to_C = math.atan2(point_C.y - point_B.y, point_C.x - point_B.x)
     angle_diff = abs(angle_to_A - angle_to_C)
+    average = (angle_to_A + angle_to_C) / 2
 
     if angle_diff > pi:
-        angle_to_A = clamp_angle(angle_to_A + pi)
-        angle_to_C = clamp_angle(angle_to_C + pi)
+        bisection_angle = average - pi
+    else:
+        bisection_angle = average
 
-    bisection_angle = (angle_to_A + angle_to_C) / 2
-
-    if angle_diff > pi:
-        clamp_angle(pi - bisection_angle)
-
-    return bisection_angle
-
+    return clamp_angle(bisection_angle)
 
 def calculate_closest_point_on_polygon(polygon=None, start_point=None):
     # Loop over each segment of search area
@@ -462,11 +597,14 @@ def calculate_closest_point_on_polygon(polygon=None, start_point=None):
             closest_distance = new_closest_distance
     return closest_point
 
-def calculate_points_along_polygon_distanced(start_point=None, polygon=None, orientation=None, layer_distance=None):
+def calculate_points_along_polygon_distanced(start_point=None, polygon=None, orientation=None, layer_distance=None, direction=None):
     rough_waypoints = [start_point]
     count = 0
     max_points = 100
-    directions = ["forward", "left"]  # 0 index is current direction to go, 1 index is previous direction travelled
+    if direction == "forward":
+        directions = ["forward", "left"]  # 0 index is current direction to go, 1 index is previous direction travelled
+    else:
+        directions = ["forward", "left"]
     new_point = None
     while count < max_points:
         # If the current direction in direction of orientation or backwards, raycast then backtrack by layer distance
@@ -551,6 +689,15 @@ def handle_sideways_direction(origin=None, polygon=None, orientation=None, layer
     # If the point is outside the search area now, bring is back in and put it near the closest vertex
     closest_vertex = find_closest_vertex_index(polygon=polygon, point=distant_point)
     distant_point = calculate_point_away_from_polygon(polygon=polygon, centre_vertex_index=closest_vertex, distance=layer_distance/2)
+
+    # If it is still outside, keep lowering the layer distance maximum 8 times
+    count = 2
+    while not polygon.contains(distant_point):
+        distant_point = calculate_point_away_from_polygon(polygon=polygon, centre_vertex_index=closest_vertex, distance=layer_distance / count)
+        count += 1
+        if count >= 10:
+            return None
+
     return distant_point
 
 def find_closest_vertex_index(polygon=None, point=None):
@@ -659,7 +806,7 @@ def create_random_start_point(x_lim=None, y_lim=None):
     return random_start
 
 def do_entire_simulation(do_plot=True):
-    search_area_polygon = create_random_search_area(6)
+    search_area_polygon = create_random_search_area(7)
     layer_distance = create_random_layer_distance([0.5, 5])
     start_point = create_random_start_point()
 
@@ -682,17 +829,44 @@ def do_entire_simulation(do_plot=True):
     path_generator.generate_path(do_plot=do_plot)
     return path_generator.error
 
-def main_function():
-    count = 1000
+def run_number_of_sims(count=None, plot=None):
     error_count = 0
     for index in range(count):
-        if index % round(count / 10) == 0:
+        if index % math.ceil(count / 10) == 0:
             print("Progress:", index / count * 100, "% |", index, "/", count)
-        error = do_entire_simulation(do_plot=False)
+        error = do_entire_simulation(do_plot=plot)
         if error:
             error_count += 1
 
     print("Simulation Complete | Error count:", error_count, "/", count, "| Error percentage:", error_count / count * 100, "%")
+
+def main_function():
+    run_number_of_sims(100, plot=False)
+
+    # raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
+    # minimum_turn_radius = 0.5
+    # search_area = [[11.423, 24.070], [10.304, 24.139], [19.507, -0.470], [19.660, -0.329], [21.390, 1.617], [22.139, 2.745], [23.923, 7.510]]
+    # # search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
+    # # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
+    # curve_resolution = 4
+    # start_point = Point(26.637, 23.066)
+    # sensor_size = (12.8, 9.6)
+    # focal_length = 16
+    # paint_overlap = 0.1
+    # angle = None
+    # layer_distance = 4.0513
+    #
+    # points = []
+    # for point in search_area:
+    #     points.append(Point(point[0], point[1]))
+    # search_area_polygon = Polygon(points)
+    #
+    # path_generator = SearchPathGenerator()
+    # path_generator.set_data(search_area=search_area_polygon)
+    # path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
+    #
+    # path_generator.generate_path(do_plot=True)
+
 
 if __name__ == "__main__":
     main_function()
