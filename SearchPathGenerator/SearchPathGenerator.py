@@ -1,22 +1,78 @@
 from __future__ import division, print_function
+
+import time
 import matplotlib.pyplot as plt
 import math
+import random
 
 pi = 3.141592653589793
-
+random.seed(time.time())
 
 class Polygon:
     def __init__(self, vertices=None):
         self.vertices = vertices  # List of Point instances
         self.maximum = self.calculate_maximum_length()
+        self.segments = self.calculate_segments()
+        self.count = self.calculate_count()
 
     def calculate_maximum_length(self):
         max_length = 0
-        for index in range(len(self.vertices)):
-            length = calculate_distance_between_points(self.vertices[index], self.vertices[(index + 1) % len(self.vertices)])
-            if length > max_length:
-                max_length = length
+        for vertex1_index in range(len(self.vertices)):
+            for vertex2_index in range(len(self.vertices) - 1):
+                if vertex1_index == vertex2_index:
+                    continue
+                vertex1 = self.vertices[vertex1_index]
+                vertex2 = self.vertices[vertex2_index]
+                length = calculate_distance_between_points(vertex1, vertex2)
+                if length > max_length:
+                    max_length = length
         return max_length
+
+    def calculate_segments(self):
+        segments = []
+        for index in range(len(self.vertices)):
+            vertex1 = self.vertices[index]
+            vertex2 = self.vertices[(index + 1) % len(self.vertices)]
+            new_segment = Segment(vertex1, vertex2)
+            segments.append(new_segment)
+        return segments
+
+    def calculate_count(self):
+        count = len(self.vertices)
+        return count
+
+    def contains(self, point=None):
+        # Cast ray to the right and count how many intersections
+        ray_end = create_point(point, self.maximum, 0)
+        ray = Segment(point, ray_end)
+        intersection_count = 0
+        intersections = []
+        for segment in self.segments:
+            if do_segments_intersect(ray, segment):
+                intersection_count += 1
+                intersections.append(find_segment_intersection(ray, segment))
+
+        # If no intersections, point not in the polygon
+        if intersection_count == 0:
+            return False
+
+        # Filter out duplicate points
+        indices_to_remove = []
+        for index1, point1 in enumerate(intersections):
+            for index2, point2 in enumerate(intersections):
+                if index1 != index2 and point1.equals(point2):
+                    indices_to_remove.append(index1)
+
+        indices_to_remove.sort()
+        for index in indices_to_remove:
+            intersections.pop(index)
+
+        # If odd intersection count, point is contained by polygon
+        if intersection_count % 2 != 0:
+            return True
+
+        # If even intersection count, point is not with polygon
+        return False
 
 
 class Waypoint:
@@ -29,7 +85,7 @@ class Waypoint:
         self.curve_waypoints = None  # List of Point instances that are the interpolated points of the curve
 
 
-class Line:
+class Segment:
     def __init__(self, start_point=None, end_point=None):
         self.start = start_point
         self.end = end_point
@@ -54,6 +110,11 @@ class Point:
 
     def multiply(self, scalar):
         return Point(self.x * scalar, self.y * scalar)
+
+    def equals(self, point=None):
+        if self.x == point.x and self.y == point.y:
+            return True
+        return False
 
 
 def calculate_distance_between_points(point_1=None, point_2=None):
@@ -84,6 +145,9 @@ class SearchPathGenerator:
     paint_radius = None  # The radius in metres around the plane that the cameras can see / paint
     layer_distance = None
 
+    first_point = None
+    error = False
+
     # Output Data
     path_waypoints = None  # Generated list of Waypoint class instances that make up the search path
     flight_time = None  # Calculated (estimate) flight time for the given path
@@ -96,7 +160,7 @@ class SearchPathGenerator:
         if boundary is not None:
             self.boundary = boundary
 
-    def set_parameters(self, minimum_turn_radius=None, boundary_resolution=None, boundary_tolerance=None, curve_resolution=None, orientation=None, start_point=None, focal_length=None, sensor_size=None, paint_overlap=None):
+    def set_parameters(self, minimum_turn_radius=None, boundary_resolution=None, layer_distance=None, boundary_tolerance=None, curve_resolution=None, orientation=None, start_point=None, focal_length=None, sensor_size=None, paint_overlap=None):
         if minimum_turn_radius is not None:
             self.minimum_turn_radius = minimum_turn_radius
         if boundary_resolution is not None:
@@ -115,40 +179,57 @@ class SearchPathGenerator:
             self.sensor_size = sensor_size
         if paint_overlap is not None:
             self.paint_overlap = paint_overlap
+        if layer_distance is not None:
+            self.layer_distance = layer_distance
 
-    def generate_path(self):
+    def generate_path(self, do_plot=True):
         # Pre-algorithm calculations
         self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)
-        self.layer_distance = calculate_layer_distance(viewing_radius=self.paint_radius, paint_overlap=self.paint_overlap)
-        self.layer_distance = 0.5
+        if self.layer_distance is None:
+            self.layer_distance = calculate_layer_distance(viewing_radius=self.paint_radius, paint_overlap=self.paint_overlap)
+        if self.orientation is None:
+            self.orientation = calculate_best_orientation(polygon=self.search_area)
 
-        # Complete data and parameter validation checks
-        validation, error_message = self.do_validation_checks()
+        # Complete pre-calculation data and parameter validation checks
+        validation, error_message = self.do_pre_validation_checks()
         if validation is None:
             print(error_message)
+            self.error = True
             return validation, error_message
 
         # Generate path points
         rough_points = self.generate_points()
-        self.print_waypoints(rough_points)
         smooth_points = self.smooth_rough_points()
-        self.plot_waypoints(waypoints=rough_points, polygon=self.search_area)
+
+        # Complete post-calculation data validation checks
+        validation, error_message = self.do_post_validation_checks(waypoints=rough_points)
+        if do_plot or validation is None:
+            self.error = True
+            # self.print_waypoints(rough_points)
+            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area)
 
     def smooth_rough_points(self):
         pass
 
     def print_waypoints(self, waypoints=None):
-        index = 1
-        for waypoint in waypoints:
+        for index, waypoint in enumerate(waypoints):
             print(index, " | ", waypoint.x, waypoint.y)
 
-    def plot_waypoints(self, waypoints=None, polygon=None):
+    def plot_waypoints(self, waypoints=None, polygon=None, equal_axis=True):
         x_vals = []
         y_vals = []
         for point in waypoints:
             x_vals.append(point.x)
             y_vals.append(point.y)
+        plt.plot(x_vals, y_vals)
         plt.scatter(x_vals, y_vals)
+
+        plt.scatter(waypoints[0].x, waypoints[0].y, color='red')
+        plt.annotate("First waypoint", (waypoints[0].x, waypoints[0].y), textcoords="offset points", xytext=(0, 10), ha='center')
+        plt.scatter(self.first_point.x, self.first_point.y, color='purple')
+        plt.annotate("Centre of calculations", (self.first_point.x, self.first_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
+        plt.scatter(self.start_point.x, self.start_point.y, marker='^', color='black')
+        plt.annotate("Takeoff", (self.start_point.x, self.start_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
 
         poly_x = []
         poly_y = []
@@ -159,49 +240,48 @@ class SearchPathGenerator:
         poly_y.append(polygon.vertices[0].y)
 
         plt.plot(poly_x, poly_y)
+        if equal_axis:
+            plt.axis('equal')
+
+        plt.title(self.orientation * 180 / pi)
+        plt.xlabel(self.layer_distance)
         plt.show()
 
+    def do_post_validation_checks(self, waypoints=None):
+        for point in waypoints:
+            if not self.search_area.contains(point) and len(waypoints) > 1:
+                return None, "A point is not in the search area"
+        return "All g", "All g"
+
     def generate_points(self):
-        rough_waypoints = []
         # Generate the first point depending on where the plane starts
         first_point = self.generate_first_point()
-        rough_waypoints = calculate_points_along_polygon_distanced(start_point=first_point, polygon=self.search_area, orientation=self.orientation, layer_distance=self.layer_distance)
+        self.first_point = first_point
+        forwards_waypoints = calculate_points_along_polygon_distanced(start_point=first_point, polygon=self.search_area, orientation=self.orientation, layer_distance=self.layer_distance)
+        backwards_waypoints = calculate_points_along_polygon_distanced(start_point=first_point, polygon=self.search_area, orientation=self.orientation + pi, layer_distance=self.layer_distance)
+        backwards_waypoints.pop(0)  # Remove the path start point
 
-        # rough_waypoints.append(first_point)
-        # # Start loop to generate all following points until whole area is searched
-        # # Raycast in direction of orientation until polygon is hit then backtrack by layer distance
-        # raycast_point = raycast_to_polygon(origin=rough_waypoints[-1], direction=self.orientation, polygon=self.search_area)
-        # print("First point:", rough_waypoints[-1].x, rough_waypoints[-1].y)
-        # print("Raycast:", raycast_point.x, raycast_point.y)
-        # distanced_point = Point(raycast_point.x + self.layer_distance * math.cos(self.orientation + pi), raycast_point.y + self.layer_distance * math.sin(self.orientation + pi))
-        # rough_waypoints.append(distanced_point)
-        # # Go in positive perpendicular direction by layer distance then raycast in positive direction of orientation and backtrack by layer distance
-        # distant_perpendicular_point = Point(distanced_point.x + self.layer_distance * math.cos(self.orientation - pi / 2), distanced_point.y + self.layer_distance * math.sin(self.orientation - pi / 2))
-        # print("Previous point:", distanced_point.x, distanced_point.y)
-        # print("Distanced point:", distant_perpendicular_point.x, distant_perpendicular_point.y)
-        # raycast_from_new_layer = raycast_to_polygon(origin=distant_perpendicular_point, direction=self.orientation, polygon=self.search_area)
-        # distanced_raycast = Point(raycast_from_new_layer.x + self.layer_distance * math.cos(self.orientation + pi), raycast_from_new_layer.y + self.layer_distance * math.sin(self.orientation + pi))
-        # rough_waypoints.append(distanced_raycast)
-        # # Raycast in negative direction of orientation and backtrack by layer distance
-        # negative_raycast_point = raycast_to_polygon(origin=rough_waypoints[-1], direction=self.orientation + pi, polygon=self.search_area)
-        # distanced_raycast = Point(negative_raycast_point.x + self.layer_distance * math.cos(self.orientation), negative_raycast_point.y + self.layer_distance * math.sin(self.orientation))
-        # rough_waypoints.append(distanced_raycast)
-        # # Go in positive perpendicular direction by layer distance then raycast in negative direction of orientation and backtrack by layer distance
-        # distant_perpendicular_point = Point(distanced_raycast.x + self.layer_distance * math.cos(self.orientation + pi), distanced_raycast.y + self.layer_distance * math.sin(self.orientation + pi))
-        # raycast_from_new_layer = raycast_to_polygon(origin=distant_perpendicular_point, direction=self.orientation + pi, polygon=self.search_area)
-        # distanced_raycast = Point(raycast_from_new_layer.x + self.layer_distance * math.cos(self.orientation), raycast_from_new_layer.y + self.layer_distance * math.sin(self.orientation))
-        # # Do in both directions from start maybe
+        backwards_waypoints.reverse()
+        rough_waypoints = []
+        rough_waypoints.extend(backwards_waypoints)
+        rough_waypoints.extend(forwards_waypoints)
         return rough_waypoints
 
     def generate_first_point(self):
         # Left of the orientation axis is negative and to the right is positive
-        closest_vertex, closest_vertex_index = calculate_closest_perpendicular_vertex(polygon=self.search_area, orientation=self.orientation, start_point=self.start_point)
+        # Check if the start point is in the search area or not
+        if not self.search_area.contains(self.start_point):
+            # Find the closest point along the polygon from the start point
+            closest_point = calculate_closest_point_on_polygon(polygon=self.search_area, start_point=self.start_point)
+        else:
+            closest_point = self.start_point
+        # Find the closest point that is the furthest away from the start point in the perpendicular directions
+        closest_vertex, closest_vertex_index = calculate_closest_perpendicular_vertex(polygon=self.search_area, orientation=self.orientation, start_point=closest_point)
         # Move d distance away from walls
         path_start = calculate_point_away_from_polygon(polygon=self.search_area, centre_vertex_index=closest_vertex_index, distance=self.layer_distance)
-        print("Path start:", path_start.x, path_start.y)
         return path_start
 
-    def do_validation_checks(self):
+    def do_pre_validation_checks(self):
         # Ensure the class instance has all the data and parameters it needs to generate a path
         validation_flag, error_message = self.validation_data_parameters()
         if validation_flag is None:
@@ -241,18 +321,37 @@ class SearchPathGenerator:
 Functions. Mostly just math functions.
 """
 
+def calculate_angle_from_points(from_point=None, to_point=None):
+    y = to_point.y - from_point.y
+    x = to_point.x - from_point.x
+    return math.atan2(y, x)
+
+def calculate_best_orientation(polygon=None):
+    # TODO: Make sure you return the correct orientation (+ or - pi or plus at all)
+    best_distance = 0
+    best_orientation = 0
+    for vertex1 in polygon.vertices:
+        for vertex2 in polygon.vertices:
+            if vertex1 == vertex2:
+                continue
+            distance = calculate_distance_between_points(vertex1, vertex2)
+            if distance > best_distance:
+                best_orientation = calculate_angle_from_points(from_point=vertex1, to_point=vertex2)
+                best_distance = distance
+    return clamp_angle(best_orientation - pi)
+
 def raycast_to_polygon(origin=None, direction=None, polygon=None):
     # Define the ray as a line
-    ray = Line(origin, Point(origin.x + polygon.maximum * math.cos(direction), origin.y + polygon.maximum * math.sin(direction)))
+    ray = Segment(origin, Point(origin.x + polygon.maximum * math.cos(direction), origin.y + polygon.maximum * math.sin(direction)))
     # Look over each edge of polygon and check for intersection
-    plt.plot([ray.start.x, ray.end.x], [ray.start.y, ray.end.y], '-.')
+    # plt.plot([ray.start.x, ray.end.x], [ray.start.y, ray.end.y], '-.')
     for index in range(len(polygon.vertices)):
         vertex1 = polygon.vertices[index]
         vertex2 = polygon.vertices[(index + 1) % len(polygon.vertices)]
 
-        edge = Line(vertex1, vertex2)
+        edge = Segment(vertex1, vertex2)
         if do_segments_intersect(segment1=ray, segment2=edge):
-            intersection_point = find_intersection(segment1=ray, segment2=edge)
+            intersection_point = find_segment_intersection(segment1=ray, segment2=edge)
             return intersection_point
 
     return None
@@ -283,7 +382,7 @@ def calculate_closest_point_on_segment_to_point(segment_start=None, segment_end=
     closest_point = Point(segment_start.x + percentage_along_segment * segment_vector.x, segment_start.y + percentage_along_segment * segment_vector.y)
     return closest_point
 
-def clamp_angle(angle, lower_bound=None, upper_bound=None):
+def clamp_angle(angle):
     return math.atan2(math.sin(angle), math.cos(angle))
 
 def calculate_closest_perpendicular_vertex(polygon=None, orientation=None, start_point=None):
@@ -313,18 +412,40 @@ def calculate_closest_perpendicular_vertex(polygon=None, orientation=None, start
     return closest_point, closest_vertex
 
 def calculate_point_away_from_polygon(polygon=None, centre_vertex_index=None, distance=None):
-    num_of_vertices = len(polygon.vertices)
     centre_vertex = polygon.vertices[centre_vertex_index]
-    next_vertex_index = (centre_vertex_index + 1) % num_of_vertices
-    next_vertex = polygon.vertices[next_vertex_index]
-    prev_vertex_index = (centre_vertex_index + (num_of_vertices - 1)) % num_of_vertices
-    prev_vertex = polygon.vertices[prev_vertex_index]
-    angle_to_next = math.atan2(next_vertex.y - centre_vertex.y, next_vertex.x - centre_vertex.x)
-    angle_to_prev = math.atan2(prev_vertex.y - centre_vertex.y, prev_vertex.x - centre_vertex.x)
-    angle_equal_distant = (angle_to_next + angle_to_prev) / 2
-    path_start = Point(centre_vertex.x + distance * math.cos(angle_equal_distant),
-                       centre_vertex.y + distance * math.sin(angle_equal_distant))
+    next_vertex = polygon.vertices[(centre_vertex_index + 1) % polygon.count]
+    prev_vertex = polygon.vertices[(centre_vertex_index + polygon.count - 1) % polygon.count]
+
+    bisection_angle = calculate_bisection_angle(prev_vertex, centre_vertex, next_vertex)
+
+    path_start = Point(centre_vertex.x + distance * math.cos(bisection_angle),
+                       centre_vertex.y + distance * math.sin(bisection_angle))
     return path_start
+
+def angle_between_points(pointA=None, pointB=None, pointC=None):
+    AB = Point(pointB.x - pointA.x, pointB.y - pointA.y)
+    BC = Point(pointC.x - pointB.x, pointC.y - pointB.y)
+    angle = math.acos(AB.dot(BC) / (AB.magnitude() * BC.magnitude()))
+
+    return angle + pi
+
+def calculate_bisection_angle(point_A=None, point_B=None, point_C=None, acute=True):
+    # TODO: Make this function work
+    angle_to_A = math.atan2(point_A.y - point_B.y, point_A.x - point_B.x)
+    angle_to_C = math.atan2(point_C.y - point_B.y, point_C.x - point_B.x)
+    angle_diff = abs(angle_to_A - angle_to_C)
+
+    if angle_diff > pi:
+        angle_to_A = clamp_angle(angle_to_A + pi)
+        angle_to_C = clamp_angle(angle_to_C + pi)
+
+    bisection_angle = (angle_to_A + angle_to_C) / 2
+
+    if angle_diff > pi:
+        clamp_angle(pi - bisection_angle)
+
+    return bisection_angle
+
 
 def calculate_closest_point_on_polygon(polygon=None, start_point=None):
     # Loop over each segment of search area
@@ -335,7 +456,7 @@ def calculate_closest_point_on_polygon(polygon=None, start_point=None):
         segment_point_2 = polygon.vertices[(index + 1) % len(polygon.vertices)]
         # Find the closest point on segment to start location
         new_closest_point = calculate_closest_point_on_segment_to_point(segment_point_1, segment_point_2, start_point)
-        new_closest_distance = calculate_distance_between_points(closest_point, start_point)
+        new_closest_distance = calculate_distance_between_points(new_closest_point, start_point)
         if closest_point is None or new_closest_distance < closest_distance:
             closest_point = new_closest_point
             closest_distance = new_closest_distance
@@ -346,9 +467,8 @@ def calculate_points_along_polygon_distanced(start_point=None, polygon=None, ori
     count = 0
     max_points = 100
     directions = ["forward", "left"]  # 0 index is current direction to go, 1 index is previous direction travelled
+    new_point = None
     while count < max_points:
-        print("Index:", count, " | ", directions[0])
-
         # If the current direction in direction of orientation or backwards, raycast then backtrack by layer distance
         if directions[0] == "forward":
             new_point = handle_forward_backward_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation, layer_distance=layer_distance)
@@ -356,18 +476,22 @@ def calculate_points_along_polygon_distanced(start_point=None, polygon=None, ori
             new_point = handle_forward_backward_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=clamp_angle(orientation + pi), layer_distance=layer_distance)
         elif directions[0] == "left":
             if directions[1] == "forward":
-                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation - pi / 2, layer_distance=layer_distance, raycast_direction=orientation)
+                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation + pi / 2, layer_distance=layer_distance, raycast_direction=orientation)
             elif directions[1] == "backward":
                 new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation - pi / 2, layer_distance=layer_distance, raycast_direction=orientation + pi)
         else:  # directions[0] == "right":
             if directions[1] == "forward":
                 new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation - pi / 2, layer_distance=layer_distance, raycast_direction=orientation)
             else:  # directions[1] == "backward":
-                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation - pi / 2, layer_distance=layer_distance, raycast_direction=orientation + pi)
+                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation + pi / 2, layer_distance=layer_distance, raycast_direction=orientation + pi)
 
+        # If reached the end of the path
         if new_point is None:
             return rough_waypoints
-        rough_waypoints.append(new_point)
+
+        # If the new point is the same as the previous point, disregard it
+        if new_point != rough_waypoints[-1]:
+            rough_waypoints.append(new_point)
 
         count += 1
         if directions == ["forward", "left"]:
@@ -390,20 +514,54 @@ def calculate_points_along_polygon_distanced(start_point=None, polygon=None, ori
 
     return rough_waypoints
 
+def get_projection(this_vector=None, on_this_vector=None):
+    projection = this_vector.dot(on_this_vector) / on_this_vector.magnitude() ** 2
+    return projection
+
 def handle_forward_backward_direction(origin=None, polygon=None, orientation=None, layer_distance=None):
     raycast_point = raycast_to_polygon(origin=origin, polygon=polygon, direction=orientation)
+    if raycast_point is None:
+        return None
+    # TODO: Distancing the point like this doesn't really work for slanted surfaces
     distant_point = create_point(raycast_point, layer_distance, orientation + pi)
+
+    # Make sure the distant point is not behind the origin point
+    forward_direction = create_point(Point(0, 0), 1, orientation)
+    reference_point = Point(distant_point.x - origin.x, distant_point.y - origin.y)
+
+    projection = get_projection(this_vector=reference_point, on_this_vector=forward_direction)
+    if projection <= 0:
+        return origin
+
     return distant_point
 
 def handle_sideways_direction(origin=None, polygon=None, orientation=None, layer_distance=None, raycast_direction=None):
     distant_point = create_point(origin, layer_distance, orientation)
     raycast_point = raycast_to_polygon(origin=distant_point, direction=raycast_direction, polygon=polygon)
     if raycast_point is None:
-        raycast_point = find_first_intersected_point(ray_origin=distant_point, ray_direction=orientation + pi, vertices=polygon.vertices)
+        raycast_point = find_closest_intersection_point(ray_origin=distant_point, ray_direction=raycast_direction + pi, polygon=polygon)
         if raycast_point is None:
             return None
     distanced_raycast = create_point(raycast_point, layer_distance, raycast_direction + pi)
-    return distanced_raycast
+
+    # If the point is within the polygon, return it. It's a good point
+    if polygon.contains(distanced_raycast):
+        return distanced_raycast
+
+    # If the point is outside the search area now, bring is back in and put it near the closest vertex
+    closest_vertex = find_closest_vertex_index(polygon=polygon, point=distant_point)
+    distant_point = calculate_point_away_from_polygon(polygon=polygon, centre_vertex_index=closest_vertex, distance=layer_distance/2)
+    return distant_point
+
+def find_closest_vertex_index(polygon=None, point=None):
+    closest_vertex_index = None
+    closest_vertex_distance = float('inf')
+    for index, vertex in enumerate(polygon.vertices):
+        distance = calculate_distance_between_points(point, vertex)
+        if distance < closest_vertex_distance:
+            closest_vertex_index = index
+            closest_vertex_distance = distance
+    return closest_vertex_index
 
 def create_segments_from_polygon(vertices=None):
     segments = []
@@ -412,60 +570,38 @@ def create_segments_from_polygon(vertices=None):
     for i in range(num_vertices):
         start = vertices[i]
         end = vertices[(i + 1) % num_vertices]
-        segment = Line(start, end)
+        segment = Segment(start, end)
         segments.append(segment)
 
     return segments
 
-def find_first_intersected_point(ray_origin, ray_direction, vertices):
-    segments = create_segments_from_polygon(vertices)
+def find_closest_intersection_point(ray_origin=None, ray_direction=None, polygon=None):
+    # Create ray
+    ray_end = create_point(ray_origin, polygon.maximum, ray_direction)
+    ray = Segment(ray_origin, ray_end)
 
-    intersected_point = None
-    closest_intersection = float('inf')
+    # Get the indices of which segments intersect
+    indices_list = []
+    for index, segment in enumerate(polygon.segments):
+        if do_segments_intersect(ray, segment):
+            indices_list.append(index)
 
-    intersected = False
+    # Loop through segments that intersect and find the closest intersection point
+    minimum_found_intersection_point = None
+    minimum_found_distance = polygon.maximum
+    for index in indices_list:
+        intersection_point = find_segment_intersection(ray, polygon.segments[index])
+        distance_to_point = calculate_distance_between_points(ray_origin, intersection_point)
+        if distance_to_point <= minimum_found_distance:
+            minimum_found_intersection_point = intersection_point
+            minimum_found_distance = distance_to_point
 
-    for segment in segments:
-        segment_start = segment.start
-        segment_end = segment.end
-
-        segment_dx = segment_end.x - segment_start.x
-        segment_dy = segment_end.y - segment_start.y
-
-        segment_length = segment_dx * segment_dx + segment_dy * segment_dy
-
-        segment_angle = math.atan2(segment_dy, segment_dx)
-
-        angle_diff = segment_angle - ray_direction
-        if angle_diff > math.pi:
-            angle_diff -= 2 * math.pi
-        elif angle_diff < -math.pi:
-            angle_diff += 2 * math.pi
-
-        if abs(angle_diff) < math.pi / 2:
-            ray_to_segment_x = segment_start.x - ray_origin.x
-            ray_to_segment_y = segment_start.y - ray_origin.y
-
-            denominator = math.sin(angle_diff) * segment_length
-
-            if denominator != 0:
-                t_ray = (ray_to_segment_x * math.sin(angle_diff) - ray_to_segment_y * math.cos(ray_direction)) / denominator
-                t_segment = (ray_to_segment_x * math.sin(angle_diff) - ray_to_segment_y * math.cos(segment_angle)) / denominator
-
-                if 0 <= t_ray <= 1 and 0 <= t_segment <= 1 and t_ray < closest_intersection:
-                    closest_intersection = t_ray
-                    intersected_point = Point(
-                        ray_origin.x + t_ray * math.cos(ray_direction),
-                        ray_origin.y + t_ray * math.sin(ray_direction)
-                    )
-                    intersected = True
-
-    return intersected_point if intersected else None
+    return minimum_found_intersection_point
 
 def create_point(point=None, dist=None, angle=None):
     return Point(point.x + dist * math.cos(angle), point.y + dist * math.sin(angle))
 
-def find_intersection(segment1, segment2):
+def find_segment_intersection(segment1, segment2):
     xdiff = Point(segment1.start.x - segment1.end.x, segment2.start.x - segment2.end.x)
     ydiff = Point(segment1.start.y - segment1.end.y, segment2.start.y - segment2.end.y)
 
@@ -481,28 +617,82 @@ def find_intersection(segment1, segment2):
     y = det(d, ydiff) / div
     return Point(x, y)
 
-def main_function():
+def create_random_search_area(vertex_count, x_lim=None, y_lim=None):
+    if y_lim is None:
+        y_lim = [0, 10]
+    if x_lim is None:
+        x_lim = [0, 10]
+    x_diff = x_lim[1] - x_lim[0]
+    y_diff = y_lim[1] - y_lim[0]
+    max_dist = math.sqrt(x_diff ** 2 + y_diff ** 2)
+    vertices = []
+
+    angle_percentages = []
+    for index in range(vertex_count):
+        angle_percentages.append(random.random())
+
+    angle_percentages.sort()
+
+    for index in range(vertex_count):
+        angle = angle_percentages[index] * 2*pi
+        vertex = Point(x_diff + max_dist * math.cos(angle), y_diff + max_dist * math.sin(angle))
+        vertices.append(vertex)
+    search_area = Polygon(vertices=vertices)
+    return search_area
+
+def create_random_layer_distance(limits=None):
+    if limits is None:
+        limits = [0.1, 1]
+    layer_distance = random.uniform(limits[0], limits[1])
+    return layer_distance
+
+def create_random_start_point(x_lim=None, y_lim=None):
+    if y_lim is None:
+        y_lim = [0, 10]
+    if x_lim is None:
+        x_lim = [0, 10]
+
+    x_diff = x_lim[1] * 2 - x_lim[0] * 2
+    y_diff = y_lim[1] * 2 - y_lim[0] * 2
+
+    random_start = Point(random.uniform(x_diff - abs(x_diff) / 2, x_diff + abs(x_diff) / 2), random.uniform(y_diff - abs(y_diff) / 2, y_diff + abs(y_diff) / 2))
+    return random_start
+
+def do_entire_simulation(do_plot=True):
+    search_area_polygon = create_random_search_area(6)
+    layer_distance = create_random_layer_distance([0.5, 5])
+    start_point = create_random_start_point()
+
     raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
     minimum_turn_radius = 0.5
-    search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
+    # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
+    # search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
+    # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
     curve_resolution = 4
-    start_point = Point(2, 9)
+    # start_point = Point(6, 14)
     sensor_size = (12.8, 9.6)
     focal_length = 16
     paint_overlap = 0.1
-    angle = 0
-
-    search_area_polygon = []
-    for point in search_area:
-        search_area_polygon.append(Point(point[0], point[1]))
-    search_area_polygon = Polygon(search_area_polygon)
+    angle = None
 
     path_generator = SearchPathGenerator()
     path_generator.set_data(search_area=search_area_polygon)
-    path_generator.set_parameters(paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, curve_resolution=curve_resolution, orientation=angle, start_point=start_point)
+    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
 
-    path_generator.generate_path()
+    path_generator.generate_path(do_plot=do_plot)
+    return path_generator.error
 
+def main_function():
+    count = 1000
+    error_count = 0
+    for index in range(count):
+        if index % round(count / 10) == 0:
+            print("Progress:", index / count * 100, "% |", index, "/", count)
+        error = do_entire_simulation(do_plot=False)
+        if error:
+            error_count += 1
+
+    print("Simulation Complete | Error count:", error_count, "/", count, "| Error percentage:", error_count / count * 100, "%")
 
 if __name__ == "__main__":
     main_function()
