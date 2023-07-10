@@ -335,8 +335,8 @@ class MissionManager:
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
         command_dict = {Commands.OVERRIDE: Commands.override, 
                         Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
-                        Commands.SYNC_SCRIPT: Commands.sync_script,
-                        Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints}  
+                        Commands.SYNC_SCRIPT: Commands.sync_script
+                        }  
         
         # run the command
         try:

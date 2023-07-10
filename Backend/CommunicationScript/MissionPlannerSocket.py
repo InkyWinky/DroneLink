@@ -213,7 +213,6 @@ if __name__ == "__main__":
             print("[ 1 ]. OVERRIDE FLIGHTPLANNER WAYPOINTS (Hardcoded Waypoints)")
             print("[ 2 ]. SYNC SCRIPT")
             print("[ 3 ]. OVERRIDE WAYPOINTS on Live Drone (Hardcoded waypoints)")
-            print("[ 4 ]. GET FLIGHTPLANNER WAYPOINTS")
             print("[ q ]. Quit")
             print("--------------------------------------------------------------------------------------")
 
@@ -224,8 +223,6 @@ if __name__ == "__main__":
                 mp_socket.sync_script()
             elif option == '3':
                 mp_socket.override_waypoints(test_waypoints)
-            elif option == '4':
-                mp_socket.get_flightplanner_waypoints()
             elif option == 'q':
                 break
             else:
