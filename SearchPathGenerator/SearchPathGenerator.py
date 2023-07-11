@@ -91,6 +91,7 @@ class Waypoint:
     def __init__(self, x=None, y=None):
         self.coords = Point(x, y)  # Point instance that stores location of waypoint
         self.centre_point = None  # Point instance
+        self.turn_type = None  # "circle", "lightbulb", "lightbulb angled"
         self.entrance = None  # Point instance for where the Albatross starts turning
         self.exit = None  # Point instance for where the Albatross stops turning
         self.turn_direction = None  # "clockwise" or "counter_clockwise"
@@ -129,10 +130,6 @@ class Point:
         return False
 
 
-def calculate_distance_between_points(point_1=None, point_2=None):
-    return math.sqrt((point_1.x - point_2.x) ** 2 + (point_1.y - point_2.y) ** 2)
-
-
 class SearchPathGenerator:
     def __init__(self):
         pass
@@ -141,8 +138,8 @@ class SearchPathGenerator:
     raw_waypoints = None  # List of rough waypoints to travel through
     search_area = None  # Polygon class instance that defines the boundary of the search area the plane will scan
     boundary = None  # Polygon class instance that defines the boundary that the path must remain in. Path can be on the boundary
-    start_point = None  # Point where the Albatross takes off
-    end_point = None  # Point where the Albatross should land
+    take_off_point = None  # Point where the Albatross takes off
+    landing_point = None  # Point where the Albatross should land
 
     # Input Parameters
     minimum_turn_radius = None  # The minimum turning radius of the plane at cruise speed in metres
@@ -155,9 +152,10 @@ class SearchPathGenerator:
     focal_length = None  # Lens focal length in mm
     paint_overlap = None  # Minimum paint overlap required in terms of percentage. Must be less than 100%
     paint_radius = None  # The radius in metres around the plane that the cameras can see / paint
-    layer_distance = None
+    perimeter_distance = None  # The distance rough points will be placed from the search area perimeter
+    layer_distance = None  # Distance between each 'layer' of the flight path
 
-    error = False
+    error = False  # Flag for if an error occurred during runtime
 
     # Output Data
     path_waypoints = None  # Generated list of Waypoint class instances that make up the search path
@@ -183,7 +181,7 @@ class SearchPathGenerator:
         if orientation is not None:
             self.orientation = orientation
         if start_point is not None:
-            self.start_point = start_point
+            self.take_off_point = start_point
         if focal_length is not None:
             self.focal_length = focal_length
         if sensor_size is not None:
@@ -210,7 +208,7 @@ class SearchPathGenerator:
 
         # Generate path points
         rough_points = self.generate_points()
-        smooth_points = self.smooth_rough_points()
+        smooth_points = self.smooth_rough_points(rough_points=rough_points)
 
         # Complete post-calculation data validation checks
         validation, error_message = self.do_post_validation_checks(waypoints=rough_points)
@@ -228,12 +226,16 @@ class SearchPathGenerator:
         for vertex in self.search_area.vertices:
             print("\t\t", vertex.x, vertex.y)
         print("\tStart Point:")
-        print("\t\t", self.start_point.x, self.start_point.y)
+        print("\t\t", self.take_off_point.x, self.take_off_point.y)
         print("\tLayer Distance:")
         print("\t\t", self.layer_distance)
 
-    def smooth_rough_points(self):
-        pass
+    def smooth_rough_points(self, rough_points=None):
+        # Create waypoints out of each point
+        waypoints = create_waypoints_from_points(points=rough_points)
+        waypoints = determine_turning_points(waypoints=waypoints, turning_radius=self.minimum_turn_radius, layer_distance=self.layer_distance, orientation=self.orientation)
+        interpolated_waypoints = interpolate_all_turns(waypoint=waypoints)
+        return interpolated_waypoints
 
     def print_waypoints(self, waypoints=None):
         for index, waypoint in enumerate(waypoints):
@@ -261,8 +263,8 @@ class SearchPathGenerator:
         plt.annotate("First waypoint", (waypoints[0].x, waypoints[0].y), textcoords="offset points", xytext=(0, 10), ha='center')
         plt.scatter(self.search_area.centroid.x, self.search_area.centroid.y, color='purple')
         plt.annotate("Centre of calculations", (self.search_area.centroid.x, self.search_area.centroid.y), textcoords="offset points", xytext=(0, 10), ha='center')
-        plt.scatter(self.start_point.x, self.start_point.y, marker='^', color='black')
-        plt.annotate("Takeoff", (self.start_point.x, self.start_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
+        plt.scatter(self.take_off_point.x, self.take_off_point.y, marker='^', color='black')
+        plt.annotate("Takeoff", (self.take_off_point.x, self.take_off_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
 
         if equal_axis:
             plt.axis('equal')
@@ -325,8 +327,8 @@ class SearchPathGenerator:
         rough_waypoints.extend(forwards_waypoints)
 
         # Find which end of the path is closest to the take-off location. Make the closest one the zeroth index by reversing if necessary
-        distance_start = calculate_distance_between_points(self.start_point, rough_waypoints[0])
-        distance_end = calculate_distance_between_points(self.start_point, rough_waypoints[-1])
+        distance_start = calculate_distance_between_points(self.take_off_point, rough_waypoints[0])
+        distance_end = calculate_distance_between_points(self.take_off_point, rough_waypoints[-1])
         if distance_end < distance_start:
             rough_waypoints.reverse()
 
@@ -335,11 +337,11 @@ class SearchPathGenerator:
     def generate_first_point(self):
         # Left of the orientation axis is negative and to the right is positive
         # Check if the start point is in the search area or not
-        if not self.search_area.contains(self.start_point):
+        if not self.search_area.contains(self.take_off_point):
             # Find the closest point along the polygon from the start point
-            closest_point = calculate_closest_point_on_polygon(polygon=self.search_area, start_point=self.start_point)
+            closest_point = calculate_closest_point_on_polygon(polygon=self.search_area, start_point=self.take_off_point)
         else:
-            closest_point = self.start_point
+            closest_point = self.take_off_point
         # Find the closest point that is the furthest away from the start point in the perpendicular directions
         closest_vertex, closest_vertex_index = calculate_closest_perpendicular_vertex(polygon=self.search_area, orientation=self.orientation, start_point=closest_point)
         # Move d distance away from walls
@@ -484,6 +486,28 @@ def calculate_viewing_radius(sensor_size=None, focal_length=None, altitude=None)
     fov = 2 * math.atan(sensor_size[1] / (2 * focal_length))
     viewing_radius = math.tan(fov / 2) * altitude
     return viewing_radius
+
+def determine_turning_points(waypoints=None, turning_radius=None, layer_distance=None, orientation=None):
+    # Order of turning types:
+    # 1. Simple circle
+    # 2. Lightbulb
+    # 3. Angled Lightbulb
+    for index in range(len(waypoints)):
+        current_waypoint = waypoints[index]
+        next_waypoint = waypoints[index + 1]
+        # If the next point is not on the same axis of orientation
+        if not on_same_axis(point1=current_waypoint, point2=next_waypoint, orientation=orientation):
+            # Index is the start of the turn
+            type_of_turn = determine_turn_type(point1=current_waypoint, point2=next_waypoint, layer_distance=layer_distance, orientation=orientation)
+            current_waypoint.turn_type = type_of_turn
+    return waypoints
+
+def create_waypoints_from_points(points=None):
+    waypoints = []
+    for point in points:
+        new_waypoint = Waypoint(point.x, point.y)
+        waypoints.append(new_waypoint)
+    return waypoints
 
 def calculate_closest_point_on_segment_to_point(segment_start=None, segment_end=None, reference_point=None):
     segment_vector = Point(segment_end.x - segment_start.x, segment_end.y - segment_start.y)
@@ -656,21 +680,22 @@ def handle_sideways_direction(origin=None, polygon=None, orientation=None, layer
     # If the point is within the polygon, return it. It's a good point
     if polygon.contains(distanced_raycast):
         return distanced_raycast
-
-    # If the point is outside the search area now, bring is back in and put it near the closest vertex
-    closest_vertex = find_closest_vertex_index(polygon=polygon, point=distant_point)
-    distant_point = calculate_point_away_from_polygon(polygon=polygon, centre_vertex_index=closest_vertex, distance=layer_distance/2)
-
-    # TODO: This is causing intersections fix it stoopid
-    # If it is still outside, keep lowering the layer distance maximum 8 times
-    count = 2
-    while not polygon.contains(distant_point):
-        distant_point = calculate_point_away_from_polygon(polygon=polygon, centre_vertex_index=closest_vertex, distance=layer_distance / count)
-        count += 1
-        if count >= 10:
-            return None
-
-    return distant_point
+    return None
+    #
+    # # If the point is outside the search area now, bring is back in and put it near the closest vertex
+    # closest_vertex = find_closest_vertex_index(polygon=polygon, point=distant_point)
+    # distant_point = calculate_point_away_from_polygon(polygon=polygon, centre_vertex_index=closest_vertex, distance=layer_distance/2)
+    #
+    # # TODO: This is causing intersections fix it stoopid
+    # # If it is still outside, keep lowering the layer distance maximum 8 times
+    # count = 2
+    # while not polygon.contains(distant_point):
+    #     distant_point = calculate_point_away_from_polygon(polygon=polygon, centre_vertex_index=closest_vertex, distance=layer_distance / count)
+    #     count += 1
+    #     if count >= 10:
+    #         return None
+    #
+    # return distant_point
 
 def find_closest_vertex_index(polygon=None, point=None):
     closest_vertex_index = None
@@ -777,6 +802,9 @@ def create_random_start_point(x_lim=None, y_lim=None):
     random_start = Point(random.uniform(x_diff - abs(x_diff) / 2, x_diff + abs(x_diff) / 2), random.uniform(y_diff - abs(y_diff) / 2, y_diff + abs(y_diff) / 2))
     return random_start
 
+def calculate_distance_between_points(point_1=None, point_2=None):
+    return math.sqrt((point_1.x - point_2.x) ** 2 + (point_1.y - point_2.y) ** 2)
+
 def do_entire_simulation(do_plot=True):
     search_area_polygon = create_random_search_area(7)
     layer_distance = create_random_layer_distance([0.5, 5])
@@ -813,7 +841,7 @@ def run_number_of_sims(count=None, plot=None):
     print("Simulation Complete | Error count:", error_count, "/", count, "| Error percentage:", error_count / count * 100, "%")
 
 def main_function():
-    run_number_of_sims(100, plot=False)
+    run_number_of_sims(1, plot=True)
 
     # raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
     # minimum_turn_radius = 0.5
