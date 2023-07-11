@@ -1,20 +1,29 @@
-<template>
-  <div class="uk-card uk-card-default uk-card-body" id="panel">
-    <h3>NOTES</h3>
-    <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
-    <button class="transparentBtn" id="open-note-btn">
-      <i
-        class="fa-solid fa-folder-open icon-btn-effect"
-        id="open-note-icon"
-      ></i>
-    </button>
-    <button class="transparentBtn" id="save-btn">
-      <i class="fa-solid fa-floppy-disk icon-btn-effect" id="save-icon"></i>
-    </button>
-  </div>
-</template>
+<script setup>
+import { ref } from "vue";
 
-<script>
+let id = 0;
+const newNote = ref("");
+
+// array of objects containing each note, which itself contains multiple lines
+const notes = ref([
+  // { id: id++, text: "Albatross crashed", time: new Date().toLocaleString() },
+  // { id: id++, text: "Albatross achieved hover", time: new Date().toLocaleString() }
+]);
+
+/** allows user to create notes */
+function addNote() {
+  notes.value.push({
+    id: id++,
+    text: newNote.value,
+    time: new Date().toLocaleString(),
+  });
+  newNote.value = "";
+}
+
+/** allows user to remove notes */
+function removeNote(note) {
+  notes.value = notes.value.filter((t) => t !== note);
+}
 //Tried to add timestamps below but didn't work
 // import { ref, onMounted } from "vue";
 
@@ -53,6 +62,33 @@
 //   },
 // };
 </script>
+
+<template>
+  <ul>
+    <li v-for="note in notes" :key="note.id">
+      {{ note.text }}
+      <button @click="removeNote(note)">X</button>
+      {{ note.time }}
+    </li>
+  </ul>
+  <form :class="newNote" @submit.prevent="addNote">
+    <input v-model="newNote" placeholder="New note" />
+  </form>
+  <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
+    <h3>NOTES</h3>
+    <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
+    <button class="transparentBtn" id="open-note-btn">
+      <i
+        class="fa-solid fa-folder-open icon-btn-effect"
+        id="open-note-icon"
+      ></i>
+    </button>
+    <button class="transparentBtn" id="save-btn">
+      <i class="fa-solid fa-floppy-disk icon-btn-effect" id="save-icon"></i>
+    </button>
+  </div> -->
+</template>
+
 <style>
 #panel {
   border-radius: 20px;
