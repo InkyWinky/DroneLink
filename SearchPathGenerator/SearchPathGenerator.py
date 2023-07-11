@@ -291,8 +291,8 @@ class SearchPathGenerator:
         return "All g", "All g"
 
     def validation_path_segment_overlap(self, waypoints):
-        # TODO: Fix this function. It is incorrectly declaring two segments as intersecting when they do not
-        for index1 in range(len(waypoints) - 1):
+        # This function was fixed by rounding the val in the orientation calculation for do segments intersecting. This is to avoid floating point error
+        for index1 in range(len(waypoints) - 3):
             vertex1 = waypoints[index1]
             vertex2 = waypoints[index1 + 1]
             edge1 = Segment(vertex1, vertex2)
@@ -427,10 +427,10 @@ def onSegment(p, q, r):
         return True
     return False
 
-def orientation(p, q, r):
+def intersection_orientation(p, q, r):
     # To find the orientation of an ordered triplet (p,q,r)
 
-    val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
+    val = round(((q.y - p.y) * (r.x - q.x)) - ((q.x - p.x) * (r.y - q.y)), 10)
     if val > 0:
         # Clockwise orientation
         return 1
@@ -447,10 +447,10 @@ def do_segments_intersect(segment1=None, segment2=None):
 
     # Find the 4 orientations required for
     # the general and special cases
-    o1 = orientation(p1, q1, p2)
-    o2 = orientation(p1, q1, q2)
-    o3 = orientation(p2, q2, p1)
-    o4 = orientation(p2, q2, q1)
+    o1 = intersection_orientation(p1, q1, p2)
+    o2 = intersection_orientation(p1, q1, q2)
+    o3 = intersection_orientation(p2, q2, p1)
+    o4 = intersection_orientation(p2, q2, q1)
 
     # General case
     if (o1 != o2) and (o3 != o4):
@@ -661,6 +661,7 @@ def handle_sideways_direction(origin=None, polygon=None, orientation=None, layer
     closest_vertex = find_closest_vertex_index(polygon=polygon, point=distant_point)
     distant_point = calculate_point_away_from_polygon(polygon=polygon, centre_vertex_index=closest_vertex, distance=layer_distance/2)
 
+    # TODO: This is causing intersections fix it stoopid
     # If it is still outside, keep lowering the layer distance maximum 8 times
     count = 2
     while not polygon.contains(distant_point):
@@ -838,8 +839,8 @@ def main_function():
     #
     # path_generator.generate_path(do_plot=True)
 
-    # seg1 = Segment(Point(-2.08866870491, 9.28946293651), Point(1.1445183324, 5.47809715246))
-    # seg2 = Segment(Point(4.37770536971, 1.66673136842), Point(7.61089240702, -2.14463441562))
+    # seg1 = Segment(Point(-0.513943242218, 14.5325684886), Point(1.13629308128, 10.1554913618))
+    # seg2 = Segment(Point(2.78652940478, 5.77841423501), Point(4.43676572829, 1.40133710819))
     # print(do_segments_intersect(seg1, seg2))
 
 
