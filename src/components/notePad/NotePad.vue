@@ -1,3 +1,40 @@
+<template>
+  <div class="uk-card uk-card-default uk-card-body" id="panel">
+    <h3>NOTES</h3>
+    <div class="note-text">
+      <ul>
+        <li v-for="note in notes" :key="note.id">
+          {{ note.text }}
+          <button @click="removeNote(note)">X</button>
+        </li>
+      </ul>
+      <form v-bind:class="newNote" @submit.prevent="addNote">
+        <input v-model="newNote" placeholder="New note" />
+      </form>
+    </div>
+    <div class="time-stamp">
+      <ul>
+        <li v-for="note in notes" :key="note.id">
+          <b>{{ note.time }}</b>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
+    <h3>NOTES</h3>
+    <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
+    <button class="transparentBtn" id="open-note-btn">
+      <i
+        class="fa-solid fa-folder-open icon-btn-effect"
+        id="open-note-icon"
+      ></i>
+    </button>
+    <button class="transparentBtn" id="save-btn">
+      <i class="fa-solid fa-floppy-disk icon-btn-effect" id="save-icon"></i>
+    </button>
+  </div> -->
+</template>
+
 <script setup>
 import { ref } from "vue";
 
@@ -6,8 +43,16 @@ const newNote = ref("");
 
 // array of objects containing each note, which itself contains multiple lines
 const notes = ref([
-  // { id: id++, text: "Albatross crashed", time: new Date().toLocaleString() },
-  // { id: id++, text: "Albatross achieved hover", time: new Date().toLocaleString() }
+  {
+    id: id++,
+    text: "Albatross crashed",
+    time: new Date().toLocaleString(),
+  },
+  {
+    id: id++,
+    text: "Albatross achieved hover",
+    time: new Date().toLocaleString(),
+  },
 ]);
 
 /** allows user to create notes */
@@ -17,7 +62,7 @@ function addNote() {
     text: newNote.value,
     time: new Date().toLocaleString(),
   });
-  newNote.value = "";
+  newNote.value = ""; // reset newNote value for next form submission
 }
 
 /** allows user to remove notes */
@@ -62,32 +107,6 @@ function removeNote(note) {
 //   },
 // };
 </script>
-
-<template>
-  <ul>
-    <li v-for="note in notes" :key="note.id">
-      {{ note.text }}
-      <button @click="removeNote(note)">X</button>
-      {{ note.time }}
-    </li>
-  </ul>
-  <form :class="newNote" @submit.prevent="addNote">
-    <input v-model="newNote" placeholder="New note" />
-  </form>
-  <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
-    <h3>NOTES</h3>
-    <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
-    <button class="transparentBtn" id="open-note-btn">
-      <i
-        class="fa-solid fa-folder-open icon-btn-effect"
-        id="open-note-icon"
-      ></i>
-    </button>
-    <button class="transparentBtn" id="save-btn">
-      <i class="fa-solid fa-floppy-disk icon-btn-effect" id="save-icon"></i>
-    </button>
-  </div> -->
-</template>
 
 <style>
 #panel {
@@ -134,5 +153,10 @@ function removeNote(note) {
   border-radius: 5px;
   font-size: 0.8em;
   margin-right: 5px;
+}
+
+.note-text {
+  display: inline-block;
+  justify-content: left;
 }
 </style>
