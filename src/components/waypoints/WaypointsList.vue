@@ -73,7 +73,12 @@
     </label>
     <input id="importBtn" type="file" accept=".csv" @change="readFile" hidden />
 
-    <button class="transparentBtn" id="splineBtn" type="button">
+    <button
+      class="transparentBtn"
+      id="splineBtn"
+      type="button"
+      @click="printWaypoints()"
+    >
       <span class="material-symbols-outlined icon-btn-effect" id="splineIcon">
         timeline
       </span>
@@ -218,6 +223,10 @@ async function testApi() {
   await api.getSpline(coordinateData, splineData);
 }
 testApi();
+function printWaypoints() {
+  
+  console.log(waypoints.value);
+}
 
 function readFile(formInput) {
   //The function readFile reads the waypoiants from the csv file chosen in the input form and turns it into text
