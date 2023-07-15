@@ -269,6 +269,11 @@ class MissionManager:
         self.waypoints[0] = waypoint
     
 
+    def arm_aircraft(self):
+        MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
+        MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
+        #MAV.doARM(True, True) -- FORCE ARMING THE AIRCRAFT (NOT IDEAL)
+
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
         This function is private.
@@ -335,7 +340,9 @@ class MissionManager:
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
         command_dict = {Commands.OVERRIDE: Commands.override, 
                         Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
-                        Commands.SYNC_SCRIPT: Commands.sync_script}  
+                        Commands.SYNC_SCRIPT: Commands.sync_script,
+                        Commands.ARM: Commands.arm_aircraft
+                        }  
         
         # run the command
         try:
@@ -371,11 +378,13 @@ class MissionManager:
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
-    The functions in this class will return an Action class that will be sent over the socket connection.
+    The functions in this class will execute the command.
     """
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
+    GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
+    ARM = "ARM"
 
 
     def override(self, mission_manager, decoded_data):
@@ -412,20 +421,20 @@ class Commands:
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
             mission_manager.FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
-            print("[COMMAND] OVERRIDE FlightPlanner Waypoint Command Executed.")
+            print("[COMMAND] OVERRIDE_FLIGHTPLANNER Waypoints Command Executed.")
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling OVERRIDE_FLIGHTPLANNER COMMAND.")
 
 
     def sync_script(self, mission_manager, decoded_data):
-        """Overrides all the waypoints in the flight planner GUI.
+        """Syncs the communication script locationwp with the self.waypoints in this class.
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
 
         Returns:
-            Action: An override_flightplanner action with the waypoints to override with.
+            Action: An sync_script action.
         """
         try:
             mission_manager.sync()
@@ -434,37 +443,97 @@ class Commands:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling SYNC_SCRIPT COMMAND.")
 
+  
+    def arm_aircraft(self, misson_manager, decoded_data):
+        try:
+            misson_manager.arm_aircraft()
+            print("[COMMAND] ARM Command Executed.")
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling ARM COMMAND.")
 
-def waypoint_mavlink_test():
-    """Sets the current mission to hard-coded waypoints using MAVLink functions.
-    """
-    id = int(MAVLink.MAV_CMD.WAYPOINT) # id_mav_cmd for waypoints
-    MAV.doCommand
-    home = Locationwp().Set(-37.8238872, 145.0538635, 0, id)
+# ------------------------------------ End Classes ------------------------------------
+# def waypoint_mavlink_test():
+#     """Sets the current mission to hard-coded waypoints using MAVLink functions.
+#     """
+#     id = int(MAVLink.MAV_CMD.WAYPOINT) # id_mav_cmd for waypoints
+#     MAV.doCommand
+#     home = Locationwp().Set(-37.8238872, 145.0538635, 0, id)
 
-    takeoff = Locationwp()
-    Locationwp.id.SetValue(takeoff, int(MAVLink.MAV_CMD.TAKEOFF))
-    Locationwp.p1.SetValue(takeoff, 15)
-    Locationwp.alt.SetValue(takeoff, 50)
+#     takeoff = Locationwp()
+#     Locationwp.id.SetValue(takeoff, int(MAVLink.MAV_CMD.TAKEOFF))
+#     Locationwp.p1.SetValue(takeoff, 15)
+#     Locationwp.alt.SetValue(takeoff, 50)
 
-    wp1 = Locationwp().Set(-37.8408347, 145.2241516, 100, id)
-    wp2 = Locationwp().Set(-37.8411058, 145.2569389, 100, id)
-    wp3 = Locationwp().Set(-37.8657742, 145.2680969, 100, id)
-    wp4 = Locationwp().Set(-37.8818991, 145.2234650, 100, id)
+#     wp1 = Locationwp().Set(-37.8408347, 145.2241516, 100, id)
+#     wp2 = Locationwp().Set(-37.8411058, 145.2569389, 100, id)
+#     wp3 = Locationwp().Set(-37.8657742, 145.2680969, 100, id)
+#     wp4 = Locationwp().Set(-37.8818991, 145.2234650, 100, id)
 
-    MAV.setWPTotal(6)
-    MAV.setWP(home, 0, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
-    MAV.setWP(takeoff, 1, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
-    MAV.setWP(wp1, 2, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
-    MAV.setWP(wp2, 3, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
-    MAV.setWP(wp3, 4, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
-    MAV.setWP(wp4, 5, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
-    MAV.setWPACK()
+#     MAV.setWPTotal(6)
+#     MAV.setWP(home, 0, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+#     MAV.setWP(takeoff, 1, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+#     MAV.setWP(wp1, 2, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+#     MAV.setWP(wp2, 3, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+#     MAV.setWP(wp3, 4, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+#     MAV.setWP(wp4, 5, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+#     MAV.setWPACK()
 
-    # Set Home waypoint
-    MAV.doCommand(MAVLink.MAV_CMD.DO_SET_HOME, 0, 0, 0, 0, -37.8238872, 145.0538635, 0)
+#     # Set Home waypoint
+#     MAV.doCommand(MAVLink.MAV_CMD.DO_SET_HOME, 0, 0, 0, 0, -37.8238872, 145.0538635, 0)
     
 
+# def waypoint_manager_test():
+#     """Adds hard-coded waypoints to the current mission using the Mission Manager Class.
+#     """
+#     mm = MissionManager(sync=False)  # Sync is set to False so that we can overwrite existing waypoints
+
+#     print("After Syncing")
+#     print(mm)
+#     home = mm.create_wp(-37.8238872, 145.0538635, 0)
+
+#     takeoff = Locationwp()
+#     Locationwp.id.SetValue(takeoff, int(MAVLink.MAV_CMD.TAKEOFF))
+#     Locationwp.p1.SetValue(takeoff, 15)
+#     Locationwp.alt.SetValue(takeoff, 50)
+
+#     wp1 = mm.create_wp(-37.8408347, 145.2241516, 100)
+#     wp2 = mm.create_wp(-37.8411058, 145.2569389, 100)
+#     wp3 = mm.create_wp(-37.8657742, 145.2680969, 100)
+#     wp4 = mm.create_wp(-37.8818991, 145.2234650, 100)
+
+#     mm.append(home)
+#     mm.append(takeoff)
+#     mm.append(wp1)
+#     mm.append(wp2)
+#     mm.append(wp3)
+#     mm.append(wp4)
+#     mm.update()
+#     print("After Adding")
+#     print(mm)
+
+#     # Sleep for 5 seconds before editing waypoint 2
+#     print("Sleeping for 5 seconds")
+#     Script.Sleep(5000)
+#     print("Changing waypoint 2")
+#     mm.set_waypoint(-37.7202198, 145.1486206, 100, 2)
+#     mm.update()
+
+#     print("Set Guided Mode Waypoint to: wp3 (index 4)")
+#     mm.target_waypoint(4)
+    
+#     # Sleep for 5 seconds before adding a new waypoint
+#     print("Sleeping for 5 seconds")
+#     Script.Sleep(5000)
+#     print("Adding a waypoint")
+#     wp5 = mm.create_wp(-37.9154926, 145.1170349, 100)
+#     mm.append(wp5)
+#     mm.update()
+
+        
+# NOTE: Script is run as a module and not as __main__.
+#waypoint_mavlink_test()
+#waypoint_manager_test()
 
 def get_ip():
     """Gets the IPs of the current device and prints them.
@@ -473,62 +542,7 @@ def get_ip():
     addr = socket.gethostbyname(hostname)
     print("[INFO] Hostname: " + hostname + "\n[INFO] Address(es): " + str(addr))
 
-
-def waypoint_manager_test():
-    """Adds hard-coded waypoints to the current mission using the Mission Manager Class.
-    """
-    mm = MissionManager(sync=False)  # Sync is set to False so that we can overwrite existing waypoints
-
-    print("After Syncing")
-    print(mm)
-    home = mm.create_wp(-37.8238872, 145.0538635, 0)
-
-    takeoff = Locationwp()
-    Locationwp.id.SetValue(takeoff, int(MAVLink.MAV_CMD.TAKEOFF))
-    Locationwp.p1.SetValue(takeoff, 15)
-    Locationwp.alt.SetValue(takeoff, 50)
-
-    wp1 = mm.create_wp(-37.8408347, 145.2241516, 100)
-    wp2 = mm.create_wp(-37.8411058, 145.2569389, 100)
-    wp3 = mm.create_wp(-37.8657742, 145.2680969, 100)
-    wp4 = mm.create_wp(-37.8818991, 145.2234650, 100)
-
-    mm.append(home)
-    mm.append(takeoff)
-    mm.append(wp1)
-    mm.append(wp2)
-    mm.append(wp3)
-    mm.append(wp4)
-    mm.update()
-    print("After Adding")
-    print(mm)
-
-    # Sleep for 5 seconds before editing waypoint 2
-    print("Sleeping for 5 seconds")
-    Script.Sleep(5000)
-    print("Changing waypoint 2")
-    mm.set_waypoint(-37.7202198, 145.1486206, 100, 2)
-    mm.update()
-
-    #
-    print("Set Guided Mode Waypoint to: wp3 (index 4)")
-    mm.target_waypoint(4)
-    
-    # Sleep for 5 seconds before adding a new waypoint
-    print("Sleeping for 5 seconds")
-    Script.Sleep(5000)
-    print("Adding a waypoint")
-    wp5 = mm.create_wp(-37.9154926, 145.1170349, 100)
-    mm.append(wp5)
-    mm.update()
-
-        
-# NOTE: Script is run as a module and not as __main__.
-#waypoint_mavlink_test()
-#waypoint_manager_test()
-
 get_ip()  # Print out the IPs of the device running Mission Planner.
-
 mm = MissionManager()  # Create a mission manager class.
 
 # id = int(MAVLink.MAV_CMD.WAYPOINT)

@@ -78,6 +78,7 @@ div {
 
 #notePad {
   position: absolute;
+  justify-content: left;
   left: 35.5%;
   width: 29%;
   height: 59%;
