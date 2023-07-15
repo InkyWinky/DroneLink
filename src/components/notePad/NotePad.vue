@@ -4,8 +4,9 @@
     <div class="note-text">
       <ul>
         <li v-for="note in notes" :key="note.id">
-          {{ note.text }}
+          {{ note.title }} {{ note.Date }}
           <button @click="removeNote(note)">X</button>
+          <button @click="toggleNote(note)">Open</button>
         </li>
       </ul>
       <form v-bind:class="newNote" @submit.prevent="addNote">
@@ -39,19 +40,41 @@
 import { ref } from "vue";
 
 let id = 0;
+let line_id = 0;
 const newNote = ref("");
 
 // array of objects containing each note, which itself contains multiple lines
 const notes = ref([
   {
     id: id++,
-    text: "Albatross crashed",
-    time: new Date().toLocaleString(),
+    title: "Albatross crashed",
+    text: [
+      {
+        line_id: line_id++,
+        text: "Albatross suffered motor failure",
+        time: new Date().toLocaleTimeString(),
+      },
+      {
+        line_id: line_id++,
+        text: "Failure caused it to lean and stall",
+        time: new Date().toLocaleTimeString(),
+      },
+    ],
+    time: new Date().toLocaleDateString(),
+    show: false,
   },
   {
     id: id++,
-    text: "Albatross achieved hover",
+    title: "Albatross achieved hover",
+    text: [
+      {
+        line_id: line_id++,
+        text: "The Albatross achieved hover today - held stable for 10 seconds before landing.",
+        time: new Date().toLocaleTimeString(),
+      },
+    ],
     time: new Date().toLocaleString(),
+    show: false,
   },
 ]);
 
@@ -68,6 +91,10 @@ function addNote() {
 /** allows user to remove notes */
 function removeNote(note) {
   notes.value = notes.value.filter((t) => t !== note);
+}
+
+function toggleNote(note) {
+  note.toggle = !note.toggle;
 }
 //Tried to add timestamps below but didn't work
 // import { ref, onMounted } from "vue";
