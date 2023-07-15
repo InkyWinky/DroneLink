@@ -77,7 +77,7 @@
       class="transparentBtn"
       id="splineBtn"
       type="button"
-      @click="printWaypoints()"
+      @click="formatWaypoints()"
     >
       <span class="material-symbols-outlined icon-btn-effect" id="splineIcon">
         timeline
@@ -223,9 +223,25 @@ async function testApi() {
   await api.getSpline(coordinateData, splineData);
 }
 testApi();
-function printWaypoints() {
-  
+function formatWaypoints() {
+  //The function formatWaypoints formats the waypoints from the gui into the format that the waypoints communication script accepts:
+  //
   console.log(waypoints.value);
+  let WAYPOINT_ID = 16;
+  console.log(WAYPOINT_ID);
+  let outputArr = [];
+  for (let i = 0; i < waypoints.value.length; i++) {
+    let wp = waypoints.value[i];
+    let wp_obj = {
+      longitude: wp.long,
+      latitude: wp.lat,
+      altitude: wp.alt,
+      id: WAYPOINT_ID,
+    };
+    outputArr.push(wp_obj);
+  }
+  console.log(outputArr);
+  return outputArr;
 }
 
 function readFile(formInput) {
