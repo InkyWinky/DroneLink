@@ -1,6 +1,28 @@
 <template>
   <div class="uk-card uk-card-default uk-card-body" id="panel">
     <h3>NOTES</h3>
+    <div class="note-text">
+      <ul>
+        <li v-for="note in notes" :key="note.id">
+          {{ note.title }} {{ note.Date }}
+          <button @click="removeNote(note)">X</button>
+          <button @click="toggleNote(note)">Open</button>
+        </li>
+      </ul>
+      <form v-bind:class="newNote" @submit.prevent="addNote">
+        <input v-model="newNote" placeholder="New note" />
+      </form>
+    </div>
+    <div class="time-stamp">
+      <ul>
+        <li v-for="note in notes" :key="note.id">
+          <b>{{ note.time }}</b>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
+    <h3>NOTES</h3>
     <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
     <button class="transparentBtn" id="open-note-btn">
       <i
@@ -11,10 +33,69 @@
     <button class="transparentBtn" id="save-btn">
       <i class="fa-solid fa-floppy-disk icon-btn-effect" id="save-icon"></i>
     </button>
-  </div>
+  </div> -->
 </template>
 
-<script>
+<script setup>
+import { ref } from "vue";
+
+let id = 0;
+let line_id = 0;
+const newNote = ref("");
+
+// array of objects containing each note, which itself contains multiple lines
+const notes = ref([
+  {
+    id: id++,
+    title: "Albatross crashed",
+    text: [
+      {
+        line_id: line_id++,
+        text: "Albatross suffered motor failure",
+        time: new Date().toLocaleTimeString(),
+      },
+      {
+        line_id: line_id++,
+        text: "Failure caused it to lean and stall",
+        time: new Date().toLocaleTimeString(),
+      },
+    ],
+    time: new Date().toLocaleDateString(),
+    show: false,
+  },
+  {
+    id: id++,
+    title: "Albatross achieved hover",
+    text: [
+      {
+        line_id: line_id++,
+        text: "The Albatross achieved hover today - held stable for 10 seconds before landing.",
+        time: new Date().toLocaleTimeString(),
+      },
+    ],
+    time: new Date().toLocaleString(),
+    show: false,
+  },
+]);
+
+/** allows user to create notes */
+function addNote() {
+  notes.value.push({
+    id: id++,
+    text: newNote.value,
+    time: new Date().toLocaleString(),
+  });
+  newNote.value = ""; // reset newNote value for next form submission
+}
+
+/** allows user to remove notes */
+function removeNote(note) {
+  notes.value = notes.value.filter((t) => t !== note);
+}
+
+function toggleNote(note) {
+  note.toggle = !note.toggle;
+}
 //Tried to add timestamps below but didn't work
 // import { ref, onMounted } from "vue";
 
@@ -53,6 +134,7 @@
 //   },
 // };
 </script>
+
 <style>
 #panel {
   border-radius: 20px;
@@ -98,5 +180,10 @@
   border-radius: 5px;
   font-size: 0.8em;
   margin-right: 5px;
+}
+
+.note-text {
+  display: inline-block;
+  justify-content: left;
 }
 </style>
