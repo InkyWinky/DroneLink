@@ -218,6 +218,7 @@ async function testApi() {
       alt: 20,
     },
   ];
+  //test server
   console.log("Testing Server ...");
   const splineData = await api.fetchSpline(coordinateData);
   await api.getSpline(coordinateData, splineData);
