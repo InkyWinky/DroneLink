@@ -24,7 +24,7 @@ clr.AddReference("MissionPlanner")
 import MissionPlanner
 clr.AddReference("MissionPlanner.Utilities")
 from MissionPlanner.Utilities import Locationwp, WaypointFile
-clr.AddReference("MAVLink")
+# clr.AddReference("MAVLink")
 import MAVLink
 
 # Importing C# List primitive dependency 
@@ -72,6 +72,9 @@ class MissionManager:
         if connect:
             self.__establish_connection()  # open the connection
         print("[TERMINATION] Communication Script has successfully Terminated.")
+
+    def __del__(self):
+        print("[TERMINATION] MissionManager Class was Garbage Collected by Python.")
 
 
     def __str__(self):
@@ -272,7 +275,7 @@ class MissionManager:
     def arm_aircraft(self):
         MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
         MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
-        #MAV.doARM(True, True) -- FORCE ARMING THE AIRCRAFT (NOT IDEAL)
+        # MAV.doARM(True, True) # -- FORCE ARMING THE AIRCRAFT (NOT IDEAL)
 
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
@@ -296,17 +299,18 @@ class MissionManager:
                     self.command_queue_mutex.acquire()
                     data = self.command_queue.pop(0)
                     self.command_queue_mutex.release()
-
-                    if data == "quit": break  # if data given is exit command
+                    # if data given is exit command
+                    if data == "quit":
+                        print("[TERMINATION] QUIT COMMAND WAS RECEIVED")
+                        break  
                     self.handle_command(data)
                     # self.connection.sendall('jsonify the data')  # echo data back!
             self.quit = True # stop the receive thread
             receive_thread.join()
-            self.close_connection()
         except Exception as e:
-            # Close connection and print out error.
-            self.close_connection()
+            # print out error.
             print("[ERROR] " + str(e))
+        self.close_connection()
 
 
     def __receive(self):
@@ -317,7 +321,8 @@ class MissionManager:
             data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
             # Check if data exists (polling due to non-blocking)
             if data:
-                if data == 'quit': break
+                if data == 'quit': 
+                    break
                 decoded_data = json.loads(data)
                 # Lock queue and insert new command
                 print('[INFO] Received Command: ' + decoded_data['command'])
@@ -355,6 +360,10 @@ class MissionManager:
     def close_connection(self):
         """Safely closes the Socket Connection.
         """
+        try:
+            self.s.shutdown(1)
+        except Exception as e:
+            print("[ERROR] " + str(e))
         self.s.close()
         print("[TERMINATION] Connection to " + str(self.addr) + " was lost.")
     
@@ -373,7 +382,6 @@ class MissionManager:
         for i in range(n):
             res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"])
         return res
-    
 
 
 class Commands:
@@ -443,7 +451,7 @@ class Commands:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling SYNC_SCRIPT COMMAND.")
 
-  
+
     def arm_aircraft(self, misson_manager, decoded_data):
         try:
             misson_manager.arm_aircraft()
@@ -451,6 +459,24 @@ class Commands:
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling ARM COMMAND.")
+  
+
+    def get_flightplanner_waypoints(self, mission_manager, decoded_data):
+        """Gets the waypoints from the Flightplanner tab and sends it to the backend.
+
+        Args:
+            mission_manager MissionManager: The mission manager class connected to the mission planner.
+        """
+        try:
+            print(type(mission_manager.FlightPlanner))
+            res = mission_manager.FlightPlanner.GetCommandList()
+            print('GetCommandList', res)
+            self.s.sendall(bytes(json.dumps(res), 'utf-8'))
+            print("[COMMAND] GET GET_FLIGHTPLANNER_WAYPOINTS Command Executed.")
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling GET_FLIGHTPLANNER_WAYPOINTS COMMAND.")
+
 
 # ------------------------------------ End Classes ------------------------------------
 # def waypoint_mavlink_test():
@@ -544,7 +570,7 @@ def get_ip():
 
 get_ip()  # Print out the IPs of the device running Mission Planner.
 mm = MissionManager()  # Create a mission manager class.
-
+del mm # garbage collect MissionManager to fully delete socket/port resources
 # id = int(MAVLink.MAV_CMD.WAYPOINT)
 # wp1 = Locationwp().Set(-37.8408347, 145.2241516, 100, id)
 # wp2 = Locationwp().Set(-37.8411058, 145.2569389, 100, id)
@@ -560,12 +586,37 @@ mm = MissionManager()  # Create a mission manager class.
 # MissionPlanner.MainV2.instance.FlightPlanner.AddWPToMap(-37.8411058, 145.2569389, 100)
 # flightPlanner.readQGC110wpfile('./test.waypoints')
 
-# MissionPlanner.MainV2.instance.FlightPlanner.GetCommandList()
+# print(MissionPlanner.MainV2.instance.FlightPlanner.Commands.Rows)
 # MissionPlanner.MainV2.instance.FlightPlanner.AddWPToMap(lat, lng, alt)
 # MissionPlanner.MainV2.instance.FlightPlanner.AddCommand(cmd, p1, p2, p3, p4, x, y, z, tag=null)
 # MissionPlanner.MainV2.instance.FlightPlanner.InsertCommand(index, cmd, p1, p2, p3, p4, x, u, z, tag)
 # MissionPlanner.MainV2.instance.FlightPlanner.readQGC110wpfile('file location')
 # MissionPlanner.MainV2.instance.FlightPlanner.WPtoScreen(List[Locationwp]([wp1, wp1, wp2, wp3, wp4]))
+# print(FlightPlanner.Commands.Rows.Count, FlightPlanner.Commands.Rows[0].Cells.Count)
+# print(FlightPlanner.Commands.Rows[0].Cells)
+# print(FlightPlanner.Commands.Rows[0].Cells[0].Value) # Command as a string
+# print(FlightPlanner.Commands.Rows[0].Cells[1].Value) # param 1
+# print(FlightPlanner.Commands.Rows[0].Cells[2].Value) # param 2
+# print(FlightPlanner.Commands.Rows[0].Cells[3].Value) # param 3
+# print(FlightPlanner.Commands.Rows[0].Cells[4].Value) # param 4
+# print(FlightPlanner.Commands.Rows[0].Cells[5].Value) # Lat
+# print(FlightPlanner.Commands.Rows[0].Cells[6].Value) # Lng
+# print(FlightPlanner.Commands.Rows[0].Cells[7].Value) # Alt
+# print(FlightPlanner.Commands.Rows[0].Cells[8].Value) #
+# print(FlightPlanner.Commands.Rows[0].Cells[9].Value) #
+# print(FlightPlanner.Commands.Rows[0].Cells[10].Value) #
+# print(FlightPlanner.Commands.Rows[0].Cells[11].Value) #
+# print(FlightPlanner.Commands.Rows[0].Cells[12].Value) #
+# print(FlightPlanner.Commands.Rows[0].Cells[13].Value) # X
+# print(FlightPlanner.Commands.Rows[0].Cells[14].Value) # Up btn
+# print(FlightPlanner.Commands.Rows[0].Cells[15].Value) # Down btn
+# print(FlightPlanner.Commands.Rows[0].Cells[16].Value) # Grad %
+# print(FlightPlanner.Commands.Rows[0].Cells[17].Value) # Angle
+# print(FlightPlanner.Commands.Rows[0].Cells[18].Value) # Dist
+# print(FlightPlanner.Commands.Rows[0].Cells[19].Value) # AZ
 
+# print(MissionPlanner.Plugin.GetWPs())
+# print(MissionPlanner.Plugin.PluginHost.GetWPs())
+# print(int(MAVLink.MAV_CMD.WAYPOINT)) # 16
 print("[TERMINATION] Script Terminated!")
 
