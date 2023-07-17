@@ -214,11 +214,11 @@ class SearchPathGenerator:
         validation, error_message = self.do_post_validation_checks(waypoints=rough_points)
         if do_plot:
             self.print_waypoints(rough_points)
-            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area)
+            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, centre_points=smooth_points)
         elif validation is None:
             self.error = error_message
             self.print_debug()
-            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area)
+            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, centre_points=smooth_points)
 
     def print_debug(self):
         print("ERROR:", self.error)
@@ -233,15 +233,15 @@ class SearchPathGenerator:
     def smooth_rough_points(self, rough_points=None):
         # Create waypoints out of each point
         waypoints = create_waypoints_from_points(points=rough_points)
-        waypoints = determine_turning_points(waypoints=waypoints, turning_radius=self.minimum_turn_radius, layer_distance=self.layer_distance, orientation=self.orientation)
-        interpolated_waypoints = interpolate_all_turns(waypoint=waypoints)
-        return interpolated_waypoints
+        waypoints = determine_turning_points(waypoints=waypoints, turn_radius=self.minimum_turn_radius, layer_distance=self.layer_distance, orientation=self.orientation)
+        # interpolated_waypoints = interpolate_all_turns(waypoint=waypoints)
+        return waypoints
 
     def print_waypoints(self, waypoints=None):
         for index, waypoint in enumerate(waypoints):
             print(index, " | ", waypoint.x, waypoint.y)
 
-    def plot_waypoints(self, waypoints=None, polygon=None, equal_axis=True):
+    def plot_waypoints(self, waypoints=None, polygon=None, equal_axis=True, centre_points=None):
         poly_x = []
         poly_y = []
         for point in polygon.vertices:
@@ -249,15 +249,25 @@ class SearchPathGenerator:
             poly_y.append(point.y)
         poly_x.append(polygon.vertices[0].x)
         poly_y.append(polygon.vertices[0].y)
-        plt.plot(poly_x, poly_y)
+        plt.plot(poly_x, poly_y, color='black')
 
         x_vals = []
         y_vals = []
         for point in waypoints:
             x_vals.append(point.x)
             y_vals.append(point.y)
-        plt.plot(x_vals, y_vals)
-        plt.scatter(x_vals, y_vals)
+        plt.plot(x_vals, y_vals, color='blue')
+        plt.scatter(x_vals, y_vals, color='blue')
+
+        x_centre = []
+        y_centre = []
+        for waypoint in centre_points:
+            if waypoint.centre_point is not None:
+                for point in waypoint.centre_point:
+                    x_centre.append(point.x)
+                    y_centre.append(point.y)
+        if len(x_centre) > 0:
+            plt.scatter(x_centre, y_centre, color='orange')
 
         plt.scatter(waypoints[0].x, waypoints[0].y, color='red')
         plt.annotate("First waypoint", (waypoints[0].x, waypoints[0].y), textcoords="offset points", xytext=(0, 10), ha='center')
@@ -487,20 +497,76 @@ def calculate_viewing_radius(sensor_size=None, focal_length=None, altitude=None)
     viewing_radius = math.tan(fov / 2) * altitude
     return viewing_radius
 
-def determine_turning_points(waypoints=None, turning_radius=None, layer_distance=None, orientation=None):
+def determine_turning_points(waypoints=None, turn_radius=None, layer_distance=None, orientation=None):
     # Order of turning types:
     # 1. Simple circle
     # 2. Lightbulb
     # 3. Angled Lightbulb
-    for index in range(len(waypoints)):
+    for index in range(len(waypoints) - 1):
         current_waypoint = waypoints[index]
         next_waypoint = waypoints[index + 1]
         # If the next point is not on the same axis of orientation
-        if not on_same_axis(point1=current_waypoint, point2=next_waypoint, orientation=orientation):
+        if not on_same_axis(point1=current_waypoint.coords, point2=next_waypoint.coords, orientation=orientation):
             # Index is the start of the turn
-            type_of_turn = determine_turn_type(point1=current_waypoint, point2=next_waypoint, layer_distance=layer_distance, orientation=orientation)
-            current_waypoint.turn_type = type_of_turn
+            current_waypoint.turn_type = determine_turn_type(point1=current_waypoint.coords, point2=next_waypoint.coords, layer_distance=layer_distance, orientation=orientation, turn_radius=turn_radius)
+            current_waypoint.centre_point = create_centre_points(point1=current_waypoint.coords, point2=next_waypoint.coords, orientation=orientation, turn_radius=turn_radius, turn_type=current_waypoint.turn_type)
     return waypoints
+
+def create_centre_points(point1=None, point2=None, orientation=None, turn_radius=None, turn_type=None):
+    circle_centres = None
+
+    if turn_type == "circle":
+        circle_centres = [Point((point1.x + point2.x) / 2, (point1.y + point2.y) / 2)]
+
+    if turn_type == "double circle":
+        distance_between = calculate_distance_between_points(point1, point2)
+        distance_from_centre = (distance_between - 2 * turn_radius) / 2
+        centre_point = Point((point1.x + point2.x) / 2, (point1.y + point2.y) / 2)
+
+        angle_centre_to_point1 = calculate_angle_from_points(centre_point, point1)
+        angle_centre_to_point2 = calculate_angle_from_points(centre_point, point2)
+
+        turn_point1 = create_point(centre_point, angle_centre_to_point1, distance_from_centre)
+        turn_point2 = create_point(centre_point, angle_centre_to_point2, distance_from_centre)
+
+        circle_centres = [turn_point1, turn_point2]
+
+    if turn_type == "lightbulb":
+        pass
+
+    return circle_centres
+def on_same_axis(point1=None, point2=None, orientation=None):
+    angle_from_points = math.atan2(point1.x - point2.x, point1.y - point2.y)
+
+    if round(angle_from_points, 10) == round(orientation, 10) or round(clamp_angle(angle_from_points + pi), 2) == round(orientation, 10):
+        return True
+    else:
+        return False
+
+def determine_turn_type(point1=None, point2=None, layer_distance=None, orientation=None, turn_radius=None):
+    # circle, double circle, lightbulb
+    orientation_vector = create_point(Point(0, 0), 1, orientation)
+
+    point1_proj = get_projection(this_vector=point1, on_this_vector=orientation_vector)
+    point2_proj = get_projection(this_vector=point2, on_this_vector=orientation_vector)
+    proj_diff = abs(point1_proj - point2_proj)
+
+    if point1_proj > point2_proj:
+        furthest_point = point1
+        extended_point = create_point(point2, proj_diff, orientation)
+    else:
+        furthest_point = point2
+        extended_point = create_point(point1, proj_diff, orientation)
+
+    point_distance = calculate_distance_between_points(furthest_point, extended_point)
+
+    if turn_radius < point_distance:
+        if turn_radius < point_distance / 2:
+            return "double circle"
+        else:
+            return "circle"
+    else:
+        return "lightbulb"
 
 def create_waypoints_from_points(points=None):
     waypoints = []
