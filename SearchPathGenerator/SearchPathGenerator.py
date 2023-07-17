@@ -142,7 +142,7 @@ class SearchPathGenerator:
     landing_point = None  # Point where the Albatross should land
 
     # Input Parameters
-    minimum_turn_radius = None  # The minimum turning radius of the plane at cruise speed in metres
+    turn_radius = None  # The minimum turning radius of the plane at cruise speed in metres
     boundary_resolution = None  # A factor inversely proportional to the step size that the path will adjust to avoid the boundary
     boundary_tolerance = None  # The minimum distance from the boundary the path must remain
     orientation = None  # Desired axis of orientation set by the user or calculated as the most efficient
@@ -171,7 +171,7 @@ class SearchPathGenerator:
 
     def set_parameters(self, minimum_turn_radius=None, boundary_resolution=None, layer_distance=None, boundary_tolerance=None, curve_resolution=None, orientation=None, start_point=None, focal_length=None, sensor_size=None, paint_overlap=None):
         if minimum_turn_radius is not None:
-            self.minimum_turn_radius = minimum_turn_radius
+            self.turn_radius = minimum_turn_radius
         if boundary_resolution is not None:
             self.boundary_resolution = boundary_resolution
         if boundary_tolerance is not None:
@@ -208,17 +208,17 @@ class SearchPathGenerator:
 
         # Generate path points
         rough_points = self.generate_points()
-        smooth_points = self.smooth_rough_points(rough_points=rough_points)
+        self.smooth_rough_points(rough_points=rough_points)
 
         # Complete post-calculation data validation checks
         validation, error_message = self.do_post_validation_checks(waypoints=rough_points)
         if do_plot:
-            self.print_waypoints(rough_points)
-            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, centre_points=smooth_points)
+            print_waypoints(rough_points)
+            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
         elif validation is None:
             self.error = error_message
             self.print_debug()
-            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, centre_points=smooth_points)
+            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
 
     def print_debug(self):
         print("ERROR:", self.error)
@@ -232,16 +232,31 @@ class SearchPathGenerator:
 
     def smooth_rough_points(self, rough_points=None):
         # Create waypoints out of each point
-        waypoints = create_waypoints_from_points(points=rough_points)
-        waypoints = determine_turning_points(waypoints=waypoints, turn_radius=self.minimum_turn_radius, layer_distance=self.layer_distance, orientation=self.orientation)
+        self.path_waypoints = create_waypoints_from_points(points=rough_points)
+        self.create_turning_points()
         # interpolated_waypoints = interpolate_all_turns(waypoint=waypoints)
-        return waypoints
 
-    def print_waypoints(self, waypoints=None):
-        for index, waypoint in enumerate(waypoints):
-            print(index, " | ", waypoint.x, waypoint.y)
+    def create_turning_points(self):
+        # Order of turning types:
+        # 1. Simple circle
+        # 2. Lightbulb
+        # 3. Angled Lightbulb
+        for index in range(len(self.path_waypoints) - 2):
+            current_waypoint = self.path_waypoints[index]
+            next_waypoint = self.path_waypoints[index + 1]
+            # If the next point is not on the same axis of orientation
+            if not on_same_axis(point1=current_waypoint.coords, point2=next_waypoint.coords, orientation=self.orientation):
+                previous_waypoint = self.path_waypoints[index - 1]
+                next_next_waypoint = self.path_waypoints[index + 2]
+                # Index is the start of the turn
+                current_waypoint.turn_type = determine_turn_type(point1=current_waypoint.coords, point2=next_waypoint.coords, layer_distance=self.layer_distance, orientation=self.orientation, turn_radius=self.turn_radius)
+                current_waypoint.centre_point = create_centre_points(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords, next_next_waypoint=next_next_waypoint.coords, orientation=self.orientation, turn_radius=self.turn_radius, turn_type=current_waypoint.turn_type)
+                current_waypoint, next_waypoint = calculate_turn_directions(previous_waypoint=previous_waypoint, current_waypoint=current_waypoint, next_waypoint=next_waypoint)
+                current_waypoint, next_waypoint = calculate_entrance_and_exit(previous_waypoint=previous_waypoint, current_waypoint=current_waypoint, next_waypoint=next_waypoint, next_next_waypoint=next_next_waypoint, turn_radius=self.turn_radius)
+                self.path_waypoints[index] = current_waypoint
+                self.path_waypoints[index + 1] = next_waypoint
 
-    def plot_waypoints(self, waypoints=None, polygon=None, equal_axis=True, centre_points=None):
+    def plot_waypoints(self, waypoints=None, polygon=None, equal_axis=True, centre_points=None, actual_waypoints=None):
         poly_x = []
         poly_y = []
         for point in polygon.vertices:
@@ -261,13 +276,27 @@ class SearchPathGenerator:
 
         x_centre = []
         y_centre = []
-        for waypoint in centre_points:
+        for waypoint in actual_waypoints:
             if waypoint.centre_point is not None:
                 for point in waypoint.centre_point:
                     x_centre.append(point.x)
                     y_centre.append(point.y)
         if len(x_centre) > 0:
             plt.scatter(x_centre, y_centre, color='orange')
+
+        x_entrance = []
+        y_entrance = []
+        x_exit = []
+        y_exit = []
+        for waypoint in actual_waypoints:
+            if waypoint.entrance is not None:
+                x_entrance.append(waypoint.entrance.x)
+                y_entrance.append(waypoint.entrance.y)
+                x_exit.append(waypoint.exit.x)
+                y_exit.append(waypoint.exit.y)
+        if len(x_entrance) > 0:
+            plt.scatter(x_entrance, y_entrance, color='green')
+            plt.scatter(x_exit, y_exit, color='green')
 
         plt.scatter(waypoints[0].x, waypoints[0].y, color='red')
         plt.annotate("First waypoint", (waypoints[0].x, waypoints[0].y), textcoords="offset points", xytext=(0, 10), ha='center')
@@ -377,7 +406,7 @@ class SearchPathGenerator:
         return "All g", "All g"
 
     def validation_data_parameters(self):
-        if self.minimum_turn_radius is None or self.curve_resolution is None:
+        if self.turn_radius is None or self.curve_resolution is None:
             return None, "Not all essential data or parameters are set in the class instance"
         return "All g", "All g"
 
@@ -497,38 +526,72 @@ def calculate_viewing_radius(sensor_size=None, focal_length=None, altitude=None)
     viewing_radius = math.tan(fov / 2) * altitude
     return viewing_radius
 
-def determine_turning_points(waypoints=None, turn_radius=None, layer_distance=None, orientation=None):
-    # Order of turning types:
-    # 1. Simple circle
-    # 2. Lightbulb
-    # 3. Angled Lightbulb
-    for index in range(len(waypoints) - 1):
-        current_waypoint = waypoints[index]
-        next_waypoint = waypoints[index + 1]
-        # If the next point is not on the same axis of orientation
-        if not on_same_axis(point1=current_waypoint.coords, point2=next_waypoint.coords, orientation=orientation):
-            # Index is the start of the turn
-            current_waypoint.turn_type = determine_turn_type(point1=current_waypoint.coords, point2=next_waypoint.coords, layer_distance=layer_distance, orientation=orientation, turn_radius=turn_radius)
-            current_waypoint.centre_point = create_centre_points(point1=current_waypoint.coords, point2=next_waypoint.coords, orientation=orientation, turn_radius=turn_radius, turn_type=current_waypoint.turn_type)
-    return waypoints
+def calculate_turn_directions(previous_waypoint=None, current_waypoint=None, next_waypoint=None):
+    direction = intersection_orientation(previous_waypoint.coords, current_waypoint.coords, next_waypoint.coords)
+    if direction == 1:
+        direction = "clockwise"
+    elif direction == 2:
+        direction = "counter clockwise"
+    else:
+        direction = "collinear"
+    current_waypoint.turn_direction = direction
+    next_waypoint.turn_direction = direction
+    return current_waypoint, next_waypoint
 
-def create_centre_points(point1=None, point2=None, orientation=None, turn_radius=None, turn_type=None):
+def calculate_entrance_and_exit(previous_waypoint=None, current_waypoint=None, next_waypoint=None, next_next_waypoint=None, turn_radius=None):
+    # Check turn type
+    if current_waypoint.turn_type == "circle":
+        current_waypoint.entrance = current_waypoint.coords
+        current_waypoint.exit = next_waypoint.coords
+
+    if current_waypoint.turn_type == "double circle":
+        # First turn
+        current_waypoint.entrance = create_point(current_waypoint.coords, turn_radius, calculate_angle_from_points(current_waypoint.coords, previous_waypoint.coords))
+        current_waypoint.exit = create_point(current_waypoint.coords, turn_radius, calculate_angle_from_points(current_waypoint.coords, next_waypoint.coords))
+
+        # Second turn
+        next_waypoint.entrance = create_point(next_waypoint.coords, turn_radius, calculate_angle_from_points(next_waypoint.coords, current_waypoint.coords))
+        next_waypoint.exit = create_point(next_waypoint.coords, turn_radius, calculate_angle_from_points(next_waypoint.coords, next_next_waypoint.coords))
+
+    if current_waypoint.turn_type == "lightbulb":
+        pass
+
+    return current_waypoint, next_waypoint
+
+def create_centre_points(previous_waypoint=None, current_waypoint=None, next_waypoint=None, next_next_waypoint=None, orientation=None, turn_radius=None, turn_type=None):
     circle_centres = None
 
     if turn_type == "circle":
-        circle_centres = [Point((point1.x + point2.x) / 2, (point1.y + point2.y) / 2)]
+        # Extend the lagging point to be perpendicular to the leading one
+        current_direction = calculate_angle_from_points(previous_waypoint, current_waypoint)
+        if round(current_direction, 10) == round(orientation, 10):
+            current_direction = orientation
+        else:
+            current_direction = clamp_angle(orientation + pi)
+        orientation_vector = create_point(Point(0, 0), 1, current_direction)
+
+        point1_proj = get_projection(this_vector=current_waypoint, on_this_vector=orientation_vector)
+        point2_proj = get_projection(this_vector=next_waypoint, on_this_vector=orientation_vector)
+        proj_diff = abs(point1_proj - point2_proj)
+
+        if point1_proj > point2_proj:
+            furthest_point = current_waypoint
+            extended_point = create_point(next_waypoint, proj_diff, current_direction)
+        else:
+            furthest_point = next_waypoint
+            extended_point = create_point(current_waypoint, proj_diff, current_direction)
+
+        circle_centres = [Point((furthest_point.x + extended_point.x) / 2, (furthest_point.y + extended_point.y) / 2)]
 
     if turn_type == "double circle":
-        distance_between = calculate_distance_between_points(point1, point2)
-        distance_from_centre = (distance_between - 2 * turn_radius) / 2
-        centre_point = Point((point1.x + point2.x) / 2, (point1.y + point2.y) / 2)
+        bisection_angle1 = calculate_bisection_angle(previous_waypoint, current_waypoint, next_waypoint)
+        bisection_angle2 = calculate_bisection_angle(current_waypoint, next_waypoint, next_next_waypoint)
 
-        angle_centre_to_point1 = calculate_angle_from_points(centre_point, point1)
-        angle_centre_to_point2 = calculate_angle_from_points(centre_point, point2)
+        # TODO This isnt right
+        distance = turn_radius / math.cos(pi / 4)
 
-        turn_point1 = create_point(centre_point, angle_centre_to_point1, distance_from_centre)
-        turn_point2 = create_point(centre_point, angle_centre_to_point2, distance_from_centre)
-
+        turn_point1 = create_point(current_waypoint, distance, bisection_angle1)
+        turn_point2 = create_point(next_waypoint, distance, bisection_angle2)
         circle_centres = [turn_point1, turn_point2]
 
     if turn_type == "lightbulb":
@@ -871,13 +934,17 @@ def create_random_start_point(x_lim=None, y_lim=None):
 def calculate_distance_between_points(point_1=None, point_2=None):
     return math.sqrt((point_1.x - point_2.x) ** 2 + (point_1.y - point_2.y) ** 2)
 
+def print_waypoints(waypoints=None):
+    for index, waypoint in enumerate(waypoints):
+        print(index, " | ", waypoint.x, waypoint.y)
+
 def do_entire_simulation(do_plot=True):
     search_area_polygon = create_random_search_area(7)
     layer_distance = create_random_layer_distance([0.5, 5])
     start_point = create_random_start_point()
 
     raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
-    minimum_turn_radius = 0.5
+    minimum_turn_radius = 1
     # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
     # search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
     # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
