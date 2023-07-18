@@ -22,7 +22,15 @@ TASKS:
             </li>
           </ul> -->
           <button @click="removeNote(note)">X</button>
-          <button @click="toggleNote(note)">Open</button>
+          <button @click="showNote = true">Open</button>
+          <Teleport to="body">
+            <!-- use the modal component, pass in the prop -->
+            <NoteBlock :show="showNote" @close="showNote = false">
+              <template #header>
+                <h3>custom header</h3>
+              </template>
+            </NoteBlock>
+          </Teleport>
         </li>
       </ul>
       <form v-bind:class="newNote" @submit.prevent="addNote">
@@ -56,11 +64,13 @@ TASKS:
 </template>
 
 <script setup>
+import NoteBlock from "./NoteBlock.vue";
 import { ref } from "vue";
 
 let id = 0;
 let line_id = 0;
 const newNote = ref("");
+const showNote = ref(false);
 
 // array of objects containing each note, which itself contains multiple lines
 const notes = ref([
@@ -112,9 +122,10 @@ function removeNote(note) {
   notes.value = notes.value.filter((t) => t !== note);
 }
 
-function toggleNote(note) {
-  note.toggle = !note.toggle;
-}
+// function toggleNote(note) {
+//   note.toggle = !note.toggle;
+//   showNote.value = true;
+// }
 //Tried to add timestamps below but didn't work
 // import { ref, onMounted } from "vue";
 
