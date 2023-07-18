@@ -1,3 +1,14 @@
+<!-- TO DO:
+-  Convert each note into a modal/dialog, where:
+- the title of the note is shown in the list, and when clicked opens into a larger, editable document
+- this way, only need to save the day date of the note, and don't need to save individual timestamps
+
+TASKS:
+  [ ] Implement note modal structure
+  [ ] Implement creation date
+  [ ] Implement 'last edited' date
+  [ ] Implement note local save (individual note and all notes)
+-->
 <template>
   <div class="uk-card uk-card-default uk-card-body" id="panel">
     <h3>NOTES</h3>
@@ -5,6 +16,11 @@
       <ul>
         <li v-for="note in notes" :key="note.id">
           {{ note.title }} {{ note.Date }}
+          <!-- <ul>
+            <li v-for="line in note" :key="line.line_id">
+              {{ line.text }}
+            </li>
+          </ul> -->
           <button @click="removeNote(note)">X</button>
           <button @click="toggleNote(note)">Open</button>
         </li>
@@ -13,14 +29,17 @@
         <input v-model="newNote" placeholder="New note" />
       </form>
     </div>
-    <div class="time-stamp">
+    <!-- <div class="time-stamp">
       <ul>
         <li v-for="note in notes" :key="note.id">
           <b>{{ note.time }}</b>
         </li>
       </ul>
-    </div>
+    </div> -->
   </div>
+  <!-- <form v-model="notes.value" @submit.prevent="addLine(note)">
+    
+  -->
   <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
     <h3>NOTES</h3>
     <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
@@ -82,7 +101,7 @@ const notes = ref([
 function addNote() {
   notes.value.push({
     id: id++,
-    text: newNote.value,
+    title: newNote.value,
     time: new Date().toLocaleString(),
   });
   newNote.value = ""; // reset newNote value for next form submission
