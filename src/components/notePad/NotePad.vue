@@ -16,18 +16,25 @@ TASKS:
       <ul>
         <li v-for="note in notes" :key="note.id">
           {{ note.title }} {{ note.Date }}
-          <!-- <ul>
-            <li v-for="line in note" :key="line.line_id">
-              {{ line.text }}
-            </li>
-          </ul> -->
           <button @click="removeNote(note)">X</button>
           <button @click="showNote = true">Open</button>
           <Teleport to="body">
             <!-- use the modal component, pass in the prop -->
             <NoteBlock :show="showNote" @close="showNote = false">
               <template #header>
-                <h3>custom header</h3>
+                <h3>{{ note.title }}</h3>
+              </template>
+              <template #body>
+                <ul>
+                  <li v-for="line in note.text" :key="line.line_id">
+                    {{ line.text }}
+                  </li>
+                </ul>
+              </template>
+              <template #footer>
+                <form v-bind:class="newLine" @submit.prevent="addLine(note)">
+                  <input v-model="newLine" placeholder="New line" />
+                </form>
               </template>
             </NoteBlock>
           </Teleport>
@@ -45,9 +52,6 @@ TASKS:
       </ul>
     </div> -->
   </div>
-  <!-- <form v-model="notes.value" @submit.prevent="addLine(note)">
-    
-  -->
   <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
     <h3>NOTES</h3>
     <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
@@ -70,6 +74,7 @@ import { ref } from "vue";
 let id = 0;
 let line_id = 0;
 const newNote = ref("");
+const newLine = ref("");
 const showNote = ref(false);
 
 // array of objects containing each note, which itself contains multiple lines
@@ -117,15 +122,19 @@ function addNote() {
   newNote.value = ""; // reset newNote value for next form submission
 }
 
+function addLine(note) {
+  note.text.push({
+    id: line_id++,
+    text: newLine.value,
+    time: new Date().toLocaleTimeString(),
+  });
+}
+
 /** allows user to remove notes */
 function removeNote(note) {
   notes.value = notes.value.filter((t) => t !== note);
 }
 
-// function toggleNote(note) {
-//   note.toggle = !note.toggle;
-//   showNote.value = true;
-// }
 //Tried to add timestamps below but didn't work
 // import { ref, onMounted } from "vue";
 
