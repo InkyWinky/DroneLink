@@ -35,6 +35,7 @@ TASKS:
                 <form v-bind:class="newLine" @submit.prevent="addLine(note)">
                   <input v-model="newLine" placeholder="New line" />
                 </form>
+                <button @click="saveNote()">Save</button>
               </template>
             </NoteBlock>
           </Teleport>
@@ -44,13 +45,6 @@ TASKS:
         <input v-model="newNote" placeholder="New note" />
       </form>
     </div>
-    <!-- <div class="time-stamp">
-      <ul>
-        <li v-for="note in notes" :key="note.id">
-          <b>{{ note.time }}</b>
-        </li>
-      </ul>
-    </div> -->
   </div>
   <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
     <h3>NOTES</h3>
@@ -128,11 +122,16 @@ function addLine(note) {
     text: newLine.value,
     time: new Date().toLocaleTimeString(),
   });
+  newLine.value = "";
 }
 
 /** allows user to remove notes */
 function removeNote(note) {
   notes.value = notes.value.filter((t) => t !== note);
+}
+
+function saveNote() {
+  showNote.value = false;
 }
 
 //Tried to add timestamps below but didn't work
