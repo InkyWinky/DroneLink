@@ -541,10 +541,13 @@ def calculate_turn_directions(previous_waypoint=None, current_waypoint=None, nex
 def calculate_entrance_and_exit(previous_waypoint=None, current_waypoint=None, next_waypoint=None, next_next_waypoint=None, turn_radius=None):
     # Check turn type
     if current_waypoint.turn_type == "circle":
+        # TODO This isnt right you have to extend the point then do the turn
         current_waypoint.entrance = current_waypoint.coords
         current_waypoint.exit = next_waypoint.coords
 
     if current_waypoint.turn_type == "double circle":
+        # TODO This isnt right either it has to be r distance away from both lines. Use the stackover flow
+        current_waypoint.entrance, current_waypoint.exit = calculate_single_turn_entrance_exit(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords, direction=current_waypoint.turn_direction, radius=turn_radius)
         # First turn
         current_waypoint.entrance = create_point(current_waypoint.coords, turn_radius, calculate_angle_from_points(current_waypoint.coords, previous_waypoint.coords))
         current_waypoint.exit = create_point(current_waypoint.coords, turn_radius, calculate_angle_from_points(current_waypoint.coords, next_waypoint.coords))
@@ -557,6 +560,9 @@ def calculate_entrance_and_exit(previous_waypoint=None, current_waypoint=None, n
         pass
 
     return current_waypoint, next_waypoint
+
+def calculate_single_turn_entrance_exit(previous_waypoint=None, current_waypoint=None, next_waypoint=None, direction=None, radius=None):
+
 
 def create_centre_points(previous_waypoint=None, current_waypoint=None, next_waypoint=None, next_next_waypoint=None, orientation=None, turn_radius=None, turn_type=None):
     circle_centres = None
