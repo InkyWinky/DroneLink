@@ -95,8 +95,11 @@ class MissionPlannerSocket():
         self.s.sendall(bytes(action.serialize()))
 
     def arm_aircraft(self):
-        action = self.COMMANDS.arm_aircraft()
+        action = self.COMMANDS.arm_disarm_aircraft()
         self.s.sendall(bytes(action.serialize()))
+
+
+        
 
 
     
@@ -141,6 +144,7 @@ class Commands:
     SYNC_SCRIPT = "SYNC_SCRIPT"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     ARM = "ARM"
+    armed = False
 
 
     def override(self, waypoints):
@@ -193,15 +197,22 @@ class Commands:
         return action
     
 
-    def arm_aircraft(self):
-        action = Action(Commands.ARM, arm=True)
-        return action
+    def arm_disarm_aircraft(self):
+        if self.armed == False:
+            self.armed = True
+            action = Action(Commands.ARM, arm=True)
+            return action
+        else:
+            self.armed = False
+            action = Action(Commands.ARM, arm=False)
+            return action
 
 if __name__ == "__main__":
     # try:
         # host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
         # host = "172.23.80.1"
         host = raw_input("Enter IP to connect to: ")
+
         
         PORT = 7766  # port number of the connection.
         mp_socket = MissionPlannerSocket(host, PORT)
