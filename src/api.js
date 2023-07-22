@@ -4,7 +4,7 @@ export default {
       const response = await fetch("http://127.0.0.1:8000", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(coordinateData),
+        body: JSON.stringify({ command: "fetchSpline", data: coordinateData }),
       });
       const coordinates = await response.json();
       return coordinates;
@@ -26,5 +26,19 @@ export default {
       );
     }
     console.log("Coordinate data received.");
+  },
+
+  async executeCommand(command, coordinateData) {
+    try {
+      const response = await fetch("http://127.0.0.1:8000", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: command, waypoints: coordinateData }),
+      });
+      const coordinates = await response.json();
+      return coordinates;
+    } catch (error) {
+      console.error(error);
+    }
   },
 };
