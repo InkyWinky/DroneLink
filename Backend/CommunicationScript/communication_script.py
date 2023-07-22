@@ -49,7 +49,7 @@ class MissionManager:
         self.id = int(MAVLink.MAV_CMD.WAYPOINT)  # id_mav_cmd for waypoints
         self.waypoint_count = 0  # The number of waypoints
         self.waypoints = []  # list of the waypoints
-
+        self.armStatus = False
         # Attribute to control FlightPlanner in MissionPlanner
         self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
         
@@ -270,9 +270,15 @@ class MissionManager:
     
 
     def arm_aircraft(self):
-        MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
-        MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
-        #MAV.doARM(True, True) -- FORCE ARMING THE AIRCRAFT (NOT IDEAL)
+        # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
+        # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0) 
+        if self.armStatus == True:
+            #MAV.doARM(True, True)
+            MAV.doCommand(MAVLink.MAV_CMD.DO_SET_MODE, 208, 0, 0, 0, 0, 0, 0, 0)
+            MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
+        else: 
+            MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 0, 21196, 0, 0, 0, 0, 0, 0)
+            #MAV.doARM(False, False) 
 
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
@@ -335,6 +341,7 @@ class MissionManager:
             data (bytes): The byte stream from the socket connection that is the data of the command.
         """
         command = decoded_data["command"]
+        self.armStatus = decoded_data["arm"]
         
         # Used in place of a switch-case as IronPython does not implement it. 
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
