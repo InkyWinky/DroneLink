@@ -18,6 +18,8 @@ import socket
 import json
 import clr
 import threading
+import gc
+import time
 
 # Importing MissionPlanner dependencies
 clr.AddReference("MissionPlanner")
@@ -55,6 +57,7 @@ class MissionManager:
         
         # Attributes for Socket connection.
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # The Python Socket class.
+        # self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # allow socket to be reused.
         self.connection = None  # The Socket Connection that was received
         self.addr = None  # The Address of the received Socket Connection
         self.PORT = port  # The port number that the application is running on (default 7766)
@@ -72,9 +75,6 @@ class MissionManager:
         if connect:
             self.__establish_connection()  # open the connection
         print("[TERMINATION] Communication Script has successfully Terminated.")
-
-    def __del__(self):
-        print("[TERMINATION] MissionManager Class was Garbage Collected by Python.")
 
 
     def __str__(self):
@@ -324,18 +324,22 @@ class MissionManager:
         """
         self.s.setblocking(0)
         while not self.quit:
-            data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
-            # Check if data exists (polling due to non-blocking)
-            if data:
-                if data == 'quit': 
-                    break
-                decoded_data = json.loads(data)
-                # Lock queue and insert new command
-                print('[INFO] Received Command: ' + decoded_data['command'])
-                self.command_queue_mutex.acquire()
-                self.command_queue.append(decoded_data)
-                self.command_queue_mutex.release()
-                # print('[INFO] command_queue', self.command_queue)
+            try:
+                data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                # Check if data exists (polling due to non-blocking)
+                if data:
+                    if data == 'quit': 
+                        break
+                    decoded_data = json.loads(data)
+                    # Lock queue and insert new command
+                    print('[INFO] Received Command: ' + decoded_data['command'])
+                    self.command_queue_mutex.acquire()
+                    self.command_queue.append(decoded_data)
+                    self.command_queue_mutex.release()
+                    # print('[INFO] command_queue', self.command_queue)
+            except Exception as e:
+                # print out error.
+                print("[ERROR] " + str(e))
         self.quit = True
         print("[TERMINATION] receive_thread has successfully terminated.")
 
@@ -353,7 +357,8 @@ class MissionManager:
         command_dict = {Commands.OVERRIDE: Commands.override, 
                         Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
                         Commands.SYNC_SCRIPT: Commands.sync_script,
-                        Commands.ARM: Commands.arm_aircraft
+                        Commands.ARM: Commands.arm_aircraft,
+                        Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
                         }  
         
         # run the command
@@ -368,10 +373,11 @@ class MissionManager:
         """Safely closes the Socket Connection.
         """
         try:
-            self.s.shutdown(1)
+            self.connection.close()
+            self.s.close()
         except Exception as e:
             print("[ERROR] " + str(e))
-        self.s.close()
+        
         print("[TERMINATION] Connection to " + str(self.addr) + " was lost.")
     
 
@@ -389,7 +395,7 @@ class MissionManager:
         for i in range(n):
             res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"])
         return res
-
+    
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
@@ -398,8 +404,8 @@ class Commands:
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
-    GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     ARM = "ARM"
+    GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
 
 
     def override(self, mission_manager, decoded_data):
@@ -475,11 +481,20 @@ class Commands:
             mission_manager MissionManager: The mission manager class connected to the mission planner.
         """
         try:
-            print(type(mission_manager.FlightPlanner))
-            res = mission_manager.FlightPlanner.GetCommandList()
-            print('GetCommandList', res)
-            self.s.sendall(bytes(json.dumps(res), 'utf-8'))
-            print("[COMMAND] GET GET_FLIGHTPLANNER_WAYPOINTS Command Executed.")
+            # print(type(mission_manager.FlightPlanner))
+            # res = mission_manager.FlightPlanner.GetCommandList()
+            n = mission_manager.FlightPlanner.Commands.Rows.Count
+            res = {"command": Commands.GET_FLIGHTPLANNER_WAYPOINTS, "waypoints":[]}
+            for i in range(n):
+                res["waypoints"].append({
+                    "id": int(mission_manager.FlightPlanner.getCmdID(mission_manager.FlightPlanner.Commands.Rows[i].Cells[0].Value)), # Command as a string
+                    "lat": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[5].Value), # Lat
+                    "long": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[6].Value), # Lng
+                    "alt": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[7].Value), # Alt
+                })
+            # print('Command List', res)
+            mission_manager.connection.send(bytes(json.dumps(res)))
+            print("[COMMAND] GET_FLIGHTPLANNER_WAYPOINTS Command Executed.")
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling GET_FLIGHTPLANNER_WAYPOINTS COMMAND.")
@@ -578,6 +593,7 @@ def get_ip():
 get_ip()  # Print out the IPs of the device running Mission Planner.
 mm = MissionManager()  # Create a mission manager class.
 del mm # garbage collect MissionManager to fully delete socket/port resources
+gc.collect() # force manual garbage collect
 # id = int(MAVLink.MAV_CMD.WAYPOINT)
 # wp1 = Locationwp().Set(-37.8408347, 145.2241516, 100, id)
 # wp2 = Locationwp().Set(-37.8411058, 145.2569389, 100, id)

@@ -49,20 +49,22 @@ class MissionPlannerSocket():
     def __receive(self):
         """Performs the receiving of the data from mission planner.
         """
-        time.sleep(1)
-        # self.s.setblocking(0)
+        self.s.setblocking(0)
         while not self.quit:
-            data = self.s.recv(self.chunk_size)  # receive data in 1024 bit chunks
-            # Check if data exists (polling due to non-blocking)
-            if data:
-                if data == 'quit': break
-                decoded_data = json.loads(data)
-                # Lock queue and insert new command
-                print('[INFO] Received Command: ' + decoded_data['command'])
-                self.command_queue_mutex.acquire()
-                self.command_queue.append(decoded_data)
-                self.command_queue_mutex.release()
-                # print('[INFO] command_queue', self.command_queue)
+            try:
+                data = self.s.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                # Check if data exists (polling due to non-blocking)
+                if data:
+                    if data == 'quit': break
+                    decoded_data = json.loads(data)
+                    # Lock queue and insert new command
+                    print('\n[INFO] Received Command: ' + decoded_data['command'])
+                    self.command_queue_mutex.acquire()
+                    self.command_queue.append(decoded_data)
+                    self.command_queue_mutex.release()
+                    # print('[INFO] command_queue', self.command_queue)
+            except Exception as e:
+                continue
         self.quit = True
         print("\n[TERMINATION] receive_thread has successfully terminated.")
 
@@ -86,7 +88,7 @@ class MissionPlannerSocket():
                 # run the command
                 try:
                     if command == self.COMMANDS.GET_FLIGHTPLANNER_WAYPOINTS:
-                        print('[COMMAND] Received from get_flightplanner_waypoint: ', decoded_data)
+                        print('\n[COMMAND] Received from get_flightplanner_waypoint: ' + str(decoded_data))
                     else:
                         print("[ERROR] Unknown Command Was Given.")
                 except Exception as e:
@@ -179,10 +181,9 @@ class Commands:
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
-    GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     ARM = "ARM"
     armed = False
-
+    GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
 
     def override(self, waypoints):
         """Creates an action that is to be sent to overrides all the waypoints in mission planner.
@@ -275,7 +276,7 @@ if __name__ == "__main__":
             print("[ 2 ]. SYNC SCRIPT")
             print("[ 3 ]. OVERRIDE WAYPOINTS on Live Drone (Hardcoded waypoints)")
             print("[ 4 ]. ARM/DISARM AIRCRAFT")
-            # print("[ 5 ]. GET FLIGHTPLANNER WAYPOINTS")
+            print("[ 5 ]. GET FLIGHTPLANNER WAYPOINTS")
             print("[ q ]. Quit")
             print("--------------------------------------------------------------------------------------")
 
@@ -288,8 +289,8 @@ if __name__ == "__main__":
                 mp_socket.override_waypoints(test_waypoints)
             elif option == '4':
                 mp_socket.arm_aircraft()
-            # elif option == '5':
-            #     mp_socket.get_flightplanner_waypoints()
+            elif option == '5':
+                mp_socket.get_flightplanner_waypoints()
             elif option == 'q':
                 break
             else:
