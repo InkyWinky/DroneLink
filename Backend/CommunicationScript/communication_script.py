@@ -274,16 +274,18 @@ class MissionManager:
         self.waypoints[0] = waypoint
     
 
-    def arm_aircraft(self):
+    def toggle_arm_aircraft(self):
         # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
         # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0) 
-        if self.armStatus == True:
-            #MAV.doARM(True, True)
-            MAV.doCommand(MAVLink.MAV_CMD.DO_SET_MODE, 208, 0, 0, 0, 0, 0, 0, 0)
-            MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
+        if cs.armed:
+            MAV.doARM(False, True)
+            print("[INFO] Toggled Drone to DISARMED")
+            # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_MODE, 208, 0, 0, 0, 0, 0, 0, 0)
+            # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
         else: 
-            MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 0, 21196, 0, 0, 0, 0, 0, 0)
-            #MAV.doARM(False, False) 
+            # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 0, 21196, 0, 0, 0, 0, 0, 0)
+            MAV.doARM(True, True)
+            print("[INFO] Toggled Drone to ARMED")
 
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
@@ -321,7 +323,8 @@ class MissionManager:
         except Exception as e:
             # print out error.
             print("[ERROR] " + str(e))
-        self.close_connection()
+            print("[ERROR] Error in Establish Connection")
+        self.close()
 
 
     def __receive(self):
@@ -355,14 +358,14 @@ class MissionManager:
             data (bytes): The byte stream from the socket connection that is the data of the command.
         """
         command = decoded_data["command"]
-        self.armStatus = decoded_data["arm"]
+        self.armStatus = cs.armed
         
         # Used in place of a switch-case as IronPython does not implement it.
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
         command_dict = {Commands.OVERRIDE: Commands.override, 
                         Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
                         Commands.SYNC_SCRIPT: Commands.sync_script,
-                        Commands.ARM: Commands.arm_aircraft,
+                        Commands.TOGGLE_ARM: Commands.toggle_arm_aircraft,
                         Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
                         }  
         
@@ -374,10 +377,11 @@ class MissionManager:
             print("[COMMAND] ERROR: Unknown Command Was Given.")
 
 
-    def close_connection(self):
+    def close(self):
         """Safely closes the Socket Connection.
         """
         try:
+            self.quit = True
             self.connection.close()
             self.s.close()
         except Exception as e:
@@ -405,20 +409,23 @@ class MissionManager:
         """Sends live data from the drone to the backend. Is run as a thread and sends data every 'live_data_rate' ms.
         """
         while not self.quit:
-            data = json.dumps({
-                "command":Commands.LIVE_DRONE_DATA,
-                "data":{
-                    "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
-                    "airspeed": float(cs.airspeed),
-                    "groundspeed": float(cs.groundspeed),
-                    "verticalspeed": float(cs.verticalspeed),
-                    "battery_voltage": float(cs.battery_voltage),
-                    "battery_remaining": float(cs.battery_remaining),
-                    "armed": cs.armed,
-                    },
-                })
-            self.connection.sendall(data)
-            Script.Sleep(self.live_data_rate)
+            try:
+                data = json.dumps({
+                    "command":Commands.LIVE_DRONE_DATA,
+                    "data":{
+                        "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
+                        "airspeed": float(cs.airspeed),
+                        "groundspeed": float(cs.groundspeed),
+                        "verticalspeed": float(cs.verticalspeed),
+                        "battery_voltage": float(cs.battery_voltage),
+                        "battery_remaining": float(cs.battery_remaining),
+                        "armed": cs.armed,
+                        },
+                    })
+                self.connection.sendall(data)
+                Script.Sleep(self.live_data_rate)
+            except Exception as e:
+                print("[ERROR] " + str(e))
         print("[TERMINATION] send_live_data_thread has successfully terminated")
     
 
@@ -429,7 +436,7 @@ class Commands:
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
-    ARM = "ARM"
+    TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
 
@@ -494,9 +501,9 @@ class Commands:
             print("[COMMAND] ERROR: Handling SYNC_SCRIPT COMMAND.")
 
 
-    def arm_aircraft(self, misson_manager, decoded_data):
+    def toggle_arm_aircraft(self, misson_manager, decoded_data):
         try:
-            misson_manager.arm_aircraft()
+            misson_manager.toggle_arm_aircraft()
             print("[COMMAND] ARM Command Executed.")
         except Exception as e:
             print("[ERROR] " + str(e))
