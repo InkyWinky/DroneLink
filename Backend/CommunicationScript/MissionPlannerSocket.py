@@ -113,142 +113,55 @@ class MissionPlannerSocket():
         
 
     def override_waypoints(self, waypoints):
-        """Sends an Action to overwrite all the waypoints in mission planner.
+        """Sends a command to overwrite all the waypoints in mission planner.
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
-        action = self.COMMANDS.override(waypoints)
-        self.s.sendall(bytes(action.serialize()))
+        data = json.dumps({"command":self.COMMANDS.OVERRIDE, "waypoints": waypoints})
+        self.s.sendall(data)
     
     
     def override_flightplanner_waypoints(self, waypoints):
-        """Sends an Action to overwrite all the waypoints in the flight planner GUI.
+        """Sends a command to overwrite all the waypoints in the flight planner GUI.
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
-        action = self.COMMANDS.override_flightplanner(waypoints)
-        self.s.sendall(bytes(action.serialize()))
+        data = json.dumps({"command":self.COMMANDS.OVERRIDE_FLIGHTPLANNER, "waypoints": waypoints})
+        self.s.sendall(data)
 
 
     def sync_script(self):
-        """Sends an Action to sync all the waypoints in the flight planner to the mission planner script.
+        """Sends a command to sync all the waypoints live on the drone to the mission planner script.
         """
-        action = self.COMMANDS.sync_script()
-        self.s.sendall(bytes(action.serialize()))
+        data = json.dumps({"command":self.COMMANDS.SYNC_SCRIPT})
+        self.s.sendall(data)
 
-    def arm_aircraft(self):
-        action = self.COMMANDS.arm_disarm_aircraft()
-        self.s.sendall(bytes(action.serialize()))
+    def toggle_arm_aircraft(self):
+        """Sends a command to toggle the arming state of the drone
+        """
+        data = json.dumps({"command":self.COMMANDS.TOGGLE_ARM})
+        self.s.sendall(data)
 
 
     def get_flightplanner_waypoints(self):
-        action = self.COMMANDS.get_flightplanner_waypoints()
-        self.s.sendall(bytes(action.serialize()))
-
-class Action:
-    """The class that is sent from the backend connection to execute commands on the mission planner script.
-    """
-    def __init__(self, command, arm=None):
-        self.command = command
-        self.waypoints = None
-        self.arm = arm
-        
-    
-
-    def serialize(self):
-        """Serializes the Action into a json string to be sent over the socket.
-
-        Returns:
-            str: The Action in string format. {"command":command, "waypoints":waypoints}
+        """Sends a command to get all the waypoints in the flight planner.
         """
-        return json.dumps({"command":self.command, "waypoints":self.waypoints, "arm":self.arm})
-
-
-    def deserialize(self, data):
-        """Deserializes the json string back into an Action class.
-
-        Args:
-            data (str): The string of the json to be converted back into a list of dictionaries.
-        """
-        decoded = json.loads(data)
-        decoded_action = Action(decoded["command"])
-        decoded_action.waypoints = decoded["waypoints"]
-        return decoded_action
-
+        data = json.dumps({"command":self.COMMANDS.GET_FLIGHTPLANNER_WAYPOINTS})
+        self.s.sendall(data)
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
-    The functions in this class will return an Action class that will be sent over the socket connection.
+    The functions in this class will execute the command.
     """
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
-    ARM = "ARM"
-    armed = False
+    TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
-
-    def override(self, waypoints):
-        """Creates an action that is to be sent to overrides all the waypoints in mission planner.
-
-        Args:
-            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
-
-        Returns:
-            Action: An override action with the waypoints to override with.
-        """
-        action = Action(Commands.OVERRIDE)
-        action.waypoints = waypoints
-        return action
     
-
-    def override_flightplanner(self, waypoints):
-        """Creates an action that is to be sent to overrides all the waypoints in the flight planner GUI.
-
-        Args:
-            waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
-
-        Returns:
-            Action: An override_flightplanner action with the waypoints to override with.
-        """
-        action = Action(Commands.OVERRIDE_FLIGHTPLANNER)
-        action.waypoints = waypoints
-        return action
-    
-
-    def sync_script(self):
-        """Creates an action that is to be send to sync all the waypoints in the flight planner to the mission planner script.
-        Returns:
-            Action: A sync script action.
-
-        Returns:
-            _type_: _description_
-        """
-        action = Action(Commands.SYNC_SCRIPT)
-        return action
-        
-    
-    def get_flightplanner_waypoints(self):
-        """Requests for the waypoints from the Flightplanner tab on the connected mission planner.
-
-        Returns:
-            Action: A get_flightplanner_waypoints action.
-        """
-        action = Action(Commands.GET_FLIGHTPLANNER_WAYPOINTS)
-        return action
-    
-
-    def arm_disarm_aircraft(self):
-        if self.armed == False:
-            self.armed = True
-            action = Action(Commands.ARM, arm=True)
-            return action
-        else:
-            self.armed = False
-            action = Action(Commands.ARM, arm=False)
-            return action
 
 if __name__ == "__main__":
     # try:
@@ -293,7 +206,7 @@ if __name__ == "__main__":
             elif option == '3':
                 mp_socket.override_waypoints(test_waypoints)
             elif option == '4':
-                mp_socket.arm_aircraft()
+                mp_socket.toggle_arm_aircraft()
             elif option == '5':
                 mp_socket.get_flightplanner_waypoints()
             elif option == 'q':
