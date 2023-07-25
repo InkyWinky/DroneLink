@@ -58,7 +58,8 @@ class MissionPlannerSocket():
                     if data == 'quit': break
                     decoded_data = json.loads(data)
                     # Lock queue and insert new command
-                    print('\n[INFO] Received Command: ' + decoded_data['command'])
+                    if decoded_data['command'] != self.COMMANDS.LIVE_DRONE_DATA:
+                        print('\n[INFO] Received Command: ' + decoded_data['command'])
                     self.command_queue_mutex.acquire()
                     self.command_queue.append(decoded_data)
                     self.command_queue_mutex.release()
@@ -89,6 +90,9 @@ class MissionPlannerSocket():
                 try:
                     if command == self.COMMANDS.GET_FLIGHTPLANNER_WAYPOINTS:
                         print('\n[COMMAND] Received from get_flightplanner_waypoint: ' + str(decoded_data))
+                    elif command == self.COMMANDS.LIVE_DRONE_DATA:
+                        # print("[DATA] " + str(decoded_data["data"]))
+                        pass
                     else:
                         print("[ERROR] Unknown Command Was Given.")
                 except Exception as e:
@@ -184,6 +188,7 @@ class Commands:
     ARM = "ARM"
     armed = False
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
+    LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
 
     def override(self, waypoints):
         """Creates an action that is to be sent to overrides all the waypoints in mission planner.

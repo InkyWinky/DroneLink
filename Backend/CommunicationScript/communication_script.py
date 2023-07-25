@@ -20,6 +20,7 @@ import clr
 import threading
 import gc
 import time
+import datetime
 
 # Importing MissionPlanner dependencies
 clr.AddReference("MissionPlanner")
@@ -52,6 +53,7 @@ class MissionManager:
         self.waypoint_count = 0  # The number of waypoints
         self.waypoints = []  # list of the waypoints
         self.armStatus = False
+        self.live_data_rate = 1000 # Data send rate from drone to backend (in ms)
         # Attribute to control FlightPlanner in MissionPlanner
         self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
         
@@ -297,7 +299,9 @@ class MissionManager:
 
             # start receive thread
             receive_thread = threading.Thread(target=self.__receive, name="receive_thread")
+            send_live_data_thread = threading.Thread(target=self.send_live_data, name="send_live_data_thread")
             receive_thread.start()
+            send_live_data_thread.start()
             # Handle commands received
             while not self.quit:
                 # If there is a command
@@ -313,6 +317,7 @@ class MissionManager:
                     # self.connection.sendall('jsonify the data')  # echo data back!
             self.quit = True # stop the receive thread
             receive_thread.join()
+            send_live_data_thread.join()
         except Exception as e:
             # print out error.
             print("[ERROR] " + str(e))
@@ -352,7 +357,7 @@ class MissionManager:
         command = decoded_data["command"]
         self.armStatus = decoded_data["arm"]
         
-        # Used in place of a switch-case as IronPython does not implement it. 
+        # Used in place of a switch-case as IronPython does not implement it.
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
         command_dict = {Commands.OVERRIDE: Commands.override, 
                         Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
@@ -396,6 +401,26 @@ class MissionManager:
             res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"])
         return res
     
+    def send_live_data(self):
+        """Sends live data from the drone to the backend. Is run as a thread and sends data every 'live_data_rate' ms.
+        """
+        while not self.quit:
+            data = json.dumps({
+                "command":Commands.LIVE_DRONE_DATA,
+                "data":{
+                    "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
+                    "airspeed": float(cs.airspeed),
+                    "groundspeed": float(cs.groundspeed),
+                    "verticalspeed": float(cs.verticalspeed),
+                    "battery_voltage": float(cs.battery_voltage),
+                    "battery_remaining": float(cs.battery_remaining),
+                    "armed": cs.armed,
+                    },
+                })
+            self.connection.sendall(data)
+            Script.Sleep(self.live_data_rate)
+        print("[TERMINATION] send_live_data_thread has successfully terminated")
+    
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
@@ -406,6 +431,7 @@ class Commands:
     SYNC_SCRIPT = "SYNC_SCRIPT"
     ARM = "ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
+    LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
 
 
     def override(self, mission_manager, decoded_data):
@@ -413,6 +439,7 @@ class Commands:
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend.
 
         Returns:
             Action: An override action with the waypoints to override with.
@@ -434,6 +461,7 @@ class Commands:
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend.
 
         Returns:
             Action: An override_flightplanner action with the waypoints to override with.
@@ -453,6 +481,7 @@ class Commands:
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend.
 
         Returns:
             Action: An sync_script action.
@@ -479,6 +508,7 @@ class Commands:
 
         Args:
             mission_manager MissionManager: The mission manager class connected to the mission planner.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend.
         """
         try:
             # print(type(mission_manager.FlightPlanner))
@@ -498,6 +528,7 @@ class Commands:
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling GET_FLIGHTPLANNER_WAYPOINTS COMMAND.")
+        
 
 
 # ------------------------------------ End Classes ------------------------------------
