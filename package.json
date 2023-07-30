@@ -14,6 +14,7 @@
     "uikit": "^3.16.1",
     "vue": "^3.2.13",
     "vue-draggable-next": "^2.1.1",
+    "vue-hooks-form": "^0.3.0",
     "vue-router": "^4.0.3",
     "vuedraggable": "^4.1.0",
     "vuex": "^4.0.0"

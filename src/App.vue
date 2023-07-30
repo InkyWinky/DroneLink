@@ -3,11 +3,25 @@
     <router-link to="/">DroneLink</router-link>
     <!-- <img id="logo-link" src="../public/logolink.png" alt="" /> -->
     <button class="transparentBtn" id="settings-btn">
-      <i
-        class="fa-sharp fa-solid fa-gears icon-btn-effect"
-        id="settings-icon"
-      ></i>
+      <i class="fa-sharp fa-solid fa-gears icon-btn-effect" id="settings-icon">
+      </i>
     </button>
+    <a class="uk-button uk-button-default" href="#modal-center" uk-toggle
+      >Connect to Mission Planner</a
+    >
+
+    <div id="modal-center" class="uk-flex-top" uk-modal>
+      <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+        <button class="uk-modal-close-default" type="button" uk-close></button>
+
+        <form @submit="onSubmit">
+          <label>Input IP address of device with Mission Planner:</label>
+          <input v-model="ip.value" :ref="ip.ref" />
+          <p v-if="ip.error">{{ ip.error.message }}</p>
+          <button type="submit">submit</button>
+        </form>
+      </div>
+    </div>
     <div id="drone-connection">
       <span>Drone Connection</span>
       <div id="connection-status"></div>
@@ -24,6 +38,9 @@
   text-align: center;
   color: #2c3e50;
   height: 100%;
+}
+.connect-btn {
+  font-size: 1em !important;
 }
 #logo-link {
   height: 2%;
@@ -47,7 +64,7 @@ nav {
 
 nav a {
   font-weight: normal;
-  font-size: 2.5em !important;
+  font-size: 2.5em;
   color: #2c3e50;
   text-decoration: none;
 }
@@ -86,3 +103,24 @@ nav a.router-link-exact-active {
   box-shadow: 0 0 5px 2px greenyellow;
 }
 </style>
+<script>
+import { useForm } from "vue-hooks-form";
+export default {
+  setup() {
+    const { useField, handleSubmit } = useForm({
+      defaultValues: {},
+    });
+    const ip = useField("ip", {
+      rule: { required: true, min: 7, max: 15 },
+    });
+    function connect(ip) {
+      console.log("ip is: " + ip);
+    }
+    const onSubmit = (data) => connect(data.ip);
+    return {
+      ip,
+      onSubmit: handleSubmit(onSubmit),
+    };
+  },
+};
+</script>
