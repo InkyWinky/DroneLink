@@ -1,24 +1,65 @@
+<!-- TO DO:
+-  Convert each note into a modal/dialog, where:
+- the title of the note is shown in the list, and when clicked opens into a larger, editable document
+- this way, only need to save the day date of the note, and don't need to save individual timestamps
+
+TASKS:
+  [ ] Implement note modal structure
+  [ ] Implement font auto-sizing so note list fits
+  [X] Implement creation date
+  [X] Implement 'last edited' date (works upon save)
+  [ ] Implement note local save (individual note and all notes)
+-->
 <template>
   <div class="uk-card uk-card-default uk-card-body" id="panel">
     <h3>NOTES</h3>
-    <div class="note-text">
-      <ul>
-        <li v-for="note in notes" :key="note.id">
-          {{ note.title }} {{ note.Date }}
-          <button @click="removeNote(note)">X</button>
-          <button @click="toggleNote(note)">Open</button>
-        </li>
-      </ul>
+    <div class="note-list">
+      <table class="note-table">
+        <thead>
+          <td>Title</td>
+          <td>Created</td>
+          <td>Modified</td>
+        </thead>
+        <tbody>
+          <tr v-for="note in notes" :key="note.id">
+            <td>
+              <button @click="openNote(note)" class="note-open">
+                {{ note.title }}
+              </button>
+              <Teleport to="body">
+                use the modal component, pass in the prop
+                <NoteBlock :show="showNote" @close="showNote = false">
+                  <template #header>
+                    <h3>{{ note.title }}</h3>
+                  </template>
+                  <template #body>
+                    <ul>
+                      <li v-for="line in note.text" :key="line.line_id">
+                        {{ line.text }}
+                      </li>
+                    </ul>
+                    <form
+                      v-bind:class="newLine"
+                      @submit.prevent="addLine(note)"
+                    >
+                      <input v-model="newLine" placeholder="New line" />
+                    </form>
+                  </template>
+                  <template #footer>
+                    <button @click="saveNote(note)">Save</button>
+                  </template>
+                </NoteBlock>
+              </Teleport>
+            </td>
+            <td>{{ note.createdDate }}</td>
+            <td>{{ note.modifiedDate }}</td>
+            <td><button @click="removeNote(note)">X</button></td>
+          </tr>
+        </tbody>
+      </table>
       <form v-bind:class="newNote" @submit.prevent="addNote">
         <input v-model="newNote" placeholder="New note" />
       </form>
-    </div>
-    <div class="time-stamp">
-      <ul>
-        <li v-for="note in notes" :key="note.id">
-          <b>{{ note.time }}</b>
-        </li>
-      </ul>
     </div>
   </div>
   <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
@@ -37,11 +78,14 @@
 </template>
 
 <script setup>
+import NoteBlock from "./NoteBlock.vue";
 import { ref } from "vue";
 
 let id = 0;
 let line_id = 0;
 const newNote = ref("");
+const newLine = ref("");
+const showNote = ref(false);
 
 // array of objects containing each note, which itself contains multiple lines
 const notes = ref([
@@ -52,15 +96,16 @@ const notes = ref([
       {
         line_id: line_id++,
         text: "Albatross suffered motor failure",
-        time: new Date().toLocaleTimeString(),
+        // time: new Date().toLocaleTimeString(),
       },
       {
         line_id: line_id++,
         text: "Failure caused it to lean and stall",
-        time: new Date().toLocaleTimeString(),
+        // time: new Date().toLocaleTimeString(),
       },
     ],
-    time: new Date().toLocaleDateString(),
+    createdDate: new Date().toLocaleDateString(),
+    modifiedDate: null,
     show: false,
   },
   {
@@ -70,10 +115,11 @@ const notes = ref([
       {
         line_id: line_id++,
         text: "The Albatross achieved hover today - held stable for 10 seconds before landing.",
-        time: new Date().toLocaleTimeString(),
+        // time: new Date().toLocaleTimeString(),
       },
     ],
-    time: new Date().toLocaleString(),
+    createdDate: new Date().toLocaleDateString(),
+    modifiedDate: null,
     show: false,
   },
 ]);
@@ -82,10 +128,19 @@ const notes = ref([
 function addNote() {
   notes.value.push({
     id: id++,
-    text: newNote.value,
+    title: newNote.value,
     time: new Date().toLocaleString(),
   });
   newNote.value = ""; // reset newNote value for next form submission
+}
+
+function addLine(note) {
+  note.text.push({
+    id: line_id++,
+    text: newLine.value,
+    time: new Date().toLocaleTimeString(),
+  });
+  newLine.value = "";
 }
 
 /** allows user to remove notes */
@@ -93,9 +148,16 @@ function removeNote(note) {
   notes.value = notes.value.filter((t) => t !== note);
 }
 
-function toggleNote(note) {
-  note.toggle = !note.toggle;
+function saveNote(note) {
+  showNote.value = false;
+  note.modifiedDate = new Date().toLocaleDateString();
 }
+
+// eslint-disable-next-line
+function openNote(note) {
+  showNote.value = true;
+}
+
 //Tried to add timestamps below but didn't work
 // import { ref, onMounted } from "vue";
 
@@ -178,12 +240,16 @@ function toggleNote(note) {
   color: white;
   padding: 2px 5px;
   border-radius: 5px;
-  font-size: 0.8em;
+  font-size: auto;
   margin-right: 5px;
 }
 
-.note-text {
+.note-list {
   display: inline-block;
   justify-content: left;
+}
+
+.note-table {
+  font-size: auto;
 }
 </style>

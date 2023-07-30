@@ -18,6 +18,9 @@ import socket
 import json
 import clr
 import threading
+import gc
+import time
+import datetime
 
 # Importing MissionPlanner dependencies
 clr.AddReference("MissionPlanner")
@@ -49,12 +52,14 @@ class MissionManager:
         self.id = int(MAVLink.MAV_CMD.WAYPOINT)  # id_mav_cmd for waypoints
         self.waypoint_count = 0  # The number of waypoints
         self.waypoints = []  # list of the waypoints
-
+        self.armStatus = False
+        self.live_data_rate = 1000 # Data send rate from drone to backend (in ms)
         # Attribute to control FlightPlanner in MissionPlanner
         self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
         
         # Attributes for Socket connection.
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # The Python Socket class.
+        # self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # allow socket to be reused.
         self.connection = None  # The Socket Connection that was received
         self.addr = None  # The Address of the received Socket Connection
         self.PORT = port  # The port number that the application is running on (default 7766)
@@ -72,9 +77,6 @@ class MissionManager:
         if connect:
             self.__establish_connection()  # open the connection
         print("[TERMINATION] Communication Script has successfully Terminated.")
-
-    def __del__(self):
-        print("[TERMINATION] MissionManager Class was Garbage Collected by Python.")
 
 
     def __str__(self):
@@ -272,10 +274,18 @@ class MissionManager:
         self.waypoints[0] = waypoint
     
 
-    def arm_aircraft(self):
-        MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
-        MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
-        # MAV.doARM(True, True) # -- FORCE ARMING THE AIRCRAFT (NOT IDEAL)
+    def toggle_arm_aircraft(self):
+        # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
+        # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0) 
+        if cs.armed:
+            MAV.doARM(False, True)
+            print("[INFO] Toggled Drone to DISARMED")
+            # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_MODE, 208, 0, 0, 0, 0, 0, 0, 0)
+            # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
+        else: 
+            # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 0, 21196, 0, 0, 0, 0, 0, 0)
+            MAV.doARM(True, True)
+            print("[INFO] Toggled Drone to ARMED")
 
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
@@ -291,7 +301,9 @@ class MissionManager:
 
             # start receive thread
             receive_thread = threading.Thread(target=self.__receive, name="receive_thread")
+            send_live_data_thread = threading.Thread(target=self.send_live_data, name="send_live_data_thread")
             receive_thread.start()
+            send_live_data_thread.start()
             # Handle commands received
             while not self.quit:
                 # If there is a command
@@ -307,10 +319,12 @@ class MissionManager:
                     # self.connection.sendall('jsonify the data')  # echo data back!
             self.quit = True # stop the receive thread
             receive_thread.join()
+            send_live_data_thread.join()
         except Exception as e:
             # print out error.
             print("[ERROR] " + str(e))
-        self.close_connection()
+            print("[ERROR] Error in Establish Connection")
+        self.close()
 
 
     def __receive(self):
@@ -318,18 +332,22 @@ class MissionManager:
         """
         self.s.setblocking(0)
         while not self.quit:
-            data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
-            # Check if data exists (polling due to non-blocking)
-            if data:
-                if data == 'quit': 
-                    break
-                decoded_data = json.loads(data)
-                # Lock queue and insert new command
-                print('[INFO] Received Command: ' + decoded_data['command'])
-                self.command_queue_mutex.acquire()
-                self.command_queue.append(decoded_data)
-                self.command_queue_mutex.release()
-                # print('[INFO] command_queue', self.command_queue)
+            try:
+                data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                # Check if data exists (polling due to non-blocking)
+                if data:
+                    if data == 'quit': 
+                        break
+                    decoded_data = json.loads(data)
+                    # Lock queue and insert new command
+                    print('[INFO] Received Command: ' + decoded_data['command'])
+                    self.command_queue_mutex.acquire()
+                    self.command_queue.append(decoded_data)
+                    self.command_queue_mutex.release()
+                    # print('[INFO] command_queue', self.command_queue)
+            except Exception as e:
+                # print out error.
+                print("[ERROR] " + str(e))
         self.quit = True
         print("[TERMINATION] receive_thread has successfully terminated.")
 
@@ -340,13 +358,15 @@ class MissionManager:
             data (bytes): The byte stream from the socket connection that is the data of the command.
         """
         command = decoded_data["command"]
+        self.armStatus = cs.armed
         
-        # Used in place of a switch-case as IronPython does not implement it. 
+        # Used in place of a switch-case as IronPython does not implement it.
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
         command_dict = {Commands.OVERRIDE: Commands.override, 
                         Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
                         Commands.SYNC_SCRIPT: Commands.sync_script,
-                        Commands.ARM: Commands.arm_aircraft
+                        Commands.TOGGLE_ARM: Commands.toggle_arm_aircraft,
+                        Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
                         }  
         
         # run the command
@@ -357,14 +377,16 @@ class MissionManager:
             print("[COMMAND] ERROR: Unknown Command Was Given.")
 
 
-    def close_connection(self):
+    def close(self):
         """Safely closes the Socket Connection.
         """
         try:
-            self.s.shutdown(1)
+            self.quit = True
+            self.connection.close()
+            self.s.close()
         except Exception as e:
             print("[ERROR] " + str(e))
-        self.s.close()
+        
         print("[TERMINATION] Connection to " + str(self.addr) + " was lost.")
     
 
@@ -382,7 +404,30 @@ class MissionManager:
         for i in range(n):
             res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"])
         return res
-
+    
+    def send_live_data(self):
+        """Sends live data from the drone to the backend. Is run as a thread and sends data every 'live_data_rate' ms.
+        """
+        while not self.quit:
+            try:
+                data = json.dumps({
+                    "command":Commands.LIVE_DRONE_DATA,
+                    "data":{
+                        "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
+                        "airspeed": float(cs.airspeed),
+                        "groundspeed": float(cs.groundspeed),
+                        "verticalspeed": float(cs.verticalspeed),
+                        "battery_voltage": float(cs.battery_voltage),
+                        "battery_remaining": float(cs.battery_remaining),
+                        "armed": cs.armed,
+                        },
+                    })
+                self.connection.sendall(data)
+                Script.Sleep(self.live_data_rate)
+            except Exception as e:
+                print("[ERROR] " + str(e))
+        print("[TERMINATION] send_live_data_thread has successfully terminated")
+    
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
@@ -391,8 +436,9 @@ class Commands:
     OVERRIDE = "OVERRIDE"
     OVERRIDE_FLIGHTPLANNER = "OVERRIDE_FLIGHTPLANNER"
     SYNC_SCRIPT = "SYNC_SCRIPT"
+    TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
-    ARM = "ARM"
+    LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
 
 
     def override(self, mission_manager, decoded_data):
@@ -400,6 +446,7 @@ class Commands:
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend.
 
         Returns:
             Action: An override action with the waypoints to override with.
@@ -421,6 +468,7 @@ class Commands:
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend.
 
         Returns:
             Action: An override_flightplanner action with the waypoints to override with.
@@ -440,6 +488,7 @@ class Commands:
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend.
 
         Returns:
             Action: An sync_script action.
@@ -452,9 +501,9 @@ class Commands:
             print("[COMMAND] ERROR: Handling SYNC_SCRIPT COMMAND.")
 
 
-    def arm_aircraft(self, misson_manager, decoded_data):
+    def toggle_arm_aircraft(self, misson_manager, decoded_data):
         try:
-            misson_manager.arm_aircraft()
+            misson_manager.toggle_arm_aircraft()
             print("[COMMAND] ARM Command Executed.")
         except Exception as e:
             print("[ERROR] " + str(e))
@@ -466,16 +515,27 @@ class Commands:
 
         Args:
             mission_manager MissionManager: The mission manager class connected to the mission planner.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend.
         """
         try:
-            print(type(mission_manager.FlightPlanner))
-            res = mission_manager.FlightPlanner.GetCommandList()
-            print('GetCommandList', res)
-            self.s.sendall(bytes(json.dumps(res), 'utf-8'))
-            print("[COMMAND] GET GET_FLIGHTPLANNER_WAYPOINTS Command Executed.")
+            # print(type(mission_manager.FlightPlanner))
+            # res = mission_manager.FlightPlanner.GetCommandList()
+            n = mission_manager.FlightPlanner.Commands.Rows.Count
+            res = {"command": Commands.GET_FLIGHTPLANNER_WAYPOINTS, "waypoints":[]}
+            for i in range(n):
+                res["waypoints"].append({
+                    "id": int(mission_manager.FlightPlanner.getCmdID(mission_manager.FlightPlanner.Commands.Rows[i].Cells[0].Value)), # Command as a string
+                    "lat": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[5].Value), # Lat
+                    "long": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[6].Value), # Lng
+                    "alt": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[7].Value), # Alt
+                })
+            # print('Command List', res)
+            mission_manager.connection.send(bytes(json.dumps(res)))
+            print("[COMMAND] GET_FLIGHTPLANNER_WAYPOINTS Command Executed.")
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling GET_FLIGHTPLANNER_WAYPOINTS COMMAND.")
+        
 
 
 # ------------------------------------ End Classes ------------------------------------
@@ -571,6 +631,7 @@ def get_ip():
 get_ip()  # Print out the IPs of the device running Mission Planner.
 mm = MissionManager()  # Create a mission manager class.
 del mm # garbage collect MissionManager to fully delete socket/port resources
+gc.collect() # force manual garbage collect
 # id = int(MAVLink.MAV_CMD.WAYPOINT)
 # wp1 = Locationwp().Set(-37.8408347, 145.2241516, 100, id)
 # wp2 = Locationwp().Set(-37.8411058, 145.2569389, 100, id)
