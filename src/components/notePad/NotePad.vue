@@ -27,7 +27,7 @@ TASKS:
                 {{ note.title }}
               </button>
               <Teleport to="body">
-                use the modal component, pass in the prop
+                <!-- use the modal component, pass in the prop -->
                 <NoteBlock :show="showNote" @close="showNote = false">
                   <template #header>
                     <h3>{{ note.title }}</h3>

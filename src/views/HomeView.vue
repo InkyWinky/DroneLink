@@ -49,6 +49,7 @@ export default {
 body {
   background-color: #eeeeee;
   height: 100%;
+  overflow: hidden;
 }
 div {
   height: 100%;
