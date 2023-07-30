@@ -105,6 +105,7 @@ nav a.router-link-exact-active {
 </style>
 <script>
 import { useForm } from "vue-hooks-form";
+import api from "./api";
 export default {
   setup() {
     const { useField, handleSubmit } = useForm({
@@ -115,6 +116,7 @@ export default {
     });
     function connect(ip) {
       console.log("ip is: " + ip);
+      api.executeCommand("CONNECTIP", { ip: ip });
     }
     const onSubmit = (data) => connect(data.ip);
     return {
