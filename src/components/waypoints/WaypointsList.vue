@@ -197,36 +197,42 @@ function addMarkerToMap(long, lat) {
   console.log(marker);
   return marker;
 }
-async function testApi() {
-  let coordinateData = [
-    {
-      id: 0,
-      long: 12,
-      lat: 14,
-      alt: 20,
-    },
-    {
-      id: 1,
-      long: 13,
-      lat: 15,
-      alt: 20,
-    },
-    {
-      id: 2,
-      long: 14,
-      lat: 16,
-      alt: 20,
-    },
-  ];
-  //test server
-  console.log("Testing Server ...");
-  const splineData = await api.fetchSpline(coordinateData);
-  await api.getSpline(coordinateData, splineData);
-}
-testApi();
-function formatWaypoints() {
+// async function testApi() {
+// let coordinateData = [
+//   {
+//     id: 0,
+//     long: 12,
+//     lat: 14,
+//     alt: 20,
+//   },
+//   {
+//     id: 1,
+//     long: 13,
+//     lat: 15,
+//     alt: 20,
+//   },
+//   {
+//     id: 2,
+//     long: 14,
+//     lat: 16,
+//     alt: 20,
+//   },
+// ];
+// console.log("Testing Server ...");
+// const splineData = await api.fetchSpline(coordinateData);
+// const commandResult = await api.executeCommand(
+//   "OVERRIDE_FLIGHTPLANNER",
+//   coordinateData
+// );
+// console.log("commandResult", commandResult);
+// await api.getSpline(coordinateData, splineData);
+// }
+// testApi();
+
+async function formatWaypoints() {
   //The function formatWaypoints formats the waypoints from the gui into the format that the waypoints communication script accepts:
   //
+
   console.log(waypoints.value);
   let WAYPOINT_ID = 16;
   console.log(WAYPOINT_ID);
@@ -234,14 +240,19 @@ function formatWaypoints() {
   for (let i = 0; i < waypoints.value.length; i++) {
     let wp = waypoints.value[i];
     let wp_obj = {
-      longitude: wp.long,
-      latitude: wp.lat,
-      altitude: wp.alt,
+      long: parseFloat(wp.long),
+      lat: parseFloat(wp.lat),
+      alt: parseFloat(wp.alt),
       id: WAYPOINT_ID,
     };
     outputArr.push(wp_obj);
   }
-  console.log(outputArr);
+  const commandResult = await api.executeCommand(
+    "OVERRIDE_FLIGHTPLANNER",
+    outputArr
+  );
+  console.log("commandResult", commandResult);
+  console.log("outputArr", outputArr);
   return outputArr;
 }
 
