@@ -36,8 +36,9 @@ export default {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ command: command, ...data }),
       });
-      const coordinates = await response.json();
-      return coordinates;
+      const res = await response;
+      console.log(res);
+      return res;
     } catch (error) {
       console.error(error);
     }

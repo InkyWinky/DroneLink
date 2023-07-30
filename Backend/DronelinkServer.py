@@ -45,12 +45,12 @@ class ServerHandler(BaseHTTPRequestHandler):
         elif command == Commands.OVERRIDE:
             mp_socket.override_waypoints(parsed_content['waypoints'])
             print("Executed OVERRIDE WAYPOINTS")
-        elif command == Commands.ARM:
+        elif command == Commands.TOGGLE_ARM:
             mp_socket.arm_aircraft()
             print("Executed ARM_AIRCRAFT")
         elif command == "CONNECTIP":
             mp_socket.initialise_dronelink(parsed_content['ip'])
-            print("Executed CONNECTIP: " + ip)
+            print("Executed CONNECTIP: " + parsed_content['ip'])
         else:
             print("Command received does not exist.")
 
