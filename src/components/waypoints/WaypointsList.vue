@@ -175,7 +175,7 @@ function addWaypt() {
   //Clear out input boxes after adding waypoint
   long.value = "";
   lat.value = "";
-  alt.value = "";
+  alt.value = "20";
   updateLine(coordinates.value);
   nextTick(() => {
     scrollBottom();
@@ -251,6 +251,7 @@ async function formatWaypoints() {
     "OVERRIDE_FLIGHTPLANNER",
     outputArr
   );
+
   console.log("commandResult", commandResult);
   console.log("outputArr", outputArr);
   return outputArr;

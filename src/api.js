@@ -29,6 +29,9 @@ export default {
   },
 
   async executeCommand(command, coordinateData) {
+    console.log(
+      JSON.stringify({ command: command, waypoints: coordinateData })
+    );
     try {
       const response = await fetch("http://127.0.0.1:8000", {
         method: "POST",

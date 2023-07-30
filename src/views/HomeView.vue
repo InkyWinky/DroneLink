@@ -1,23 +1,20 @@
 <template>
-  <div class="home">
-    <WaypointsList />
-    <div id="toggleBtn"><ToggleBtn /></div>
-    <div id="speedIndicator">
-      <SpeedIndicator :airspeed="0" :max="150" :min="0" />
-    </div>
-    <div id="notePad">
-      <NotePad />
-    </div>
-    <div id="batteryStats">
-      <BatteryStatistics />
-    </div>
-    <div id="current-monitor">
-      <CurrentMonitor />
-    </div>
-
-    <div id="pwm-monitor">
-      <PwmMonitor />
-    </div>
+  <WaypointsList />
+  <div id="toggleBtn"><ToggleBtn /></div>
+  <div id="speedIndicator">
+    <SpeedIndicator :airspeed="0" :max="150" :min="0" />
+  </div>
+  <div id="notePad">
+    <NotePad />
+  </div>
+  <div id="batteryStats">
+    <BatteryStatistics />
+  </div>
+  <div id="current-monitor">
+    <CurrentMonitor />
+  </div>
+  <div id="pwm-monitor">
+    <PwmMonitor />
   </div>
 </template>
 
