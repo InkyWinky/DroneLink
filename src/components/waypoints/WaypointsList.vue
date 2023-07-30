@@ -247,10 +247,9 @@ async function formatWaypoints() {
     };
     outputArr.push(wp_obj);
   }
-  const commandResult = await api.executeCommand(
-    "OVERRIDE_FLIGHTPLANNER",
-    outputArr
-  );
+  const commandResult = await api.executeCommand("OVERRIDE_FLIGHTPLANNER", {
+    waypoints: outputArr,
+  });
 
   console.log("commandResult", commandResult);
   console.log("outputArr", outputArr);

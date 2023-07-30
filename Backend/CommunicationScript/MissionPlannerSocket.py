@@ -8,14 +8,14 @@ class MissionPlannerSocket():
     This class is run on the Backend Server and requires the IP address of the device running Mission Planner (With the Communication Script running).
     The main purpose of this class is to handle sending and receiving data asynchronously on the Backend Server from the Mission Planner Device.
     """
-    def __init__(self, host, port):
+    def __init__(self, port):
         """Constructor that sets up the Socket Connection.
 
         Args:
             host (str): The IP of the host to connect to.
             port (int): The port number of the application to connect to.
         """
-        self.HOST = host
+        # self.HOST = host
         self.PORT = port
         self.COMMANDS = Commands()
         
@@ -24,11 +24,14 @@ class MissionPlannerSocket():
         self.command_queue_mutex = threading.Lock() # Mutex for command_queue
         self.quit = False # Allows for threads to terminate correctly
 
+    def initialise_dronelink(self, ip):
+        self.HOST = ip
         # Create Socket and connect to address
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.chunk_size = 1024 
         self.connect()
-    
+
+
     def connect(self):
         """Connects the Socket to the host and port, if successful, a new thread will be created to handle sends and receives.
         """
@@ -171,7 +174,8 @@ if __name__ == "__main__":
 
         
         PORT = 7766  # port number of the connection.
-        mp_socket = MissionPlannerSocket(host, PORT)
+        mp_socket = MissionPlannerSocket(PORT)
+        mp_socket.initialise_dronelink(host)
 
         # TESTING
         test_waypoints = [{"lat":-37.8238872, "long":145.0538635, "alt":0},

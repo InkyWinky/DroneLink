@@ -28,15 +28,13 @@ export default {
     console.log("Coordinate data received.");
   },
 
-  async executeCommand(command, coordinateData) {
-    console.log(
-      JSON.stringify({ command: command, waypoints: coordinateData })
-    );
+  async executeCommand(command, data) {
+    console.log(JSON.stringify({ command: command, ...data }));
     try {
       const response = await fetch("http://127.0.0.1:8000", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: command, waypoints: coordinateData }),
+        body: JSON.stringify({ command: command, ...data }),
       });
       const coordinates = await response.json();
       return coordinates;
