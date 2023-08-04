@@ -91,7 +91,7 @@ class Waypoint:
     def __init__(self, x=None, y=None):
         self.coords = Point(x, y)  # Point instance that stores location of waypoint
         self.centre_point = None  # Point instance
-        self.turn_type = None  # "circle", "lightbulb", "lightbulb angled"
+        self.turn_type = None  # "circle", "double circle" "lightbulb", "lightbulb angled"
         self.entrance = None  # Point instance for where the Albatross starts turning
         self.exit = None  # Point instance for where the Albatross stops turning
         self.turn_direction = None  # "clockwise" or "counter_clockwise"
@@ -234,7 +234,14 @@ class SearchPathGenerator:
         # Create waypoints out of each point
         self.path_waypoints = create_waypoints_from_points(points=rough_points)
         self.create_turning_points()
-        # interpolated_waypoints = interpolate_all_turns(waypoint=waypoints)
+        self.interpolate_all_turns()
+
+    def interpolate_all_turns(self):
+        for waypoint in self.path_waypoints:
+            if waypoint.centre_point is not None:
+                # Interpolate the curve to curve resolution
+                if waypoint.turn_type == "double circle":
+
 
     def create_turning_points(self):
         # Order of turning types:
@@ -573,6 +580,7 @@ def calculate_entrance_and_exit(previous_waypoint=None, current_waypoint=None, n
         next_waypoint.exit = create_point(current_waypoint.centre_point[1], turn_radius, exit_angle)
 
     if current_waypoint.turn_type == "lightbulb":
+        print("Do lightbulb")
         pass
 
     return current_waypoint, next_waypoint
@@ -582,25 +590,18 @@ def calculate_single_turn_entrance_exit(previous_waypoint=None, current_waypoint
     bisector_angle = calculate_bisection_angle(previous_waypoint, current_waypoint, next_waypoint)
     centre_radius = radius / math.sin(angle_between / 2)
 
-    current_to_prev_direction = calculate_angle_from_points(from_point=current_waypoint, to_point=previous_waypoint)
-    current_to_prev_point = create_point(current_waypoint, centre_radius, current_to_prev_direction)
-    x = current_to_prev_point.x - current_waypoint.x
-    y = current_to_prev_point.y - current_waypoint.y
-    if direction == "clockwise":
-        theta = angle_between / 2
-    else:
-        theta = - angle_between / 2
-    centre_point = Point(x * math.cos(theta) - y * math.sin(theta), x * math.sin(theta) + y * math.cos(theta))
+    # https://math.stackexchange.com/questions/797828/calculate-center-of-circle-tangent-to-two-lines-in-space
+    centre_point = create_point(current_waypoint, centre_radius, bisector_angle)
 
     # https://math.stackexchange.com/questions/4629284/looking-for-a-formula-to-find-the-angle-to-a-point-that-creates-two-perpendicula
-    current_normalised = Point(current_waypoint.x - centre_point.x, current_waypoint.y - centre_point.y)
-
+    centre_to_current_direction = calculate_angle_from_points(from_point=centre_point, to_point=current_waypoint)
     if direction == "clockwise":
-        entrance_angle = math.acos(radius / math.sqrt(current_normalised.x ** 2 + current_normalised.y ** 2)) + math.atan2(current_normalised.y, current_normalised.x)
-        exit_angle = math.acos(radius / math.sqrt(current_normalised.x ** 2 + current_normalised.y ** 2)) - math.atan2(current_normalised.y, current_normalised.x)
+        entrance_angle = centre_to_current_direction - (pi - angle_between / 2 - pi / 2)
+        exit_angle = centre_to_current_direction + (pi - angle_between / 2 - pi / 2)
     else:
-        entrance_angle = math.acos(radius / math.sqrt(current_normalised.x ** 2 + current_normalised.y ** 2)) - math.atan2(current_normalised.y, current_normalised.x)
-        exit_angle = math.acos(radius / math.sqrt(current_normalised.x ** 2 + current_normalised.y ** 2)) + math.atan2(current_normalised.y, current_normalised.x)
+        entrance_angle = centre_to_current_direction + (pi - angle_between / 2 - pi / 2)
+        exit_angle = centre_to_current_direction - (pi - angle_between / 2 - pi / 2)
+
     return entrance_angle, exit_angle
 
 def create_centre_points(previous_waypoint=None, current_waypoint=None, next_waypoint=None, next_next_waypoint=None, orientation=None, turn_radius=None, turn_type=None, direction=None):
