@@ -52,10 +52,9 @@ class MissionManager:
         self.id = int(MAVLink.MAV_CMD.WAYPOINT)  # id_mav_cmd for waypoints
         self.waypoint_count = 0  # The number of waypoints
         self.waypoints = []  # list of the waypoints
-        self.armStatus = False
         self.live_data_rate = 1000 # Data send rate from drone to backend (in ms)
-        # Attribute to control FlightPlanner in MissionPlanner
-        self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
+        self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner # Attribute to control FlightPlanner in MissionPlanner
+        self.cs_drone = MissionPlanner.MainV2.comPort.MAV.cs # current state of drone object
         
         # Attributes for Socket connection.
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # The Python Socket class.
@@ -129,6 +128,7 @@ class MissionManager:
             print("[INFO] Syncing Live Waypoints...")
             self.waypoint_count = MAV.getWPCount()
             self.waypoints = [MAV.getWP(index) for index in range(MAV.getWPCount())]
+            self.cs_drone = MissionPlanner.MainV2.comPort.MAV.cs  # update current state of drone object
             print("[INFO] Syncing Live Waypoints Successful")
         except:
             print("[INFO] Syncing Live Waypoints Failed! The drone may not be connected.")
@@ -277,7 +277,7 @@ class MissionManager:
     def toggle_arm_aircraft(self):
         # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
         # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0) 
-        if cs.armed:
+        if self.cs_drone and self.cs_drone.armed:
             MAV.doARM(False, True)
             print("[INFO] Toggled Drone to DISARMED")
             # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_MODE, 208, 0, 0, 0, 0, 0, 0, 0)
@@ -358,7 +358,6 @@ class MissionManager:
             data (bytes): The byte stream from the socket connection that is the data of the command.
         """
         command = decoded_data["command"]
-        self.armStatus = cs.armed
         
         # Used in place of a switch-case as IronPython does not implement it.
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
@@ -409,23 +408,24 @@ class MissionManager:
         """Sends live data from the drone to the backend. Is run as a thread and sends data every 'live_data_rate' ms.
         """
         while not self.quit:
-            try:
-                data = json.dumps({
-                    "command":Commands.LIVE_DRONE_DATA,
-                    "data":{
-                        "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
-                        "airspeed": float(cs.airspeed),
-                        "groundspeed": float(cs.groundspeed),
-                        "verticalspeed": float(cs.verticalspeed),
-                        "battery_voltage": float(cs.battery_voltage),
-                        "battery_remaining": float(cs.battery_remaining),
-                        "armed": cs.armed,
-                        },
-                    })
-                self.connection.sendall(data)
-                Script.Sleep(self.live_data_rate)
-            except Exception as e:
-                print("[ERROR] " + str(e))
+            if self.cs_drone:
+                try:
+                    data = json.dumps({
+                        "command":Commands.LIVE_DRONE_DATA,
+                        "data":{
+                            "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
+                            "airspeed": float(self.cs_drone.airspeed),
+                            "groundspeed": float(self.cs_drone.groundspeed),
+                            "verticalspeed": float(self.cs_drone.verticalspeed),
+                            "battery_voltage": float(self.cs_drone.battery_voltage),
+                            "battery_remaining": float(self.cs_drone.battery_remaining),
+                            "armed": self.cs_drone.armed,
+                            },
+                        })
+                    self.connection.sendall(data)
+                    Script.Sleep(self.live_data_rate)
+                except Exception as e:
+                    print("[ERROR] " + str(e))
         print("[TERMINATION] send_live_data_thread has successfully terminated")
     
 

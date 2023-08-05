@@ -46,7 +46,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             mp_socket.override_waypoints(parsed_content['waypoints'])
             print("Executed OVERRIDE WAYPOINTS")
         elif command == Commands.TOGGLE_ARM:
-            mp_socket.arm_aircraft()
+            mp_socket.toggle_arm_aircraft()
             print("Executed ARM_AIRCRAFT")
         elif command == "CONNECTIP":
             mp_socket.initialise_dronelink(parsed_content['ip'])
@@ -55,7 +55,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             print("Command received does not exist.")
 
         # Get the data in a JSON readable format and send it back to whoever asked for it
-        self.wfile.write(json.dumps({'statusCode':'200 Command Executed: ' + command}).encode("utf-8"))
+        self.wfile.write(json.dumps({'statusCode':'200', 'command':'Command Executed: ' + command}).encode("utf-8"))
         print("Request finished at:", time.ctime())
         
 
