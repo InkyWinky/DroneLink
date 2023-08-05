@@ -1,6 +1,7 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
+    <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyChainedComparisonsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="ignoreConstantInTheMiddle" value="true" />
     </inspection_tool>
@@ -16,6 +17,8 @@
         <list>
           <option value="N802" />
           <option value="N813" />
+          <option value="N803" />
+          <option value="N806" />
         </list>
       </option>
     </inspection_tool>
