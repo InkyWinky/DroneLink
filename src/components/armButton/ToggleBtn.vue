@@ -1,9 +1,11 @@
 <template>
   <div id="toggleWrapper">
-    <input type="checkbox" id="switch" v-model="isChecked" /><label
-      id="toggleLabel"
-      for="switch"
-    ></label>
+    <input
+      type="checkbox"
+      id="switch"
+      @click="toggleArm()"
+      v-model="isChecked"
+    /><label id="toggleLabel" for="switch"></label>
     <span v-if="!isChecked" id="disarmedText">DISARMED</span>
     <span v-if="isChecked" id="armedText">ARMED</span>
     <img
@@ -14,10 +16,19 @@
     />
   </div>
 </template>
+
 <script setup>
 import { ref } from "vue";
+import api from "../../api.js";
+
 let isChecked = ref(false);
+
+async function toggleArm() {
+  const commandResult = api.executeCommand("TOGGLE_ARM", {});
+  console.log("TOGGLE_ARM Response: ", commandResult);
+}
 </script>
+
 <style>
 input[type="checkbox"] {
   height: 0;
