@@ -240,7 +240,8 @@ class SearchPathGenerator:
         for waypoint in self.path_waypoints:
             if waypoint.centre_point is not None:
                 # Interpolate the curve to curve resolution
-                if waypoint.turn_type == "double circle":
+                if waypoint.turn_type == "double circle" or waypoint.turn_type == "circle":
+                    waypoint.curve_waypoints = calculate_curve_waypoints_for_one_curve(waypoint=waypoint, curve_resolution=self.curve_resolution, radius=self.turn_radius)
 
 
     def create_turning_points(self):
@@ -433,6 +434,28 @@ class SearchPathGenerator:
 """
 Functions. Mostly just math functions.
 """
+
+def calculate_curve_waypoints_for_one_curve(waypoint=None, curve_resolution=None, radius=None):
+    # Find start angle
+    start_angle = calculate_angle_from_points(from_point=waypoint.centre_point, to_point=waypoint.entrance)
+
+    # Find end angle
+    end_angle = calculate_angle_from_points(from_point=waypoint.centre_point, to_point=waypoint.exit)
+
+    # Find inbetween angle based on turn direction
+    if waypoint.turn_direction == "clockwise":
+
+
+    # Find angle step
+    angle_step = calculate_angle_step_for_curve_interpolation(start_angle=start_angle, end_angle=end_angle, curve_resolution=curve_resolution, radius=radius)
+
+def calculate_angle_step_for_curve_interpolation(start_angle=None, end_angle=None, curve_resolution=None, radius=None):
+    # Find arc length
+
+
+    # Find how many points will be along the arc must start and end at entrance and exit
+
+    # Find angle step to achieve these points
 
 def calculate_angle_from_points(from_point=None, to_point=None):
     y = to_point.y - from_point.y
