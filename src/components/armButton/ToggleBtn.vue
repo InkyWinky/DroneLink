@@ -6,8 +6,12 @@
       @click="toggleArm()"
       v-model="isChecked"
     /><label id="toggleLabel" for="switch"></label>
-    <span v-if="!isChecked" id="disarmedText">DISARMED</span>
-    <span v-if="isChecked" id="armedText">ARMED</span>
+    <span v-if="!isChecked" id="disarmedText" class="pointer-events-none"
+      >DISARMED</span
+    >
+    <span v-if="isChecked" id="armedText" class="pointer-events-none"
+      >ARMED</span
+    >
     <img
       v-if="isChecked"
       id="propellerImg"
