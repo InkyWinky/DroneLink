@@ -53,6 +53,7 @@
 </template>
 
 <script setup>
+// import { store } from "@/store";
 import { defineProps, computed, ref } from "vue";
 // Will need to check these voltages but I think it should be OK to set some defaults for now
 const props = defineProps({

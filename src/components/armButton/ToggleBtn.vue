@@ -1,19 +1,23 @@
 <template>
   <div id="toggleWrapper">
-    <input
-      type="checkbox"
-      id="switch"
+    <input type="checkbox" :checked="store.live_data?.armed" /><label
+      id="toggleLabel"
       @click="toggleArm()"
-      v-model="isChecked"
-    /><label id="toggleLabel" for="switch"></label>
-    <span v-if="!isChecked" id="disarmedText" class="pointer-events-none"
+      aria-disabled
+      for=""
+    ></label>
+    <span v-if="isLoading.valueOf()" id="armedText" class="pointer-events-none"
+      >LOADING...</span
+    >
+    <span
+      v-else-if="!store.live_data?.armed"
+      id="disarmedText"
+      class="pointer-events-none"
       >DISARMED</span
     >
-    <span v-if="isChecked" id="armedText" class="pointer-events-none"
-      >ARMED</span
-    >
+    <span v-else id="armedText" class="pointer-events-none">ARMED</span>
     <img
-      v-if="isChecked"
+      v-if="store.live_data?.armed"
       id="propellerImg"
       src="../../../public/propeller.png"
       alt=""
@@ -24,11 +28,22 @@
 <script setup>
 import { ref } from "vue";
 import api from "../../api.js";
+import { store } from "./../../store";
 
-let isChecked = ref(false);
+const isLoading = ref(false);
 
 async function toggleArm() {
+  if (this.isLoading) {
+    return;
+  }
+  isLoading.value = true;
+  console.log(isLoading.value);
+  console.log("toggleArm button pressed");
   const commandResult = api.executeCommand("TOGGLE_ARM", {});
+  setTimeout(function () {
+    isLoading.value = false;
+    console.log("help");
+  }, 3000);
   console.log("TOGGLE_ARM Response: ", commandResult);
 }
 </script>
