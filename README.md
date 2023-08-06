@@ -12,17 +12,17 @@ npm install
 npm run serve
 ```
 
-### Optional: Compiles and minifies for production (Only for Production)
+### Optional: Compiles and minifies for production
 ```
 npm run build
 ```
 
-### Optional: Run your unit tests (Optional)
+### Optional: Run your unit tests
 ```
 npm run test:unit
 ```
 
-### Optional: Lints and fixes files (Manually Lint)
+### Optional: Lints and fixes files
 ```
 npm run lint
 ```
