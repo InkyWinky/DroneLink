@@ -88,7 +88,7 @@
 
 <script setup>
 // eslint-disable-next-line no-unused-vars, prettier/prettier
-import { Ref } from "vue";
+// import { Ref } from "vue";
 import { ref, nextTick, computed } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
@@ -103,7 +103,7 @@ const long = ref("");
 const lat = ref("");
 const alt = ref("");
 const MARKER_HEIGHT = 41;
-/** @type {Ref<mapboxgl.Map>} */
+// /** @type {Ref<mapboxgl.Map>} */
 const map = ref();
 
 //And example of a waypoint object:
