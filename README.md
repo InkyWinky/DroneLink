@@ -1,29 +1,51 @@
-# gui
-
+# **Mission Management: gui**
 ## Project setup
+---
+## Setting Up the Frontend
+### 1. Install node packages
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
+### 2. Compiles and hot-reloads for development
 ```
 npm run serve
 ```
 
-### Compiles and minifies for production
+### Optional: Compiles and minifies for production (Only for Production)
 ```
 npm run build
 ```
 
-### Run your unit tests
+### Optional: Run your unit tests (Optional)
 ```
 npm run test:unit
 ```
 
-### Lints and fixes files
+### Optional: Lints and fixes files (Manually Lint)
 ```
 npm run lint
 ```
+---
+## Setting Up the Backend
+- Ensure you have python v2.7 installed and accessible from the command prompt.
+### 1. Check if you have python v2.7
+```
+py --list
+```
+> -V:2.7           Python 2.7
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### 2. Move to correct directory
+```
+cd ./Backend
+```
+### 3. Install requirements.txt
+```
+py -2.7 -m pip install -r requirements.txt
+```
+### 4. Run Backend Server
+```
+py -2.7 ./DronelinkServer.py
+```
+**All Set up :)**
+
