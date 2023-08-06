@@ -11,7 +11,9 @@
     >
 
     <div id="modal-center" class="uk-flex-top" uk-modal>
-      <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical">
+      <div
+        class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical uk-height-max-large"
+      >
         <button class="uk-modal-close-default" type="button" uk-close></button>
 
         <form @submit="onSubmit">
@@ -20,6 +22,17 @@
           <p v-if="ip.error">{{ ip.error.message }}</p>
           <button type="submit">submit</button>
         </form>
+        <p class="uk-text-right">
+          <button
+            class="uk-button uk-button-default uk-modal-close"
+            type="button"
+          >
+            Cancel
+          </button>
+          <button class="uk-button uk-button-primary" type="button">
+            Save
+          </button>
+        </p>
       </div>
     </div>
     <div id="drone-connection">
@@ -31,6 +44,9 @@
 </template>
 
 <style>
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 #app {
   font-family: "Aldrich", sans-serif;
   -webkit-font-smoothing: antialiased;
