@@ -17,12 +17,17 @@ class MissionPlannerSocket():
         """
         # self.HOST = host
         self.PORT = port
+        self.HOST = "CONNECT TO MISSION PLANNER"
         self.COMMANDS = Commands()
         
         # Attributes for Receive thread
         self.command_queue = [] # A queue of commands that were received
         self.command_queue_mutex = threading.Lock() # Mutex for command_queue
         self.quit = False # Allows for threads to terminate correctly
+        self.live_data_mutex = threading.Lock()
+        self.live_data = {}
+        self.s = None
+
 
     def initialise_dronelink(self, ip):
         self.HOST = ip
@@ -95,7 +100,15 @@ class MissionPlannerSocket():
                         print('\n[COMMAND] Received from get_flightplanner_waypoint: ' + str(decoded_data))
                     elif command == self.COMMANDS.LIVE_DRONE_DATA:
                         # print("[DATA] " + str(decoded_data["data"]))
-                        pass
+                        # pass
+                        try:
+                            self.live_data_mutex.acquire()
+                            self.live_data = decoded_data["data"]
+                            self.live_data_mutex.release()
+                        except Exception as e:
+                            pass
+                        
+
                     else:
                         print("[ERROR] Unknown Command Was Given.")
                 except Exception as e:
@@ -108,11 +121,13 @@ class MissionPlannerSocket():
     def close(self):
         """Safely closes the Socket.
         """
-        self.s.sendall(bytes("quit"))
-        self.s.shutdown(1)
-        self.s.close()  # close socket
-        self.quit = True
-        print("[INFO] Connection to (" + self.HOST + ":" + str(self.PORT) + ") was lost.")
+        if self.s is not None:
+            self.s.sendall(bytes("quit"))
+            self.s.shutdown(1)
+            self.s.close()  # close socket
+            self.quit = True
+            print("[INFO] Connection to (" + self.HOST + ":" + str(self.PORT) + ") was lost.")
+
         
 
     def override_waypoints(self, waypoints):

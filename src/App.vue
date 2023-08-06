@@ -7,8 +7,8 @@
       </i>
     </button>
     <a class="uk-button uk-button-default" href="#modal-center" uk-toggle>{{
-      connected_ip.valueOf()
-        ? "IP: " + connected_ip.valueOf()
+      store.live_data?.ip
+        ? "IP: " + store.live_data?.ip
         : "Connect to Mission Planner"
     }}</a>
 
@@ -49,8 +49,19 @@
       </div>
     </div>
     <div id="drone-connection">
+      <span
+        uk-icon="refresh"
+        class="pr-2 cursor-pointer"
+        @click="onRefreshClick()"
+      ></span>
       <span>Drone Connection</span>
-      <div id="connection-status"></div>
+      <div
+        :id="
+          store.live_data?.drone_connected
+            ? 'connection-status-on'
+            : 'connection-status-off'
+        "
+      ></div>
     </div>
   </nav>
   <router-view />
@@ -60,6 +71,7 @@
 import { useForm } from "vue-hooks-form";
 import api from "./api";
 import { ref } from "vue";
+import { store } from "./store";
 export default {
   setup() {
     const connected_ip = ref("");
@@ -79,7 +91,29 @@ export default {
       ip,
       connected_ip,
       onSubmit: handleSubmit(onSubmit),
+      store,
     };
+  },
+  created() {
+    console.log("Starting connection to WebSocket Server");
+    this.connection = new WebSocket("ws:127.0.0.1:8081");
+
+    this.connection.onmessage = function (event) {
+      event;
+      store.updateLiveData(JSON.parse(event.data));
+      // console.log("live_data_feed: ", JSON.parse(event.data));
+    };
+
+    this.connection.onopen = function (event) {
+      console.log(event);
+      console.log("Successfully connected to the websocket server...");
+    };
+  },
+  methods: {
+    onRefreshClick() {
+      console.log("SYNC SCRIPT button pressed");
+      api.executeCommand("SYNC_SCRIPT", {});
+    },
   },
 };
 </script>
@@ -149,7 +183,7 @@ nav a.router-link-exact-active {
   font-size: 1.5em;
   -webkit-font-smoothing: antialiased;
 }
-#connection-status {
+#connection-status-on {
   background-color: greenyellow;
   height: 10px;
   width: 10px;
@@ -158,5 +192,15 @@ nav a.router-link-exact-active {
   margin: 20px;
   margin-top: 16px;
   box-shadow: 0 0 5px 2px greenyellow;
+}
+#connection-status-off {
+  background-color: red;
+  height: 10px;
+  width: 10px;
+  border-radius: 5px;
+  float: right;
+  margin: 20px;
+  margin-top: 16px;
+  box-shadow: 0 0 5px 2px red;
 }
 </style>

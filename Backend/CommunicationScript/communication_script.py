@@ -55,7 +55,7 @@ class MissionManager:
         self.live_data_rate = 1000 # Data send rate from drone to backend (in ms)
         self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner # Attribute to control FlightPlanner in MissionPlanner
         self.cs_drone = MissionPlanner.MainV2.comPort.MAV.cs # current state of drone object
-        
+        self.drone_connected = False
         # Attributes for Socket connection.
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # The Python Socket class.
         # self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # allow socket to be reused.
@@ -129,6 +129,7 @@ class MissionManager:
             self.waypoint_count = MAV.getWPCount()
             self.waypoints = [MAV.getWP(index) for index in range(MAV.getWPCount())]
             self.cs_drone = MissionPlanner.MainV2.comPort.MAV.cs  # update current state of drone object
+            self.drone_connected = True
             print("[INFO] Syncing Live Waypoints Successful")
         except:
             print("[INFO] Syncing Live Waypoints Failed! The drone may not be connected.")
@@ -420,6 +421,7 @@ class MissionManager:
                             "battery_voltage": float(self.cs_drone.battery_voltage),
                             "battery_remaining": float(self.cs_drone.battery_remaining),
                             "armed": self.cs_drone.armed,
+                            "drone_connected": self.drone_connected,
                             },
                         })
                     self.connection.sendall(data)

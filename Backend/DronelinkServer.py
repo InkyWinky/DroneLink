@@ -1,11 +1,31 @@
 from __future__ import print_function, division
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
+import threading
 import json
 import SplineGenerator.SplineGenerator as spline
 import time
 import sys
 import os
 from CommunicationScript.MissionPlannerSocket import MissionPlannerSocket, Commands
+
+class WebSocketServer(WebSocket):
+    def handleMessage(self):
+       for client in clients:
+          if client != self:
+             client.sendMessage(self.address[0] + u' - ' + self.data)
+
+    def handleConnected(self):
+       print('[WEBSOCKET] ', self.address, 'connected')
+       for client in clients:
+          client.sendMessage(self.address[0] + u' - connected')
+       clients.append(self)
+
+    def handleClose(self):
+       clients.remove(self)
+       print('[WEBSOCKET] ', self.address, 'closed')
+       for client in clients:
+          client.sendMessage(self.address[0] + u' - disconnected')
 
 
 class ServerHandler(BaseHTTPRequestHandler):
@@ -85,22 +105,111 @@ class ServerHandler(BaseHTTPRequestHandler):
         # print("Request finished at:", time.ctime())
 
 
+class WebSocketThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.server = None
+
+    def run(self):
+        self.server = SimpleWebSocketServer('127.0.0.1', 8081, WebSocketServer)
+        try:
+            self.server.serveforever()
+        except:
+            pass
+
+        print("[TERMINATION] Closed WebSocketThread\n")
+
+    def close(self):
+        if self.server is not None:
+            self.server.close()
+
+
+class LiveDataThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.quit = False
+        self.data_interval = 1 # second
+
+    def run(self):
+        while not self.quit:
+            mp_socket.live_data_mutex.acquire()
+            data = mp_socket.live_data
+            data["ip"] = mp_socket.HOST
+            # print("live_data:", data)
+            for client in clients:
+                client.sendMessage(json.dumps(data))
+            mp_socket.live_data_mutex.release()
+            time.sleep(self.data_interval)
+        print("[TERMINATION] Closed LiveDataThread\n")
+
+    def close(self):
+        self.quit = True
+        
+
+class HTTPServerThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.server = None
+
+    def run(self):
+        server_address = ("127.0.0.1", 8000)
+        self.server = HTTPServer(server_address, ServerHandler)
+        self.server.serve_forever()
+        print("[TERMINATION] Closed HTTPServerThread\n")
+
+    def close(self):
+        self.server.shutdown()
+        
+
+
 if __name__ == "__main__":
-    PORT = 8000
-    IP = "127.0.0.1"
-    server_address = (IP, PORT)
-    # MP_HOST = raw_input("Enter IP to connect to: ")
-    # print(MP_HOST + type(MP_HOST))
+
+    # Mission Planner Socket
     MP_PORT = 7766
     global mp_socket
     mp_socket = MissionPlannerSocket(MP_PORT)
-    server = HTTPServer(server_address, ServerHandler)
-    print("Server started on IP address:", IP, "and port:", PORT, "...")
+    print("[INFO] Mission Planner Socket Initialised")
 
-    run_server = True
-    awake_check = time.time()
-    time_check_interval = 1.0  # Seconds
-    while run_server:
-        server.handle_request()
+    # Web Socket Server
+    IP = "127.0.0.1"
+    global clients
+    clients = []
+    global web_socket_server
+    web_socket_server = WebSocketThread()
+    web_socket_server.start()
+    print("[INFO] WebSocket Initialised on:", IP + ":" + str(8081))
 
+    # Live Data Sending
+    live_data = LiveDataThread()
+    live_data.start()
+    print("[INFO] Live Data Thread Initialised")
+
+    # HTTP Server
+    http_server = HTTPServerThread()
+    http_server.start()
+    print("[INFO] HTTP Server Initialised on:", IP + ":" + str(8000))
+
+    # web_socket_server.join()
+    # live_data.join()
+    # http_server.join()
+    try:
+        a = raw_input("PRESS ENTER TO STOP SERVERS\n")
+    finally:
+        try:
+            web_socket_server.close()
+        except:
+            pass
+        try:
+            live_data.close()
+        except:
+            pass
+        try:
+            http_server.close()
+        except:
+            pass
+        try:
+            mp_socket.close()
+        except:
+            pass
+        
     print("Closing server ...")
