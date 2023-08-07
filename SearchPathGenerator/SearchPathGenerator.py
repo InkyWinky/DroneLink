@@ -154,6 +154,7 @@ class SearchPathGenerator:
     paint_radius = None  # The radius in metres around the plane that the cameras can see / paint
     perimeter_distance = None  # The distance rough points will be placed from the search area perimeter
     layer_distance = None  # Distance between each 'layer' of the flight path
+    turn_type = None  # Turn type for the turns in search area mode
 
     error = False  # Flag for if an error occurred during runtime
 
@@ -287,8 +288,40 @@ class SearchPathGenerator:
             return None
         # Create waypoints out of each point
         self.path_waypoints = create_waypoints_from_points(points=rough_points)
-        self.create_turning_points()
+        self.calculate_turn_directions()
+        # self.create_turning_points()
+        self.calculate_turn_type()
+        self.create_turn_points()
         self.interpolate_all_turns()
+
+    def create_turn_points(self):
+        if on_same_axis(self.path_waypoints[0].coords, self.path_waypoints[1].coords, self.orientation):
+            start_offset = 1
+        else:
+            start_offset = 0
+
+        if on_same_axis(self.path_waypoints[-1].coords, self.path_waypoints[-2].coords, self.orientation):
+            end_offset = 1
+        else:
+            end_offset = 0
+
+        for index in range(start_offset, len(self.path_waypoints) - 2 + end_offset, 2):
+            current_waypoint.centre_point, next_waypoint.centre_point = create_centre_points(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords, next_next_waypoint=next_next_waypoint.coords, orientation=self.orientation, turn_radius=self.turn_radius, turn_type=current_waypoint.turn_type,
+                                                                                             direction=current_waypoint.turn_direction, layer_distance=self.layer_distance)
+            current_waypoint, next_waypoint = calculate_entrance_and_exit(previous_waypoint=previous_waypoint, current_waypoint=current_waypoint, next_waypoint=next_waypoint, next_next_waypoint=next_next_waypoint, turn_radius=self.turn_radius)
+
+    def calculate_turn_directions(self):
+        for index in range(1, len(self.path_waypoints) - 1):
+            self.path_waypoints[index].turn_direction = intersection_orientation(self.path_waypoints[index - 1].coords, self.path_waypoints[index].coords, self.path_waypoints[index + 1].coords)
+
+    def calculate_turn_type(self):
+        if 2 * self.turn_radius < self.layer_distance:
+            if 4 * self.turn_radius < self.layer_distance:
+                self.turn_type = "double circle"
+            else:
+                self.turn_type = "circle"
+        else:
+            self.turn_type = "lightbulb"
 
     def interpolate_all_turns(self):
         for waypoint in self.path_waypoints:
@@ -312,7 +345,7 @@ class SearchPathGenerator:
                 previous_waypoint = self.path_waypoints[index - 1]
                 next_next_waypoint = self.path_waypoints[index + 2]
                 # Index is the start of the turn
-                current_waypoint.turn_type, next_waypoint.turn_type = determine_turn_type(point1=current_waypoint.coords, point2=next_waypoint.coords, layer_distance=self.layer_distance, orientation=self.orientation, turn_radius=self.turn_radius)
+                current_waypoint.turn_type, next_waypoint.turn_type = determine_turn_type(layer_distance=self.layer_distance, turn_radius=self.turn_radius)
                 current_waypoint.turn_direction, next_waypoint.turn_direction = calculate_turn_directions(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords)
                 current_waypoint.centre_point, next_waypoint.centre_point = create_centre_points(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords, next_next_waypoint=next_next_waypoint.coords, orientation=self.orientation, turn_radius=self.turn_radius, turn_type=current_waypoint.turn_type, direction=current_waypoint.turn_direction, layer_distance=self.layer_distance)
                 current_waypoint, next_waypoint = calculate_entrance_and_exit(previous_waypoint=previous_waypoint, current_waypoint=current_waypoint, next_waypoint=next_waypoint, next_next_waypoint=next_next_waypoint, turn_radius=self.turn_radius)
@@ -811,21 +844,7 @@ def on_same_axis(point1=None, point2=None, orientation=None):
     else:
         return False
 
-def determine_turn_type(point1=None, point2=None, layer_distance=None, orientation=None, turn_radius=None):
-    # circle, double circle, lightbulb
-    orientation_vector = create_point(Point(0, 0), 1, orientation)
-
-    point1_proj = get_projection(this_vector=point1, on_this_vector=orientation_vector)
-    point2_proj = get_projection(this_vector=point2, on_this_vector=orientation_vector)
-    proj_diff = abs(point1_proj - point2_proj)
-
-    if point1_proj > point2_proj:
-        furthest_point = point1
-        extended_point = create_point(point2, proj_diff, orientation)
-    else:
-        furthest_point = point2
-        extended_point = create_point(point1, proj_diff, orientation)
-
+def determine_turn_type(layer_distance=None, turn_radius=None):
     if 2 * turn_radius < layer_distance:
         if 4 * turn_radius < layer_distance:
             return "double circle", "double circle"
