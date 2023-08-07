@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     try:
         hostname = socket.gethostname()
-        addr = socket.gethostbyname_ex(hostname)[2][0]
+        addr = min(socket.gethostbyname_ex(hostname)[2])
     except Exception:
         addr = "127.0.0.1"
     global IP
