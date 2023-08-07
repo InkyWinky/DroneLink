@@ -306,13 +306,41 @@ class SearchPathGenerator:
             end_offset = 0
 
         for index in range(start_offset, len(self.path_waypoints) - 2 + end_offset, 2):
-            current_waypoint.centre_point, next_waypoint.centre_point = create_centre_points(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords, next_next_waypoint=next_next_waypoint.coords, orientation=self.orientation, turn_radius=self.turn_radius, turn_type=current_waypoint.turn_type,
-                                                                                             direction=current_waypoint.turn_direction, layer_distance=self.layer_distance)
-            current_waypoint, next_waypoint = calculate_entrance_and_exit(previous_waypoint=previous_waypoint, current_waypoint=current_waypoint, next_waypoint=next_waypoint, next_next_waypoint=next_next_waypoint, turn_radius=self.turn_radius)
+            self.path_waypoints[index].centre_point, self.path_waypoints[index + 1].centre_point = create_centre_points(current_waypoint=self.path_waypoints[index].coords,
+                                                                                                                        next_waypoint=self.path_waypoints[index + 1].coords,
+                                                                                                                        orientation=self.orientation,
+                                                                                                                        turn_radius=self.turn_radius,
+                                                                                                                        turn_type=self.turn_type,
+                                                                                                                        direction=self.path_waypoints[index].turn_direction,
+                                                                                                                        layer_distance=self.layer_distance)
+            self.path_waypoints[index].entrance, \
+            self.path_waypoints[index].exit, \
+            self.path_waypoints[index + 1].entrance, \
+            self.path_waypoints[index + 1].exit = calculate_entrance_and_exit(current_waypoint=self.path_waypoints[index].coords,
+                                                                                 next_waypoint=self.path_waypoints[index + 1].coords,
+                                                                                 turn_radius=self.turn_radius,
+                                                                                 direction=self.path_waypoints[index].turn_direction,
+                                                                                 orientation=self.orientation,
+                                                                                 turn_type=self.turn_type)
 
     def calculate_turn_directions(self):
         for index in range(1, len(self.path_waypoints) - 1):
-            self.path_waypoints[index].turn_direction = intersection_orientation(self.path_waypoints[index - 1].coords, self.path_waypoints[index].coords, self.path_waypoints[index + 1].coords)
+            direction = intersection_orientation(self.path_waypoints[index - 1].coords, self.path_waypoints[index].coords, self.path_waypoints[index + 1].coords)
+            if direction == 1:
+                direction = "clockwise"
+            elif direction == 2:
+                direction = "counter clockwise"
+            else:
+                direction = "collinear"
+            self.path_waypoints[index].turn_direction = direction
+
+        # Check first point
+        if not on_same_axis(self.path_waypoints[0].coords, self.path_waypoints[1].coords, self.orientation):
+            self.path_waypoints[0].turn_direction = self.path_waypoints[1].turn_direction
+
+        # Check last point
+        if not on_same_axis(self.path_waypoints[-1].coords, self.path_waypoints[-2].coords, self.orientation):
+            self.path_waypoints[-1].turn_direction = self.path_waypoints[-2].turn_direction
 
     def calculate_turn_type(self):
         if 2 * self.turn_radius < self.layer_distance:
@@ -731,28 +759,65 @@ def calculate_furthest_point(point1=None, point2=None, direction=None):
     else:
         return None, point2
 
-def calculate_entrance_and_exit(previous_waypoint=None, current_waypoint=None, next_waypoint=None, next_next_waypoint=None, turn_radius=None):
-    # Check turn type
-    if current_waypoint.turn_type == "circle":
-        direction = calculate_angle_from_points(from_point=previous_waypoint.coords, to_point=current_waypoint.coords)
-        current_waypoint.entrance, current_waypoint.exit = extend_point_to_match_original_order(current_waypoint.coords, next_waypoint.coords, direction)
+def calculate_entrance_and_exit(current_waypoint=None, next_waypoint=None, turn_radius=None, direction=None, orientation=None, turn_type=None):
+    current_waypoint_entrance = None
+    current_waypoint_exit = None
+    next_waypoint_entrance = None
+    next_waypoint_exit = None
 
-    if current_waypoint.turn_type == "double circle":
+    current_direction, previous_point, next_next_point = calculate_current_direction(current_waypoint, next_waypoint, orientation, direction)
+
+    # Check turn type
+    if turn_type == "circle":
+        current_waypoint_entrance, current_waypoint_exit = extend_point_to_match_original_order(current_waypoint, next_waypoint, current_direction)
+
+    if turn_type == "double circle":
         # First turn
-        entrance_angle, exit_angle = calculate_single_turn_entrance_exit(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords, direction=current_waypoint.turn_direction, radius=turn_radius)
-        current_waypoint.entrance = create_point(current_waypoint.centre_point, turn_radius, entrance_angle)
-        current_waypoint.exit = create_point(current_waypoint.centre_point, turn_radius, exit_angle)
+        entrance_angle, exit_angle = calculate_single_turn_entrance_exit(previous_waypoint=previous_point, current_waypoint=current_waypoint, next_waypoint=next_waypoint, direction=direction, radius=turn_radius)
+        current_waypoint_entrance = create_point(current_waypoint.centre_point, turn_radius, entrance_angle)
+        current_waypoint_exit = create_point(current_waypoint.centre_point, turn_radius, exit_angle)
 
         # Second turn
-        entrance_angle, exit_angle = calculate_single_turn_entrance_exit(previous_waypoint=current_waypoint.coords, current_waypoint=next_waypoint.coords, next_waypoint=next_next_waypoint.coords, direction=current_waypoint.turn_direction, radius=turn_radius)
-        next_waypoint.entrance = create_point(next_waypoint.centre_point, turn_radius, entrance_angle)
-        next_waypoint.exit = create_point(next_waypoint.centre_point, turn_radius, exit_angle)
+        entrance_angle, exit_angle = calculate_single_turn_entrance_exit(previous_waypoint=current_waypoint, current_waypoint=next_waypoint, next_waypoint=next_next_point, direction=direction, radius=turn_radius)
+        next_waypoint_entrance = create_point(next_waypoint.centre_point, turn_radius, entrance_angle)
+        next_waypoint_exit = create_point(next_waypoint.centre_point, turn_radius, exit_angle)
 
-    if current_waypoint.turn_type == "lightbulb start":
-        print("hello")
+    if turn_type == "lightbulb start":
+        print("Lightbulb entrance and exit")
         pass
 
-    return current_waypoint, next_waypoint
+    return current_waypoint_entrance, current_waypoint_exit, next_waypoint_entrance, next_waypoint_exit
+
+def calculate_current_direction(current_waypoint=None, next_waypoint=None, orientation=None, direction=None):
+    # Get angle from current to next
+    current_to_next_angle = calculate_angle_from_points(from_point=current_waypoint, to_point=next_waypoint)
+    positive_direction = create_point(current_waypoint, 1, orientation)
+    negative_direction = create_point(current_waypoint, 1, orientation + pi)
+    angle_to_positive = calculate_angle_from_points(from_point=current_waypoint, to_point=positive_direction)
+    angle_to_negative = calculate_angle_from_points(from_point=current_waypoint, to_point=negative_direction)
+
+    # Find the current direction
+    if abs(current_to_next_angle - angle_to_positive) < abs(current_to_next_angle - angle_to_negative):
+        if direction == "clockwise":
+            current_direction = angle_to_positive
+        else:
+            current_direction = angle_to_negative
+    elif abs(current_to_next_angle - angle_to_positive) > abs(current_to_next_angle - angle_to_negative):
+        if direction == "clockwise":
+            current_direction = angle_to_negative
+        else:
+            current_direction = angle_to_positive
+    else:
+        current_direction = None
+
+    if current_direction is not None:
+        previous_point = create_point(current_waypoint, 1, current_direction + pi)
+        next_next_point = create_point(next_waypoint, 1, current_direction + pi)
+    else:
+        previous_point = None
+        next_next_point = None
+
+    return current_direction, previous_point, next_next_point
 
 def calculate_single_turn_entrance_exit(previous_waypoint=None, current_waypoint=None, next_waypoint=None, direction=None, radius=None):
     angle_between = angle_between_points(previous_waypoint, current_waypoint, next_waypoint)
@@ -773,29 +838,27 @@ def calculate_single_turn_entrance_exit(previous_waypoint=None, current_waypoint
 
     return entrance_angle, exit_angle
 
-def create_centre_points(previous_waypoint=None, current_waypoint=None, next_waypoint=None, next_next_waypoint=None, orientation=None, turn_radius=None, turn_type=None, direction=None, layer_distance=None):
+def create_centre_points(current_waypoint=None, next_waypoint=None, orientation=None, turn_radius=None, turn_type=None, direction=None, layer_distance=None):
     circle_centres = None, None
-    if turn_type == "circle":
-        # Extend the lagging point to be perpendicular to the leading one
-        current_direction = calculate_angle_from_points(previous_waypoint, current_waypoint)
-        if round(current_direction, 10) == round(orientation, 10):
-            current_direction = orientation
-        else:
-            current_direction = clamp_angle(orientation + pi)
 
-        furthest_point, extended_point = extend_point_to_match(point1=current_waypoint, point2=next_waypoint, direction=current_direction)
-        circle_centres = (Point((furthest_point.x + extended_point.x) / 2, (furthest_point.y + extended_point.y) / 2), None)
+    current_direction, previous_point, next_next_point = calculate_current_direction(current_waypoint, next_waypoint, orientation, direction)
+
+    if turn_type == "circle":
+        if current_direction is not None:
+            current_waypoint, next_waypoint = extend_point_to_match_original_order(current_waypoint, next_waypoint, current_direction)
+
+        circle_centres = (Point((current_waypoint.x + next_waypoint.x) / 2, (current_waypoint.y + next_waypoint.y) / 2), None)
 
     if turn_type == "double circle":
-        turn_point1 = calculate_single_centre_point(previous_waypoint, current_waypoint, next_waypoint, turn_radius, direction)
-        turn_point2 = calculate_single_centre_point(current_waypoint, next_waypoint, next_next_waypoint, turn_radius, direction)
+        turn_point1 = calculate_single_centre_point(previous_point, current_waypoint, next_waypoint, turn_radius)
+        turn_point2 = calculate_single_centre_point(current_waypoint, next_waypoint, next_next_point, turn_radius)
         circle_centres = (turn_point1, turn_point2)
 
     if turn_type == "lightbulb start":
         current_point, next_point = extend_point_to_match(point1=current_waypoint, point2=next_waypoint, direction=orientation)
         # Find first circle centre if the turn is clockwise it will be on the left of the current waypoint coords
-        prev_to_current_angle = calculate_angle_from_points(from_point=previous_waypoint, to_point=current_waypoint)
-        next_next_to_next_angle = calculate_angle_from_points(from_point=next_next_waypoint, to_point=next_waypoint)
+        prev_to_current_angle = calculate_angle_from_points(from_point=previous_point, to_point=current_waypoint)
+        next_next_to_next_angle = calculate_angle_from_points(from_point=next_next_point, to_point=next_waypoint)
         if direction == "clockwise":
             first_centre = create_point(current_point, turn_radius, prev_to_current_angle + pi / 2)
             third_centre = create_point(next_point, turn_radius, next_next_to_next_angle - pi / 2)
@@ -827,8 +890,7 @@ def create_centre_points(previous_waypoint=None, current_waypoint=None, next_way
 
     return circle_centres
 
-
-def calculate_single_centre_point(previous_waypoint=None, current_waypoint=None, next_waypoint=None, radius=None, direction=None):
+def calculate_single_centre_point(previous_waypoint=None, current_waypoint=None, next_waypoint=None, radius=None):
     angle_between = angle_between_points(previous_waypoint, current_waypoint, next_waypoint)
     bisector_angle = calculate_bisection_angle(previous_waypoint, current_waypoint, next_waypoint)
     centre_radius = radius / math.sin(angle_between / 2)
@@ -837,9 +899,9 @@ def calculate_single_centre_point(previous_waypoint=None, current_waypoint=None,
     return centre_point
 
 def on_same_axis(point1=None, point2=None, orientation=None):
-    angle_from_points = math.atan2(point1.x - point2.x, point1.y - point2.y)
+    angle_from_points = math.atan2(point1.y - point2.y, point1.x - point2.x)
 
-    if round(angle_from_points, 10) == round(orientation, 10) or round(clamp_angle(angle_from_points + pi), 2) == round(orientation, 10):
+    if round(angle_from_points, 10) == round(orientation, 10) or round(clamp_angle(angle_from_points + pi), 10) == round(orientation, 10):
         return True
     else:
         return False
