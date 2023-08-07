@@ -627,7 +627,7 @@ def get_ip():
     """Gets the IPs of the current device and prints them.
     """
     hostname = socket.gethostname()
-    addr = socket.gethostbyname_ex(hostname)[2][0]
+    addr = min(socket.gethostbyname_ex(hostname)[2])
     print("[INFO] Hostname: " + hostname + "\n[INFO] Address(es): " + str(addr))
 
 get_ip()  # Print out the IPs of the device running Mission Planner.
