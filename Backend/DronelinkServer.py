@@ -5,6 +5,7 @@ import threading
 import json
 import SplineGenerator.SplineGenerator as spline
 import time
+import socket
 import sys
 import os
 from CommunicationScript.MissionPlannerSocket import MissionPlannerSocket, Commands
@@ -111,7 +112,7 @@ class WebSocketThread(threading.Thread):
         self.server = None
 
     def run(self):
-        self.server = SimpleWebSocketServer('127.0.0.1', 8081, WebSocketServer)
+        self.server = SimpleWebSocketServer(IP, 8081, WebSocketServer)
         try:
             self.server.serveforever()
         except:
@@ -152,7 +153,7 @@ class HTTPServerThread(threading.Thread):
         self.server = None
 
     def run(self):
-        server_address = ("127.0.0.1", 8000)
+        server_address = (IP, 8000)
         self.server = HTTPServer(server_address, ServerHandler)
         self.server.serve_forever()
         print("[TERMINATION] Closed HTTPServerThread\n")
@@ -170,8 +171,15 @@ if __name__ == "__main__":
     mp_socket = MissionPlannerSocket(MP_PORT)
     print("[INFO] Mission Planner Socket Initialised")
 
+    try:
+        hostname = socket.gethostname()
+        addr = socket.gethostbyname_ex(hostname)[2][0]
+    except Exception:
+        addr = "127.0.0.1"
+    global IP
+    IP = addr
+
     # Web Socket Server
-    IP = "127.0.0.1"
     global clients
     clients = []
     global web_socket_server

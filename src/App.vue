@@ -96,7 +96,10 @@ export default {
   },
   created() {
     console.log("Starting connection to WebSocket Server");
-    this.connection = new WebSocket("ws:127.0.0.1:8081");
+    // console.log(`ws:${window.location.host.split(":")[0]}:8081`);
+    this.connection = new WebSocket(
+      `ws:${window.location.host.split(":")[0]}:8081`
+    );
 
     this.connection.onmessage = function (event) {
       event;
