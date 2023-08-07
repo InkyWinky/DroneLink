@@ -313,7 +313,7 @@ class SearchPathGenerator:
                 next_next_waypoint = self.path_waypoints[index + 2]
                 # Index is the start of the turn
                 current_waypoint.turn_type, next_waypoint.turn_type = determine_turn_type(point1=current_waypoint.coords, point2=next_waypoint.coords, layer_distance=self.layer_distance, orientation=self.orientation, turn_radius=self.turn_radius)
-                current_waypoint, next_waypoint = calculate_turn_directions(previous_waypoint=previous_waypoint, current_waypoint=current_waypoint, next_waypoint=next_waypoint)
+                current_waypoint.turn_direction, next_waypoint.turn_direction = calculate_turn_directions(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords)
                 current_waypoint.centre_point, next_waypoint.centre_point = create_centre_points(previous_waypoint=previous_waypoint.coords, current_waypoint=current_waypoint.coords, next_waypoint=next_waypoint.coords, next_next_waypoint=next_next_waypoint.coords, orientation=self.orientation, turn_radius=self.turn_radius, turn_type=current_waypoint.turn_type, direction=current_waypoint.turn_direction, layer_distance=self.layer_distance)
                 current_waypoint, next_waypoint = calculate_entrance_and_exit(previous_waypoint=previous_waypoint, current_waypoint=current_waypoint, next_waypoint=next_waypoint, next_next_waypoint=next_next_waypoint, turn_radius=self.turn_radius)
                 self.path_waypoints[index] = current_waypoint
@@ -646,16 +646,16 @@ def calculate_viewing_radius(sensor_size=None, focal_length=None, altitude=None)
     return viewing_radius
 
 def calculate_turn_directions(previous_waypoint=None, current_waypoint=None, next_waypoint=None):
-    direction = intersection_orientation(previous_waypoint.coords, current_waypoint.coords, next_waypoint.coords)
+    direction = intersection_orientation(previous_waypoint, current_waypoint, next_waypoint)
     if direction == 1:
         direction = "clockwise"
     elif direction == 2:
         direction = "counter clockwise"
     else:
         direction = "collinear"
-    current_waypoint.turn_direction = direction
-    next_waypoint.turn_direction = direction
-    return current_waypoint, next_waypoint
+    current_waypoint_turn_direction = direction
+    next_waypoint_turn_direction = direction
+    return current_waypoint_turn_direction, next_waypoint_turn_direction
 
 def extend_point_to_match(point1=None, point2=None, direction=None):
     orientation_vector = create_point(Point(0, 0), 1, direction)
@@ -825,8 +825,6 @@ def determine_turn_type(point1=None, point2=None, layer_distance=None, orientati
     else:
         furthest_point = point2
         extended_point = create_point(point1, proj_diff, orientation)
-
-    point_distance = calculate_distance_between_points(furthest_point, extended_point)
 
     if 2 * turn_radius < layer_distance:
         if 4 * turn_radius < layer_distance:
