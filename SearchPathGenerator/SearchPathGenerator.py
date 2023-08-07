@@ -317,11 +317,19 @@ class SearchPathGenerator:
             self.path_waypoints[index].exit, \
             self.path_waypoints[index + 1].entrance, \
             self.path_waypoints[index + 1].exit = calculate_entrance_and_exit(current_waypoint=self.path_waypoints[index].coords,
+                                                                              current_waypoint_centre_point=self.path_waypoints[index].centre_point,
                                                                                  next_waypoint=self.path_waypoints[index + 1].coords,
+                                                                              next_waypoint_centre_point=self.path_waypoints[index + 1].centre_point,
                                                                                  turn_radius=self.turn_radius,
                                                                                  direction=self.path_waypoints[index].turn_direction,
                                                                                  orientation=self.orientation,
                                                                                  turn_type=self.turn_type)
+
+        # If first waypoint is a double circle turn, remove the entrance, exit, and centre point
+        if self.path_waypoints[0].centre_point is not None and self.turn_type == "double circle":
+            self.path_waypoints[0].centre_point = None
+            self.path_waypoints[0].entrance = None
+            self.path_waypoints[0].exit = None
 
     def calculate_turn_directions(self):
         for index in range(1, len(self.path_waypoints) - 1):
@@ -759,7 +767,7 @@ def calculate_furthest_point(point1=None, point2=None, direction=None):
     else:
         return None, point2
 
-def calculate_entrance_and_exit(current_waypoint=None, next_waypoint=None, turn_radius=None, direction=None, orientation=None, turn_type=None):
+def calculate_entrance_and_exit(current_waypoint=None, current_waypoint_centre_point=None, next_waypoint=None, next_waypoint_centre_point=None, turn_radius=None, direction=None, orientation=None, turn_type=None):
     current_waypoint_entrance = None
     current_waypoint_exit = None
     next_waypoint_entrance = None
@@ -774,13 +782,13 @@ def calculate_entrance_and_exit(current_waypoint=None, next_waypoint=None, turn_
     if turn_type == "double circle":
         # First turn
         entrance_angle, exit_angle = calculate_single_turn_entrance_exit(previous_waypoint=previous_point, current_waypoint=current_waypoint, next_waypoint=next_waypoint, direction=direction, radius=turn_radius)
-        current_waypoint_entrance = create_point(current_waypoint.centre_point, turn_radius, entrance_angle)
-        current_waypoint_exit = create_point(current_waypoint.centre_point, turn_radius, exit_angle)
+        current_waypoint_entrance = create_point(current_waypoint_centre_point, turn_radius, entrance_angle)
+        current_waypoint_exit = create_point(current_waypoint_centre_point, turn_radius, exit_angle)
 
         # Second turn
         entrance_angle, exit_angle = calculate_single_turn_entrance_exit(previous_waypoint=current_waypoint, current_waypoint=next_waypoint, next_waypoint=next_next_point, direction=direction, radius=turn_radius)
-        next_waypoint_entrance = create_point(next_waypoint.centre_point, turn_radius, entrance_angle)
-        next_waypoint_exit = create_point(next_waypoint.centre_point, turn_radius, exit_angle)
+        next_waypoint_entrance = create_point(next_waypoint_centre_point, turn_radius, entrance_angle)
+        next_waypoint_exit = create_point(next_waypoint_centre_point, turn_radius, exit_angle)
 
     if turn_type == "lightbulb start":
         print("Lightbulb entrance and exit")
