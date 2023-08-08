@@ -169,6 +169,21 @@ class SearchPathGenerator:
     # Callable Data
     path_points = None  # Points in x and y format that make the entire path
 
+    def get_waypoints(self):
+        """
+        Call this function to get a dictionary of every point in the path. The format is as follows:
+        [{"id": 0, "long": 101.24, "lat": 62.76, "alt": 100}, {"id": 1, "long": 98.64, "lat": 65.22, "alt": 100}, ...]
+        """
+        dict_list = []
+
+        id_count = 0
+        for point in self.path_points:
+            new_dict_entry = {"id": id_count, "long": point.x, "lat": point.y, "alt": 100}
+            dict_list.append(new_dict_entry)
+            id_count += 1
+
+        return dict_list
+
     def set_data(self, raw_waypoints=None, search_area=None, boundary=None):
         if raw_waypoints is not None:
             self.raw_waypoints = raw_waypoints
@@ -1317,7 +1332,7 @@ def run_number_of_sims(count=None, plot=None):
     print("Simulation Complete | Error count:", error_count, "/", count, "| Error percentage:", error_count / count * 100, "%")
 
 def main_function():
-    run_number_of_sims(10000, plot=False)
+    run_number_of_sims(1, plot=True)
 
     # raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
     # minimum_turn_radius = 2.5
