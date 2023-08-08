@@ -31,13 +31,22 @@ import api from "../../api.js";
 import { store } from "./../../store";
 
 const isLoading = ref(false);
+const armConfirmed = ref(false);
 
 async function toggleArm() {
-  if (this.isLoading) {
+  if (isLoading.value) {
     return;
   }
   isLoading.value = true;
   console.log(isLoading.value);
+  console.log("Confirming arm");
+  if (confirm("Confirm Arm?")) {
+    armConfirmed.value = true;
+  } else {
+    isLoading.value = false;
+    return;
+  }
+
   console.log("toggleArm button pressed");
   const commandResult = api.executeCommand("TOGGLE_ARM", {});
   setTimeout(function () {
