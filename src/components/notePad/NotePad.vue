@@ -11,47 +11,43 @@ TASKS:
   [ ] Implement note local save (individual note and all notes)
 -->
 <template>
+  <Teleport to="body">
+    <!-- use the modal component, pass in the prop -->
+    <NoteBlock :show="selectedNote.show" @close="selectedNote.show = false">
+      <template #header>
+        <h3>{{ selectedNote.title }}</h3>
+        <!-- clicking X will not save note, but clicking 'save' will -->
+        <button @click="selectedNote.show = false">X</button>
+      </template>
+      <template #body>
+        <textarea
+          v-model="selectedNote.text"
+          ref="textarea"
+          id="text-input"
+          cols="30"
+          rows="10"
+        ></textarea>
+      </template>
+      <template #footer>
+        <button @click="saveNote(selectedNote)">Save</button>
+      </template>
+    </NoteBlock>
+  </Teleport>
   <div class="uk-card uk-card-default uk-card-body" id="panel">
-    <h3>NOTES</h3>
+    <h3 class="text-red-500 font-bold">NOTES</h3>
     <div class="note-list">
       <table class="note-table">
         <thead>
           <td>Title</td>
-          <td>Created</td>
           <td>Modified</td>
         </thead>
         <tbody>
           <tr v-for="note in notes" :key="note.id">
             <td>
-              <button @click="openNote(note)" class="note-open">
+              <button @click="selectNote(note)" class="note-open">
                 {{ note.title }}
               </button>
-              <Teleport to="body">
-                <!-- use the modal component, pass in the prop -->
-                <NoteBlock :show="showNote" @close="showNote = false">
-                  <template #header>
-                    <h3>{{ note.title }}</h3>
-                  </template>
-                  <template #body>
-                    <ul>
-                      <li v-for="line in note.text" :key="line.line_id">
-                        {{ line.text }}
-                      </li>
-                    </ul>
-                    <form
-                      v-bind:class="newLine"
-                      @submit.prevent="addLine(note)"
-                    >
-                      <input v-model="newLine" placeholder="New line" />
-                    </form>
-                  </template>
-                  <template #footer>
-                    <button @click="saveNote(note)">Save</button>
-                  </template>
-                </NoteBlock>
-              </Teleport>
             </td>
-            <td>{{ note.createdDate }}</td>
             <td>{{ note.modifiedDate }}</td>
             <td><button @click="removeNote(note)">X</button></td>
           </tr>
@@ -62,6 +58,8 @@ TASKS:
       </form>
     </div>
   </div>
+  <!-- below is kept for posterity, until I am sure that I want to get rid of it !! -->
+
   <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
     <h3>NOTES</h3>
     <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
@@ -81,45 +79,29 @@ TASKS:
 import NoteBlock from "./NoteBlock.vue";
 import { ref } from "vue";
 
-let id = 0;
-let line_id = 0;
+let id = -1; // starts at -1 so note id's start from 0
 const newNote = ref("");
-const newLine = ref("");
-const showNote = ref(false);
+const selectedNote = ref({
+  id: 0,
+  show: false,
+  title: "",
+  text: "",
+});
 
-// array of objects containing each note, which itself contains multiple lines
+// array of objects containing each note
 const notes = ref([
   {
     id: id++,
     title: "Albatross crashed",
-    text: [
-      {
-        line_id: line_id++,
-        text: "Albatross suffered motor failure",
-        // time: new Date().toLocaleTimeString(),
-      },
-      {
-        line_id: line_id++,
-        text: "Failure caused it to lean and stall",
-        // time: new Date().toLocaleTimeString(),
-      },
-    ],
-    createdDate: new Date().toLocaleDateString(),
-    modifiedDate: null,
+    text: "",
+    modifiedDate: new Date().toLocaleDateString(),
     show: false,
   },
   {
     id: id++,
     title: "Albatross achieved hover",
-    text: [
-      {
-        line_id: line_id++,
-        text: "The Albatross achieved hover today - held stable for 10 seconds before landing.",
-        // time: new Date().toLocaleTimeString(),
-      },
-    ],
-    createdDate: new Date().toLocaleDateString(),
-    modifiedDate: null,
+    text: "",
+    modifiedDate: new Date().toLocaleDateString(),
     show: false,
   },
 ]);
@@ -134,13 +116,11 @@ function addNote() {
   newNote.value = ""; // reset newNote value for next form submission
 }
 
-function addLine(note) {
-  note.text.push({
-    id: line_id++,
-    text: newLine.value,
-    time: new Date().toLocaleTimeString(),
-  });
-  newLine.value = "";
+function selectNote(note) {
+  selectedNote.value.id = note.id;
+  selectedNote.value.title = note.title;
+  selectedNote.value.text = note.text;
+  selectedNote.value.show = true; // will open the Teleport modal
 }
 
 /** allows user to remove notes */
@@ -148,14 +128,12 @@ function removeNote(note) {
   notes.value = notes.value.filter((t) => t !== note);
 }
 
-function saveNote(note) {
-  showNote.value = false;
+function saveNote(noteToSave) {
+  let note = notes.value[noteToSave.id];
+  note.text = noteToSave.value.text;
+  note.title = noteToSave.value.title;
   note.modifiedDate = new Date().toLocaleDateString();
-}
-
-// eslint-disable-next-line
-function openNote(note) {
-  showNote.value = true;
+  selectedNote.value.show = false;
 }
 
 //Tried to add timestamps below but didn't work
