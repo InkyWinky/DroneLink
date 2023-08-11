@@ -7,27 +7,25 @@ const props = defineProps({
 </script>
 
 <template>
-  <Transition name="NoteBlock">
-    <div v-if="props.show" class="modal-mask">
-      <div class="modal-container">
-        <div class="modal-header">
-          <slot name="header">default header</slot>
-        </div>
+  <div v-if="props.show" class="modal-mask">
+    <div class="modal-container">
+      <div class="modal-header">
+        <slot name="header">default header</slot>
+      </div>
 
-        <div class="modal-body">
-          <slot name="body">default body</slot>
-        </div>
+      <div class="modal-body">
+        <slot name="body">default body</slot>
+      </div>
 
-        <div class="modal-footer">
-          <slot name="footer">
-            <button class="modal-default-button" @click="$emit('close')">
-              Close
-            </button>
-          </slot>
-        </div>
+      <div class="modal-footer">
+        <slot name="footer">
+          <button class="modal-default-button" @click="$emit('close')">
+            Close
+          </button>
+        </slot>
       </div>
     </div>
-  </Transition>
+  </div>
 </template>
 
 <style>
