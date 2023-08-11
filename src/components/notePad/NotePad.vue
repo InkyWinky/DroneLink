@@ -29,7 +29,12 @@ TASKS:
         ></textarea>
       </template>
       <template #footer>
-        <button @click="saveNote(selectedNote)">Save</button>
+        <button
+          class="uk-button uk-button-primary"
+          @click="saveNote(selectedNote)"
+        >
+          Save
+        </button>
       </template>
     </NoteBlock>
   </Teleport>
@@ -117,10 +122,8 @@ function addNote() {
 }
 
 function selectNote(note) {
-  selectedNote.value.id = note.id;
-  selectedNote.value.title = note.title;
-  selectedNote.value.text = note.text;
-  selectedNote.value.show = true; // will open the Teleport modal
+  note.show = true;
+  selectedNote.value = note;
 }
 
 /** allows user to remove notes */
@@ -129,11 +132,9 @@ function removeNote(note) {
 }
 
 function saveNote(noteToSave) {
-  let note = notes.value[noteToSave.id];
-  note.text = noteToSave.value.text;
-  note.title = noteToSave.value.title;
-  note.modifiedDate = new Date().toLocaleDateString();
+  selectedNote.value = noteToSave;
   selectedNote.value.show = false;
+  selectedNote.value.modifiedDate = new Date().toLocaleDateString();
 }
 
 //Tried to add timestamps below but didn't work
