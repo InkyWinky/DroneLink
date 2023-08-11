@@ -1,1 +1,0 @@
-# Multipurpose Spline Generator
