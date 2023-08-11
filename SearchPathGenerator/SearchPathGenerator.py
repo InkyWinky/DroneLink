@@ -1,7 +1,6 @@
 from __future__ import division, print_function
 
 import time
-import types
 
 import matplotlib.pyplot as plt
 import math
@@ -172,15 +171,13 @@ class SearchPathGenerator:
     def get_waypoints(self):
         """
         Call this function to get a dictionary of every point in the path. The format is as follows:
-        [{"id": 0, "long": 101.24, "lat": 62.76, "alt": 100}, {"id": 1, "long": 98.64, "lat": 65.22, "alt": 100}, ...]
+        [{"long": 101.24, "lat": 62.76, "alt": 100}, {"long": 98.64, "lat": 65.22, "alt": 100}, ...]
         """
         dict_list = []
 
-        id_count = 0
         for point in self.path_points:
-            new_dict_entry = {"id": id_count, "long": point.x, "lat": point.y, "alt": 100}
+            new_dict_entry = {"long": point.x, "lat": point.y, "alt": 100}
             dict_list.append(new_dict_entry)
-            id_count += 1
 
         return dict_list
 
@@ -216,8 +213,8 @@ class SearchPathGenerator:
 
     def generate_path(self, do_plot=True):
         # Pre-algorithm calculations
-        self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)
-        if self.layer_distance is None:
+        if self.sensor_size is not None and self.focal_length is not None and self.layer_distance is None:
+            self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)
             self.layer_distance = calculate_layer_distance(viewing_radius=self.paint_radius, paint_overlap=self.paint_overlap)
         if self.orientation is None:
             self.orientation = calculate_best_orientation(polygon=self.search_area)
@@ -270,8 +267,9 @@ class SearchPathGenerator:
             y_polygon.append(polygon.vertices[0].y)
             plt.plot(x_polygon, y_polygon, color='black')
 
-        plt.scatter(self.take_off_point.x, self.take_off_point.y, marker='^', color='black')
-        plt.annotate("Takeoff", (self.take_off_point.x, self.take_off_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
+        if self.take_off_point is not None:
+            plt.scatter(self.take_off_point.x, self.take_off_point.y, marker='^', color='black')
+            plt.annotate("Takeoff", (self.take_off_point.x, self.take_off_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
         plt.annotate("First Waypoint", (self.path_points[0].x, self.path_points[0].y), textcoords="offset points", xytext=(0, 10), ha='center')
         plt.annotate("Final Waypoint", (self.path_points[-1].x, self.path_points[-1].y), textcoords="offset points", xytext=(0, 10), ha='center')
 
@@ -464,8 +462,9 @@ class SearchPathGenerator:
         plt.annotate("First waypoint", (waypoints[0].x, waypoints[0].y), textcoords="offset points", xytext=(0, 10), ha='center')
         plt.scatter(self.search_area.centroid.x, self.search_area.centroid.y, color='purple')
         plt.annotate("Centre of calculations", (self.search_area.centroid.x, self.search_area.centroid.y), textcoords="offset points", xytext=(0, 10), ha='center')
-        plt.scatter(self.take_off_point.x, self.take_off_point.y, marker='^', color='black')
-        plt.annotate("Takeoff", (self.take_off_point.x, self.take_off_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
+        if self.take_off_point is not None:
+            plt.scatter(self.take_off_point.x, self.take_off_point.y, marker='^', color='black')
+            plt.annotate("Takeoff", (self.take_off_point.x, self.take_off_point.y), textcoords="offset points", xytext=(0, 10), ha='center')
 
         if equal_axis:
             plt.axis('equal')
@@ -532,10 +531,11 @@ class SearchPathGenerator:
             return None
 
         # Find which end of the path is closest to the take-off location. Make the closest one the zeroth index by reversing if necessary
-        distance_start = calculate_distance_between_points(self.take_off_point, rough_waypoints[0])
-        distance_end = calculate_distance_between_points(self.take_off_point, rough_waypoints[-1])
-        if distance_end < distance_start:
-            rough_waypoints.reverse()
+        if self.take_off_point is not None:
+            distance_start = calculate_distance_between_points(self.take_off_point, rough_waypoints[0])
+            distance_end = calculate_distance_between_points(self.take_off_point, rough_waypoints[-1])
+            if distance_end < distance_start:
+                rough_waypoints.reverse()
 
         return rough_waypoints
 
@@ -1315,7 +1315,7 @@ def do_entire_simulation(do_plot=True):
 
     path_generator = SearchPathGenerator()
     path_generator.set_data(search_area=search_area_polygon)
-    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
+    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=None)
 
     path_generator.generate_path(do_plot=do_plot)
     return path_generator.error
@@ -1332,7 +1332,7 @@ def run_number_of_sims(count=None, plot=None):
     print("Simulation Complete | Error count:", error_count, "/", count, "| Error percentage:", error_count / count * 100, "%")
 
 def main_function():
-    run_number_of_sims(1, plot=True)
+    run_number_of_sims(10000, plot=False)
 
     # raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
     # minimum_turn_radius = 2.5
