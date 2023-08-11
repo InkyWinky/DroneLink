@@ -3,7 +3,7 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 import threading
 import json
-import SplineGenerator.SplineGenerator as spline
+import SplineGenerator.SearchPathGenerator as spliner
 import time
 import socket
 import sys
@@ -58,6 +58,23 @@ class ServerHandler(BaseHTTPRequestHandler):
         # Run command
         command = parsed_content["command"]
         if command == Commands.OVERRIDE_FLIGHTPLANNER:
+            # Make instance of SearchPathGenerator
+            waypoint_spliner = spliner.SearchPathGenerator()
+
+            # Give arguments
+            waypoint_spliner.set_data(search_area=None)
+            waypoint_spliner.set_parameters(minimum_turn_radius=None,           # The minimum turn radius of the plane
+                                            layer_distance=None,                # Distance between layers on map
+                                            curve_resolution=None,              # How many waypoints per metre for curves
+                                            start_point=spliner.Point(0, 0),    # Where the plane takes off from. Leave as spliner.Point(0, 0) if not known until fixed
+                                            focal_length=None,                  # Focal length of the camera on board the plane in mm
+                                            sensor_size=None,                   # Sensor size of the camera on board the plane as (width, height) in mm
+                                            paint_overlap=None)                 # The percentage of overlap desired for the camera to see on consecutive layers
+
+            # Generate and save spline
+            waypoint_spliner.generate_path()
+            splined_waypoints = waypoint_spliner.get_waypoints()
+
             mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'])
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
         elif command == Commands.SYNC_SCRIPT:
@@ -78,33 +95,6 @@ class ServerHandler(BaseHTTPRequestHandler):
         # Get the data in a JSON readable format and send it back to whoever asked for it
         self.wfile.write(json.dumps({'statusCode':'200', 'command':'Command Executed: ' + command}).encode("utf-8"))
         print("Request finished at:", time.ctime())
-        
-
-        # Extract list of waypoints
-        # parsed_content = json.loads(post_message)
-        # waypoint_list = []
-        # for waypoint in parsed_content["data"]:
-        #     new_waypoint = [waypoint["long"], waypoint["lat"]]
-        #     waypoint_list.append(new_waypoint)
-
-        # Get list of Waypoint classes
-        # waypoint_class_list = spline.generate_waypoints_from_list(waypoint_list)
-
-        # Create instance of SplineGenerator class
-        # spliner = spline.SplineGenerator(
-        #     waypoints=waypoint_class_list,
-        #     radius_range=(38.1, 39),  # Metres
-        #     boundary_points=None,
-        #     boundary_resolution=None,
-        #     tolerance=0.0,
-        #     curve_resolution=3,
-        # )
-
-        # Get the data in a JSON readable format and send it back to whoever asked for it
-        # waypoint_output_list = spliner.get_waypoint_in_dictionary()
-        # self.wfile.write(json.dumps(waypoint_output_list).encode("utf-8"))
-        # print("Request finished at:", time.ctime())
-
 
 class WebSocketThread(threading.Thread):
     def __init__(self):
