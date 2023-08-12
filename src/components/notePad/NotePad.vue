@@ -39,21 +39,21 @@ TASKS:
     </NoteBlock>
   </Teleport>
   <div class="uk-card uk-card-default uk-card-body" id="panel">
-    <h3 class="text-red-500 font-bold">NOTES</h3>
+    <h3 class="font-bold">NOTES</h3>
     <div class="note-list">
-      <table class="note-table">
+      <table class="table-fixed">
         <thead>
           <td>Title</td>
-          <td>Modified</td>
+          <td>Date Modified</td>
         </thead>
         <tbody>
           <tr v-for="note in notes" :key="note.id">
-            <td>
+            <td class="text-left text-ellipsis overflow-hidden ...">
               <button @click="selectNote(note)" class="note-open">
                 {{ note.title }}
               </button>
             </td>
-            <td>{{ note.modifiedDate }}</td>
+            <td class="text-sm">{{ note.modifiedDate }}</td>
             <td><button @click="removeNote(note)">X</button></td>
           </tr>
         </tbody>
@@ -84,7 +84,7 @@ TASKS:
 import NoteBlock from "./NoteBlock.vue";
 import { ref } from "vue";
 
-let id = -1; // starts at -1 so note id's start from 0
+let id = -1; // starts at -1 so note 'id' starts from 0
 const newNote = ref("");
 const selectedNote = ref({
   id: 0,
