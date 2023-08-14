@@ -4,11 +4,10 @@
 - this way, only need to save the day date of the note, and don't need to save individual timestamps
 
 TASKS:
-  [ ] Implement note modal structure
-  [ ] Implement font auto-sizing so note list fits
-  [X] Implement creation date
-  [X] Implement 'last edited' date (works upon save)
+  [ ] Fix note save versus 'X' button
   [ ] Implement note local save (individual note and all notes)
+  [ ] Implement font auto-sizing so note list fits
+  [ ] Implement list sorting choice - by last modified, by name, etc
 -->
 <template>
   <Teleport to="body">
