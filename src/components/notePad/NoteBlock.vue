@@ -1,3 +1,10 @@
+<!-- 
+  GOALS:
+  [ ] place save button on the right
+  [ ] fix positioning so that note is on left third of screen
+  [ ] fix modal container / mask / text-area sizing
+  [ ] sort map vs notes z-index properly
+ -->
 <script setup>
 // import { defineProps } from "vue";
 // eslint-disable-next-line no-undef
@@ -35,14 +42,15 @@ const props = defineProps({
   top: 0;
   left: 0;
   width: 100%;
-  height: auto;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   transition: opacity 0.3s ease;
 }
 
 .modal-container {
-  width: 300px;
+  width: auto;
+  height: auto;
   margin: auto;
   padding: 20px 30px;
   background-color: #fff;

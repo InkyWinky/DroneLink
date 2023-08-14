@@ -1,13 +1,10 @@
 <!-- TO DO:
--  Convert each note into a modal/dialog, where:
-- the title of the note is shown in the list, and when clicked opens into a larger, editable document
-- this way, only need to save the day date of the note, and don't need to save individual timestamps
-
 TASKS:
   [ ] Fix note save versus 'X' button
   [ ] Implement note local save (individual note and all notes)
   [ ] Implement font auto-sizing so note list fits
   [ ] Implement list sorting choice - by last modified, by name, etc
+  [ ] consider replacing note table with individual note, instead of a modal
 -->
 <template>
   <Teleport to="body">
@@ -23,7 +20,7 @@ TASKS:
           v-model="selectedNote.text"
           ref="textarea"
           id="text-input"
-          cols="30"
+          cols="100"
           rows="10"
         ></textarea>
       </template>
