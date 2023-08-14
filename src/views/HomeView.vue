@@ -18,7 +18,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 // @ is an alias to /src
 import WaypointsList from "@/components/waypoints/WaypointsList.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
@@ -31,20 +31,8 @@ import PwmMonitor from "@/components/pwm/PwmMonitor.vue";
 import UIkit from "uikit";
 import Icons from "uikit/dist/js/uikit-icons";
 UIkit.use(Icons);
-
-export default {
-  name: "HomeView",
-  components: {
-    WaypointsList,
-    ToggleBtn,
-    SpeedIndicator,
-    NotePad,
-    BatteryStatistics,
-    CurrentMonitor,
-    PwmMonitor,
-  },
-};
 </script>
+
 <style>
 body {
   background-color: #eeeeee;
