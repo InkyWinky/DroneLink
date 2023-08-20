@@ -62,18 +62,18 @@ class ServerHandler(BaseHTTPRequestHandler):
             waypoint_spliner = spliner.SearchPathGenerator()
 
             # Give arguments
-            waypoint_spliner.set_data(search_area=None)
-            waypoint_spliner.set_parameters(minimum_turn_radius=None,       # The minimum turn radius of the plane
-                                            layer_distance=None,            # Distance between layers on map. Use this or both focal length and sensor size, not all three
-                                            curve_resolution=None,          # How many waypoints per metre for curves
-                                            start_point=None,               # Where the plane takes off from. Leave as None if not known
-                                            focal_length=None,              # Focal length of the camera on board the plane in mm
-                                            sensor_size=None,               # Sensor size of the camera on board the plane as (width, height) in mm
-                                            paint_overlap=None)             # The percentage of overlap desired for the camera to see on consecutive layers
+            # waypoint_spliner.set_data(search_area=None)
+            # waypoint_spliner.set_parameters(minimum_turn_radius=None,       # The minimum turn radius of the plane
+            #                                 layer_distance=None,            # Distance between layers on map. Use this or both focal length and sensor size, not all three
+            #                                 curve_resolution=None,          # How many waypoints per metre for curves
+            #                                 start_point=None,               # Where the plane takes off from. Leave as None if not known
+            #                                 focal_length=None,              # Focal length of the camera on board the plane in mm
+            #                                 sensor_size=None,               # Sensor size of the camera on board the plane as (width, height) in mm
+            #                                 paint_overlap=None)             # The percentage of overlap desired for the camera to see on consecutive layers
 
-            # Generate and save spline
-            waypoint_spliner.generate_path()
-            splined_waypoints = waypoint_spliner.get_waypoints()  # A list of dictionaries with keys "long", "lat", and "alt" in order of flight
+            # # Generate and save spline
+            # waypoint_spliner.generate_path()
+            # splined_waypoints = waypoint_spliner.get_waypoints()  # A list of dictionaries with keys "long", "lat", and "alt" in order of flight
 
             mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'])
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
