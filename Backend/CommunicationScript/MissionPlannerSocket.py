@@ -140,13 +140,13 @@ class MissionPlannerSocket():
         self.s.sendall(data)
     
     
-    def override_flightplanner_waypoints(self, waypoints):
+    def override_flightplanner_waypoints(self, waypoints, takeoff_alt):
         """Sends a command to overwrite all the waypoints in the flight planner GUI.
 
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
-        data = json.dumps({"command":self.COMMANDS.OVERRIDE_FLIGHTPLANNER, "waypoints": waypoints})
+        data = json.dumps({"command":self.COMMANDS.OVERRIDE_FLIGHTPLANNER, "waypoints": waypoints, "takeoff_alt":takeoff_alt})
         self.s.sendall(data)
 
 

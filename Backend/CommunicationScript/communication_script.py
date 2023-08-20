@@ -494,6 +494,7 @@ class Commands:
         try:
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
+            print("takeoff_alt: ", decoded_data["takeoff_alt"])
             recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.TAKEOFF)))  
             recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
             mission_manager.FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
