@@ -228,11 +228,11 @@ function addMarkerToMap(long, lat) {
 // await api.getSpline(coordinateData, splineData);
 // }
 // testApi();
-
+//TODO: add drop down in gui to change the waypoint ids and input takeoff altitude
 async function formatWaypoints() {
   //The function formatWaypoints formats the waypoints from the gui into the format that the waypoints communication script accepts:
   //
-
+  const takeoff_alt = 10;
   console.log(waypoints.value);
   let WAYPOINT_ID = 16;
   console.log(WAYPOINT_ID);
@@ -249,6 +249,7 @@ async function formatWaypoints() {
   }
   const commandResult = await api.executeCommand("OVERRIDE_FLIGHTPLANNER", {
     waypoints: outputArr,
+    takeoff_alt: takeoff_alt,
   });
 
   console.log("commandResult", commandResult);
@@ -340,7 +341,6 @@ onMounted(() => {
 h3 {
   font-family: "Aldrich", sans-serif;
 }
-
 #bg {
   width: 26%;
   height: 72%;
@@ -353,11 +353,9 @@ h3 {
   top: 200px;
   z-index: 1;
 }
-
 .white-hover:hover {
   color: white;
 }
-
 ul {
   /* Remove bullet points */
   list-style: none;
@@ -373,11 +371,9 @@ li {
   margin: 2%;
   padding-left: 25px;
 }
-
 input {
   border-style: none;
 }
-
 form {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
   border-radius: 5px;
@@ -389,7 +385,6 @@ form {
 li:hover {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
 }
-
 #removeWayptBtn {
   background-color: transparent;
   border-style: none;
@@ -403,7 +398,6 @@ li:hover #removeWayptBtn,
 #removeWayptBtn:hover {
   display: inline-block;
 }
-
 span {
   font-weight: bold;
   font-size: 0.8em;
@@ -418,19 +412,16 @@ span {
   width: 10%;
   font-size: 0.8em;
 }
-
 label {
   font-size: 0.8em;
   margin: 5px;
 }
-
 #tick-btn {
   font-size: 1.5em;
   position: absolute;
   right: 35px;
   top: 8px;
 }
-
 .transparentBtn {
   background-color: transparent;
   border-style: none;
@@ -440,7 +431,6 @@ label {
   height: 85%;
   overflow: auto;
 }
-
 /* #importBtn {
   position: absolute;
   bottom: 15px;
@@ -464,19 +454,16 @@ label {
 .v-leave-to {
   opacity: 0;
 }
-
 #mapCon {
   height: 100%;
   position: relative;
   overflow: hidden;
   z-index: 1;
 }
-
 /* Hide inbuilt mapbox footer */
 .mapboxgl-ctrl-bottom-right {
   display: none;
 }
-
 #splineIcon {
   position: absolute;
   top: 95%;
@@ -493,7 +480,6 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 /* .mapboxgl-canvas {
   height: 100vh !important;
 } */
@@ -522,12 +508,9 @@ input::-webkit-inner-spin-button {
   font-weight: lighter;
   top: -5px;
 }
-
 .icon-btn-effect:hover {
   color: #2c3e50 !important;
-  transform: scale(1.1);
-  /* increase size by 20% */
-  transition: transform 0.1s ease-out;
-  /* add a smooth transition */
+  transform: scale(1.1); /* increase size by 20% */
+  transition: transform 0.1s ease-out; /* add a smooth transition */
 }
 </style>
