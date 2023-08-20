@@ -190,7 +190,7 @@ class MissionManager:
         self.__set_home(self.waypoints[0])  # Set the home waypoint as the first waypoint
     
 
-    def create_wp(self, lat, lng, alt):
+    def create_wp(self, lat, lng, alt, id=None):
         """Creates a waypoint
 
         Args:
@@ -201,7 +201,9 @@ class MissionManager:
         Returns:
             Locationwp: The Locationwp object which contains the lat, lng and alt. This is an object from of MAVLink/Mission Planner.
         """
-        return Locationwp().Set(lat, lng, alt, self.id)
+        if id is None:
+            id = self.id
+        return Locationwp().Set(lat, lng, alt, id)
     
 
     def set_waypoint(self, lat, lng, alt, index):
@@ -363,7 +365,7 @@ class MissionManager:
         # Used in place of a switch-case as IronPython does not implement it.
         # NOTE: THIS SHOULD BE CHANGED TO AN ATTRIBUTE (ie. self.command_dict) ONCE ALL COMMANDS ARE DONE.
         command_dict = {Commands.OVERRIDE: Commands.override, 
-                        Commands.OVERRIDE_FLIGHTPLANNER: Commands.override_flightplanner,
+                        Commands.OVERRIDE_FLIGHTPLANNER: Commands.test_flightplanner,
                         Commands.SYNC_SCRIPT: Commands.sync_script,
                         Commands.TOGGLE_ARM: Commands.toggle_arm_aircraft,
                         Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
@@ -464,6 +466,20 @@ class Commands:
             print('ERROR: ' + str(e))
             print("[COMMAND] ERROR: Handling OVERRIDE COMMAND: Waypoints sent from backend does not exist or a Live Drone is not connected.")
         
+
+    def test_flightplanner(self, mission_manager, decoded_data):
+        try:
+            waypoints = decoded_data["waypoints"]
+            recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
+            Locationwp.id.SetValue(recv_waypoints[1], int(MAVLink.MAV_CMD.LOITER_TURNS))
+            recv_waypoints.insert(1,mission_manager.create_wp(0, 0, 20, id=int(MAVLink.MAV_CMD.TAKEOFF)))    
+            recv_waypoints.append(mission_manager.create_wp(0, 0, 20, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
+            mission_manager.FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
+            print("[COMMAND] TEST_FLIGHTPLANNER Waypoints Command Executed.")
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling TEST_FLIGHTPLANNER COMMAND.")
+
 
     def override_flightplanner(self, mission_manager, decoded_data):
         """Overrides all the waypoints in the flight planner GUI.
