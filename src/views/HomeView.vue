@@ -1,5 +1,6 @@
 <template>
-  <WaypointsList />
+  <div id="path-planner"><PathPlanner /></div>
+
   <div id="toggleBtn"><ToggleBtn /></div>
   <div id="speedIndicator">
     <SpeedIndicator :airspeed="0" :max="150" :min="0" />
@@ -20,7 +21,7 @@
 
 <script setup>
 // @ is an alias to /src
-import WaypointsList from "@/components/waypoints/WaypointsList.vue";
+import PathPlanner from "@/components/waypoints/WaypointsList.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
 import NotePad from "@/components/notePad/NotePad.vue";
@@ -42,11 +43,16 @@ body {
 div {
   height: 100%;
 }
+#path-planner {
+  margin-left: 4%;
+  margin-top: 11%;
+  height: 95%;
+}
 #toggleBtn {
   text-align: center;
   width: 22%;
   position: absolute;
-  top: 80px;
+  top: 7%;
   z-index: 0;
   margin-left: 2%;
   /* Same width as waypoints list */
@@ -57,7 +63,7 @@ div {
   position: absolute;
   right: 0;
   margin: 2%;
-  top: 70px;
+  top: 7%;
   border-radius: 15px;
   z-index: 0;
 }
@@ -68,7 +74,7 @@ div {
   left: 35.5%;
   width: 29%;
   height: 59%;
-  top: 110px;
+  top: 11%;
   z-index: 0;
 }
 
