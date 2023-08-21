@@ -126,7 +126,7 @@ const cellCount = ref(0);
   text-align: center;
 }
 .calculator-cell-count > input {
-  margin-top: 0.2rem;
+  margin-top: 0.1rem;
   background-color: #ddd;
   text-align: center;
   border-radius: 8px;
@@ -148,25 +148,25 @@ const cellCount = ref(0);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-top: 5%;
+  margin-top: 15%;
 }
 #battery-terminal {
   position: absolute;
   width: 6%;
   height: 22%;
   border-radius: 5px;
-  top: 20%;
+  top: 28%;
   right: 0;
   background-color: rgb(225, 62, 62);
 }
 .battery-stat-group {
   display: block;
   position: absolute;
-  top: 50%;
+  top: 30%;
   transform: translateY(-45%);
 }
 .battery-stat {
-  font-size: 3em;
+  font-size: 2em;
   position: absolute;
   top: 13%;
   transform: translateX(-40%);
@@ -177,6 +177,7 @@ const cellCount = ref(0);
   display: flex;
   flex-direction: column;
   transform: translateY(-40%);
+  font-size: 0.7em;
 }
 .statistic {
   margin: 0;
@@ -194,8 +195,8 @@ const cellCount = ref(0);
 }
 #time-remaining {
   position: absolute;
-  font-size: 1em;
-  left: 12%;
-  bottom: 30%;
+  font-size: 0.7em;
+  left: 8%;
+  bottom: 15%;
 }
 </style>

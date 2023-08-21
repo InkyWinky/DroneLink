@@ -343,7 +343,7 @@ h3 {
 }
 #bg {
   width: 26%;
-  height: 72%;
+  height: 60%;
   background-color: white;
   padding: 1.5%;
   border-radius: 20px;

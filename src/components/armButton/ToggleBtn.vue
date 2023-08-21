@@ -6,7 +6,10 @@
       aria-disabled
       for=""
     ></label>
-    <span v-if="isLoading.valueOf()" id="armedText" class="pointer-events-none"
+    <span
+      v-if="isLoading.valueOf()"
+      id="disarmedText"
+      class="pointer-events-none"
       >LOADING...</span
     >
     <span
@@ -100,14 +103,16 @@ input[type="checkbox"] {
 #disarmedText {
   position: relative;
   display: inline-block;
-  font-size: 2em;
+  font-size: 1.6em;
+  padding-left: 22%;
   transform: translate(10px, -78px);
   color: rgb(61, 0, 0);
 }
 #armedText {
   position: relative;
   display: inline-block;
-  font-size: 2em;
+  font-size: 1.6em;
+  padding-right: 20%;
   transform: translate(-3px, -78px);
 }
 #toggleLabel:after {

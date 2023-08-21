@@ -1,16 +1,18 @@
 <template>
   <nav>
+    <p id="command-btn" href="#modal-center" uk-toggle>
+      {{
+        store.live_data?.ip
+          ? "IP: " + store.live_data?.ip
+          : "Connect to Mission Planner"
+      }}
+    </p>
     <router-link to="/">DroneLink</router-link>
     <!-- <img id="logo-link" src="../public/logolink.png" alt="" /> -->
     <button class="transparentBtn" id="settings-btn">
       <i class="fa-sharp fa-solid fa-gears icon-btn-effect" id="settings-icon">
       </i>
     </button>
-    <a class="uk-button uk-button-default" href="#modal-center" uk-toggle>{{
-      store.live_data?.ip
-        ? "IP: " + store.live_data?.ip
-        : "Connect to Mission Planner"
-    }}</a>
 
     <div id="modal-center" class="uk-flex-top" uk-modal>
       <div
@@ -136,6 +138,19 @@ export default {
 .connect-btn {
   font-size: 1em !important;
 }
+#command-btn {
+  font-family: "Inter", sans-serif;
+  color: white;
+  font-size: 1.1em;
+  position: absolute;
+  left: 6%;
+  top: 2%;
+}
+#command-btn:hover {
+  font-weight: bold;
+  cursor: pointer;
+}
+
 #logo-link {
   height: 2%;
   width: 2%;
@@ -151,7 +166,7 @@ body {
 }
 nav {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
-  padding: 10px;
+  padding: 5px;
   margin: 0;
   text-decoration: none;
 }
@@ -170,7 +185,7 @@ nav a.router-link-exact-active {
 }
 #settings-icon {
   color: white;
-  font-size: 2em;
+  font-size: 1.5em;
 }
 #settings-btn {
   position: absolute;
