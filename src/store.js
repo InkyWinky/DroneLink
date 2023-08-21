@@ -5,6 +5,7 @@ export const store = reactive({
   updateLiveData(data) {
     this.live_data = data;
   },
+  settings: { default_alt: 20, takeoff_alt: 20, waypoint_type: 16 },
 });
 export const menuClosed = ref(false);
 export const toggleSettingsMenu = () => (menuClosed.value = !menuClosed.value);
