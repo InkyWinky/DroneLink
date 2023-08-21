@@ -105,7 +105,7 @@ input[type="checkbox"] {
   display: inline-block;
   font-size: 1.6em;
   padding-left: 22%;
-  transform: translate(10px, -78px);
+  transform: translate(10px, -67px);
   color: rgb(61, 0, 0);
 }
 #armedText {
@@ -113,7 +113,7 @@ input[type="checkbox"] {
   display: inline-block;
   font-size: 1.6em;
   padding-right: 20%;
-  transform: translate(-3px, -78px);
+  transform: translate(-3px, -67px);
 }
 #toggleLabel:after {
   content: "";

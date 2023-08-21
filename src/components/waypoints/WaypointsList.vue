@@ -336,7 +336,7 @@ onMounted(() => {
   map.value.on("load", drawLine);
 });
 </script>
-<style>
+<style scoped>
 /* Background of waypoints panel */
 h3 {
   font-family: "Aldrich", sans-serif;
