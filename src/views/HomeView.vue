@@ -21,7 +21,7 @@
 
 <script setup>
 // @ is an alias to /src
-import PathPlanner from "@/components/waypoints/WaypointsList.vue";
+import PathPlanner from "@/components/pathPlanner/PathPlanner.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
 import NotePad from "@/components/notePad/NotePad.vue";

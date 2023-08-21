@@ -7,7 +7,7 @@
     <div v-show="showMap" id="mapCon" />
   </Transition>
   <div id="bg">
-    <h3>WAYPOINTS</h3>
+    <h3>PATH PLANNER</h3>
     <div id="listWrapper" ref="listContainer">
       <ul>
         <!-- Iterate through array of waypoints and show them on list -->
@@ -348,7 +348,8 @@ h3 {
   padding: 1.5%;
   border-radius: 20px;
   box-shadow: 0px 10px 8px -3px rgba(0, 0, 0, 0.1);
-  z-index: 1;
+  z-index: 0.9;
+  position: absolute;
 }
 .white-hover:hover {
   color: white;
@@ -439,7 +440,7 @@ label {
   left: 15px;
   font-size: 3em;
   color: grey;
-  z-index: 9999;
+  z-index: 0.99;
 }
 
 .v-enter-active,
