@@ -94,6 +94,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { onMounted } from "vue";
 import api from "../../api.js";
+import { store } from "@/store";
 
 // give each waypoint a unique id
 const showMap = ref(false);
@@ -101,7 +102,7 @@ let id = 0;
 // Instantiate variables for coordinates
 const long = ref("");
 const lat = ref("");
-const alt = ref("");
+const alt = ref(store?.settings?.default_alt.toString() || "");
 const MARKER_HEIGHT = 41;
 // /** @type {Ref<mapboxgl.Map>} */
 const map = ref();
@@ -175,7 +176,7 @@ function addWaypt() {
   //Clear out input boxes after adding waypoint
   long.value = "";
   lat.value = "";
-  alt.value = "20";
+  alt.value = store?.settings?.default_alt.toString() || "20";
   updateLine(coordinates.value);
   nextTick(() => {
     scrollBottom();
@@ -232,9 +233,9 @@ function addMarkerToMap(long, lat) {
 async function formatWaypoints() {
   //The function formatWaypoints formats the waypoints from the gui into the format that the waypoints communication script accepts:
   //
-  const takeoff_alt = 10;
+  const takeoff_alt = store?.settings?.takeoff_alt;
   console.log(waypoints.value);
-  let WAYPOINT_ID = 16;
+  let WAYPOINT_ID = store?.settings?.waypoint_type || 16;
   console.log(WAYPOINT_ID);
   let outputArr = [];
   for (let i = 0; i < waypoints.value.length; i++) {

@@ -35,7 +35,6 @@ import { store } from "./../../store";
 
 const isLoading = ref(false);
 const armConfirmed = ref(false);
-
 async function toggleArm() {
   if (isLoading.value) {
     return;
