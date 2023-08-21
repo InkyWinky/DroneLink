@@ -9,10 +9,6 @@
     </p>
     <router-link to="/">DroneLink</router-link>
     <!-- <img id="logo-link" src="../public/logolink.png" alt="" /> -->
-    <button class="transparentBtn" id="settings-btn">
-      <i class="fa-sharp fa-solid fa-gears icon-btn-effect" id="settings-icon">
-      </i>
-    </button>
 
     <div id="modal-center" class="uk-flex-top" uk-modal>
       <div
@@ -66,7 +62,8 @@
       ></div>
     </div>
   </nav>
-  <router-view />
+  <SettingsMenu />
+  <router-view></router-view>
 </template>
 
 <script>
@@ -74,6 +71,8 @@ import { useForm } from "vue-hooks-form";
 import api from "./api";
 import { ref } from "vue";
 import { store } from "./store";
+import SettingsMenu from "./components/settingsMenu/SettingsMenu.vue";
+import toggleSettingsMenu from "./store";
 export default {
   setup() {
     const connected_ip = ref("");
@@ -94,6 +93,7 @@ export default {
       connected_ip,
       onSubmit: handleSubmit(onSubmit),
       store,
+      toggleSettingsMenu,
     };
   },
   created() {
@@ -102,13 +102,11 @@ export default {
     this.connection = new WebSocket(
       `ws:${window.location.host.split(":")[0]}:8081`
     );
-
     this.connection.onmessage = function (event) {
       event;
       store.updateLiveData(JSON.parse(event.data));
       // console.log("live_data_feed: ", JSON.parse(event.data));
     };
-
     this.connection.onopen = function (event) {
       console.log(event);
       console.log("Successfully connected to the websocket server...");
@@ -120,6 +118,7 @@ export default {
       api.executeCommand("SYNC_SCRIPT", {});
     },
   },
+  components: { SettingsMenu },
 };
 </script>
 
@@ -187,11 +186,7 @@ nav a.router-link-exact-active {
   color: white;
   font-size: 1.5em;
 }
-#settings-btn {
-  position: absolute;
-  left: 20px;
-  top: 2%;
-}
+
 #drone-connection {
   color: white;
   position: absolute;
