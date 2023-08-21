@@ -7,7 +7,7 @@
       <button class="uk-offcanvas-close" type="button" uk-close></button>
 
       <h3 class="font-bold text-xl">Settings</h3>
-      <form class="uk-grid-small" uk-grid @submit.prevent="onSubmit">
+      <form class="uk-grid-small" uk-grid>
         <div class="uk-width-1-1">
           <p
             class="text-start font-bold text-sm"
@@ -65,19 +65,25 @@
         </div>
         <span class="flex flex-row justify-center w-full m-0 p-0">
           <button
-            class="uk-button bg-blue-600 hover:bg-blue-700 ml-10 mt-2 border-gray-600"
-            type="submit"
+            class="uk-button bg-gray-500 hover:bg-gray-600 mx-2 mt-2 border-gray-600 w-1/2"
+            @click.prevent="resetForm"
           >
-            Submit
+            Reset
           </button>
-
-          <div
-            uk-icon="icon:check; ratio: 1.5"
-            class="ml-2 mt-1 flex items-center text-green-600 relative"
-            :class="{ invisible: !isSuccess.valueOf() }"
+          <button
+            class="uk-button bg-blue-600 hover:bg-blue-700 mx-2 mt-2 border-gray-600 w-1/2"
+            type="submit"
+            @click.prevent="onSubmit"
           >
-            <div uk-spinner class="flex items-center absolute" />
-          </div>
+            <div
+              v-if="isSuccess.valueOf()"
+              uk-icon="icon:check; ratio: 1.5"
+              class="flex flex-col justify-center items-center text-white relative"
+            >
+              <div uk-spinner class="flex items-center absolute" />
+            </div>
+            <p v-else>Submit</p>
+          </button>
         </span>
       </form>
     </div>
@@ -97,6 +103,16 @@ let edited_waypoint_type = ref(false);
 
 console.log(store?.settings);
 console.log(store.settings.default_alt, default_alt);
+
+const resetForm = () => {
+  default_alt = store?.settings?.default_alt;
+  takeoff_alt = store?.settings?.takeoff_alt;
+  waypoint_type = store?.settings?.waypoint_type.toString();
+  edited_default_alt.value = false;
+  edited_takeoff_alt.value = false;
+  edited_waypoint_type.value = false;
+};
+
 const onSubmit = () => {
   console.log("Updating Settings");
   store.settings.default_alt = Number(default_alt);
