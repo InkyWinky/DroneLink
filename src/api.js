@@ -35,7 +35,7 @@ export default {
   },
 
   async executeCommand(command, data) {
-    console.log(JSON.stringify({ command: command, ...data }));
+    // console.log(JSON.stringify({ command: command, ...data }));
     try {
       const response = await fetch(
         `http://${window.location.host.split(":")[0]}:8000`,
@@ -46,7 +46,7 @@ export default {
         }
       );
       const res = await response;
-      console.log(res);
+      // console.log(res);
       return res;
     } catch (error) {
       console.error(error);
