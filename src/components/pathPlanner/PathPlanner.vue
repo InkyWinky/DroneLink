@@ -28,7 +28,9 @@
       <!-- Form for adding a waypoint: -->
       <!-- Prevent default behaviour of submitting form and add waypoint instead -->
       <form @submit.prevent="addWaypt">
-        <span id="plus-symbol">+</span>
+        <button class="transparentBtn" id="addWayptBtn">
+          <span class="white-hover" id="plus-symbol">+</span>
+        </button>
         <label for="longitude">Long: </label>
         <input
           class="coordInput"
@@ -53,9 +55,7 @@
           name="altitude"
           v-model="alt"
         />
-        <button class="transparentBtn" id="addWayptBtn">
-          <i class="fa fa-check white-hover" id="tick-btn"></i>
-        </button>
+
         <button
           class="transparentBtn rightAlign"
           id="addByMapBtn"
@@ -162,7 +162,6 @@ function addWaypt() {
   //Parameters: None
   //Inputs:None
   //Outputs: Changed waypoints array
-
   const marker = addMarkerToMap(long.value, lat.value);
   //Add waypoint to array
   waypoints.value.push({
@@ -341,19 +340,6 @@ onMounted(() => {
 h3 {
   font-family: "Aldrich", sans-serif;
 }
-#bg {
-  width: 26%;
-  height: 60%;
-  background-color: white;
-  padding: 1.5%;
-  border-radius: 20px;
-  box-shadow: 0px 10px 8px -3px rgba(0, 0, 0, 0.1);
-  z-index: 0.9;
-  position: absolute;
-}
-.white-hover:hover {
-  color: white;
-}
 ul {
   /* Remove bullet points */
   list-style: none;
@@ -383,6 +369,24 @@ form {
 li:hover {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
 }
+</style>
+<style>
+#bg {
+  width: 30%;
+  height: 70%;
+  background-color: white;
+  padding: 1.5%;
+  border-radius: 20px;
+  box-shadow: 0px 10px 8px -3px rgba(0, 0, 0, 0.1);
+  z-index: 3;
+  position: absolute;
+  top: 26%;
+  left: 3%;
+}
+.white-hover:hover {
+  color: white;
+}
+
 #removeWayptBtn {
   background-color: transparent;
   border-style: none;
@@ -456,7 +460,7 @@ label {
   height: 100%;
   position: relative;
   overflow: hidden;
-  z-index: 1;
+  z-index: 2;
 }
 /* Hide inbuilt mapbox footer */
 .mapboxgl-ctrl-bottom-right {
@@ -464,7 +468,7 @@ label {
 }
 #splineIcon {
   position: absolute;
-  top: 95%;
+  top: 92%;
   right: 15px;
   font-size: 3em;
   color: grey;

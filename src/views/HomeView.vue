@@ -1,5 +1,5 @@
 <template>
-  <div id="path-planner"><PathPlanner /></div>
+  <PathPlanner />
 
   <div id="toggleBtn"><ToggleBtn /></div>
   <div id="speedIndicator">
