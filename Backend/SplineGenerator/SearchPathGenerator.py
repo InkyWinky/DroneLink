@@ -223,7 +223,7 @@ class SearchPathGenerator:
         if layer_distance is not None:
             self.layer_distance = layer_distance
 
-    def generate_path(self, do_plot=True):
+    def generate_path(self, do_plot=False):
         # Pre-algorithm calculations
         if self.sensor_size is not None and self.focal_length is not None and self.layer_distance is None:
             self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)
