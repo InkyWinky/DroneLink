@@ -27,14 +27,24 @@ class MissionPlannerSocket():
         self.live_data_mutex = threading.Lock()
         self.live_data = {}
         self.s = None
+        self.connected = False
 
 
     def initialise_dronelink(self, ip):
+        if self.connected:
+            print("[ERROR] A connection has already been made, please restart the server to reconnect.")
+            return
         self.HOST = ip
         # Create Socket and connect to address
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.chunk_size = 1024 
-        self.connect()
+        self.chunk_size = 1024
+        try:
+            self.connect()
+            self.connected = True
+            return True
+        except Exception:
+            print("[ERROR] Failed to initilise connection to dronelink.")
+            return False
 
 
     def connect(self):

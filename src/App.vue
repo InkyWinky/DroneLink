@@ -19,24 +19,38 @@
           <span class="p-4 w-full">
             <label class="font-bold text-lg">Connect to Mission Planner</label>
             <input
+              v-if="!isSuccess.valueOf()"
               v-model="ip.value"
               :class="{ 'uk-form-danger': ip.error }"
               :ref="ip.ref"
               placeholder="Input Ip address of device with Mission Planner"
               class="uk-input"
             />
+            <div
+              v-if="isLoading.valueOf()"
+              uk-spinner
+              class="w-full flex flex-col justify-center items-center"
+            ></div>
             <p v-if="ip.error" class="text-red-500">
               {{ ip.error.message }}
+            </p>
+            <p v-if="connectionError.valueOf()" class="text-red-500">
+              Connection Failed, Please try again...
+            </p>
+            <p v-if="isSuccess.valueOf()" class="text-green-500">
+              Connection to {{ store?.live_data.ip }} was Successful!
             </p>
           </span>
           <span class="flex flex-row-reverse justify-self-end m-0 p-0">
             <button
+              v-if="!isSuccess.valueOf()"
               class="uk-button uk-button-primary bg-blue-600 hover:bg-blue-700 ml-2 mt-2 border-gray-600"
               type="submit"
             >
               Submit
             </button>
             <button
+              id="cancel_button"
               class="uk-button uk-button-default uk-modal-close bg-gray-400 hover:bg-gray-500 border-gray-600 text-white mx-2 mt-2"
               type="button"
             >
@@ -73,19 +87,38 @@ import { ref } from "vue";
 import { store } from "./store";
 import SettingsMenu from "./components/settingsMenu/SettingsMenu.vue";
 import toggleSettingsMenu from "./store";
+
 export default {
   setup() {
     const connected_ip = ref("");
+    const connectionError = ref(false);
+    const isLoading = ref(false);
+    const isSuccess = ref(false);
     const { useField, handleSubmit } = useForm({
       defaultValues: {},
     });
     const ip = useField("ip", {
       rule: { required: true, min: 7, max: 15 },
     });
+
     function connect(ip) {
       console.log("ip is: " + ip);
       connected_ip.value = ip;
-      api.executeCommand("CONNECTIP", { ip: ip });
+      connectionError.value = false;
+      isLoading.value = true;
+      api.executeCommand("CONNECTIP", { ip: ip }).then((res) => {
+        console.log({ res });
+        if (res.status == 200) {
+          document.getElementById("cancel_button").click();
+          isSuccess.value = true;
+        } else if (res.status == 400) {
+          connectionError.value = true;
+          setTimeout(() => {
+            connectionError.value = false;
+          }, 4000);
+        }
+        isLoading.value = false;
+      });
     }
     const onSubmit = (data) => connect(data.ip);
     return {
@@ -94,6 +127,9 @@ export default {
       onSubmit: handleSubmit(onSubmit),
       store,
       toggleSettingsMenu,
+      connectionError,
+      isLoading,
+      isSuccess,
     };
   },
   created() {

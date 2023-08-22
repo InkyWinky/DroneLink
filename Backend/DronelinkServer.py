@@ -44,14 +44,20 @@ class ServerHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.do_HEAD()
 
+    def send_RESPONSE(self, statusCode):
+        self.send_response(statusCode)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Origin, X-Requested-With, Content-Type, Accept",
+        )
+        self.end_headers()
     def do_POST(self):
-        # Send initial headers
-        self.do_HEAD()
-
         # Get the message from API client
         content_length = int(self.headers.getheader("content-length", 0))
         post_message = self.rfile.read(content_length)
-
+        statusCode = 200
         print('post_message', post_message)
         parsed_content = json.loads(post_message)
 
@@ -87,13 +93,17 @@ class ServerHandler(BaseHTTPRequestHandler):
             mp_socket.toggle_arm_aircraft()
             print("Executed ARM_AIRCRAFT")
         elif command == "CONNECTIP":
-            mp_socket.initialise_dronelink(parsed_content['ip'])
+            result = mp_socket.initialise_dronelink(parsed_content['ip'])
+            if not result:
+                statusCode = 400
             print("Executed CONNECTIP: " + parsed_content['ip'])
         else:
             print("Command received does not exist.")
 
         # Get the data in a JSON readable format and send it back to whoever asked for it
-        self.wfile.write(json.dumps({'statusCode':'200', 'command':'Command Executed: ' + command}).encode("utf-8"))
+        # self.wfile.write(json.dumps({'statusCode':'200', 'command':'Command Executed: ' + command}).encode("utf-8"))
+        # Send headers
+        self.send_RESPONSE(statusCode)
         print("Request finished at:", time.ctime())
 
 class WebSocketThread(threading.Thread):
