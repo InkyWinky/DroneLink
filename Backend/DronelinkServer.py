@@ -68,7 +68,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             waypoint_spliner = spliner.SearchPathGenerator()
 
             # Give arguments
-            waypoint_spliner.set_data(search_area=None)
+            waypoint_spliner.set_search_area(parsed_content['waypoints'])
             waypoint_spliner.set_parameters(minimum_turn_radius=30,       # The minimum turn radius of the plane
                                             layer_distance=12,            # Distance between layers on map. Use this or both focal length and sensor size, not all three
                                             curve_resolution=5,          # How many waypoints per metre for curves
