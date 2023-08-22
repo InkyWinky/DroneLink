@@ -341,6 +341,7 @@ class MissionManager:
                 if data:
                     if data == 'quit': 
                         break
+                    print('sad data',data)
                     decoded_data = json.loads(data)
                     # Lock queue and insert new command
                     print('[INFO] Received Command: ' + decoded_data['command'])
@@ -650,7 +651,7 @@ def get_ip():
     print("[INFO] Hostname: " + hostname + "\n[INFO] Address(es): " + str(addr))
 
 get_ip()  # Print out the IPs of the device running Mission Planner.
-mm = MissionManager()  # Create a mission manager class.
+mm = MissionManager(chunk_size=8192)  # Create a mission manager class.
 del mm # garbage collect MissionManager to fully delete socket/port resources
 gc.collect() # force manual garbage collect
 # id = int(MAVLink.MAV_CMD.WAYPOINT)
