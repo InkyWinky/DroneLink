@@ -187,9 +187,11 @@ class SearchPathGenerator:
         """
         dict_list = []
 
+        id_count = 0
         for point in self.path_points:
-            new_dict_entry = {"long": point.x, "lat": point.y, "alt": 100}
+            new_dict_entry = {"long": point.x, "lat": point.y, "alt": 100, "id": id_count}
             dict_list.append(new_dict_entry)
+            id_count += 1
 
         return dict_list
 
@@ -693,7 +695,7 @@ def calculate_angle_step_for_curve_interpolation(curve_resolution=None, radius=N
 
     # Find how many points will be along the arc must start and end at entrance and exit
     number_of_points = int(1 + math.ceil(arc_length * curve_resolution))
-
+    number_of_points = curve_resolution
     # Find angle step to achieve these points
     angle_step = angle_difference / number_of_points
     return number_of_points, angle_step
@@ -1314,20 +1316,25 @@ def do_entire_simulation(do_plot=True):
     start_point = create_random_start_point()
 
     raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
-    minimum_turn_radius = 1
+    minimum_turn_radius = 0.0004
     # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
     # search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
     # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
-    curve_resolution = 4
+    curve_resolution = 5
     # start_point = Point(6, 14)
     sensor_size = (12.8, 9.6)
     focal_length = 16
-    paint_overlap = 0.1
-    angle = None
+    paint_overlap = 0.2
+    layer_distance = 0.001
 
     path_generator = SearchPathGenerator()
-    path_generator.set_data(search_area=search_area_polygon)
-    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=None)
+    search_area = [{"long": 145.27767786, "lat": -38.11254273, "alt": 1000},
+                   {"long": 145.28277322, "lat": -38.11303319, "alt": 1000},
+                   {"long": 145.28374899, "lat": -38.11595429, "alt": 1000},
+                   {"long": 145.27624146, "lat": -38.11785208, "alt": 1000},
+                   {"long": 145.27624146, "lat": -38.1150587, "alt": 1000}]
+    path_generator.set_search_area(search_area)
+    path_generator.set_parameters(paint_overlap=paint_overlap, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution)
 
     path_generator.generate_path(do_plot=do_plot)
     return path_generator.error
@@ -1344,7 +1351,7 @@ def run_number_of_sims(count=None, plot=None):
     print("Simulation Complete | Error count:", error_count, "/", count, "| Error percentage:", error_count / count * 100, "%")
 
 def main_function():
-    run_number_of_sims(10000, plot=False)
+    run_number_of_sims(1, plot=True)
 
     # raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
     # minimum_turn_radius = 2.5
