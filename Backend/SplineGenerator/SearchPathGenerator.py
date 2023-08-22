@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 
 import time
-
+# Test 2
 import matplotlib.pyplot as plt
 import math
 import random
@@ -167,6 +167,18 @@ class SearchPathGenerator:
 
     # Callable Data
     path_points = None  # Points in x and y format that make the entire path
+
+    def set_search_area(self, waypoints):
+        """
+        Takes in a list of dictionaries containing "long", "lat", and "alt" keys.
+        """
+        points = []
+        for waypoint in waypoints:
+            new_point = Point(waypoint["long"], waypoint["lat"])
+            points.append(new_point)
+
+        search_area = Polygon(points)
+        self.search_area = search_area
 
     def get_waypoints(self):
         """
@@ -1352,7 +1364,7 @@ def main_function():
     #     points.append(Point(point[0], point[1]))
     # search_area_polygon = Polygon(points)
     #
-    # path_generator = SearchPathGenerator()
+    # path_generator = SplineGenerator()
     # path_generator.set_data(search_area=search_area_polygon)
     # path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
     #
