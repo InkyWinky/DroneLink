@@ -81,7 +81,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             waypoint_spliner.generate_path()
             splined_waypoints = waypoint_spliner.get_waypoints()  # A list of dictionaries with keys "long", "lat", and "alt" in order of flight
 
-            mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
+            # mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
+            mp_socket.override_flightplanner_waypoints(splined_waypoints, parsed_content['takeoff_alt'])
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
         elif command == Commands.SYNC_SCRIPT:
             mp_socket.sync_script()
