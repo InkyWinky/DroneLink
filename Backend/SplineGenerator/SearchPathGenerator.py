@@ -167,6 +167,7 @@ class SearchPathGenerator:
 
     # Callable Data
     path_points = None  # Points in x and y format that make the entire path
+    mavlink_id = None
 
     def set_search_area(self, waypoints):
         """
@@ -179,6 +180,7 @@ class SearchPathGenerator:
 
         search_area = Polygon(points)
         self.search_area = search_area
+        self.mavlink_id = waypoints[0]["id"]
 
     def get_waypoints(self):
         """
@@ -187,11 +189,9 @@ class SearchPathGenerator:
         """
         dict_list = []
 
-        id_count = 0
         for point in self.path_points:
-            new_dict_entry = {"long": point.x, "lat": point.y, "alt": 100, "id": id_count}
+            new_dict_entry = {"long": point.x, "lat": point.y, "alt": 100, "id": self.mavlink_id}
             dict_list.append(new_dict_entry)
-            id_count += 1
 
         return dict_list
 
