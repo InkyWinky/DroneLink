@@ -6,7 +6,8 @@
     <SpeedIndicator :airspeed="0" :max="150" :min="0" />
   </div>
   <div id="notePad">
-    <NotePad />
+    <!-- <NotePad /> -->
+    <NotePad_new />
   </div>
   <div id="batteryStats">
     <BatteryStatistics />
@@ -24,7 +25,8 @@
 import PathPlanner from "@/components/pathPlanner/PathPlanner.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
-import NotePad from "@/components/notePad/NotePad.vue";
+import NotePad_new from "@/components/notePad/NotePad_new.vue";
+// import NotePad from "@/components/notePad/NotePad.vue";
 import BatteryStatistics from "@/components/batteryStats/BatteryStatistics.vue";
 import CurrentMonitor from "@/components/currentMonitor/CurrentMonitor.vue";
 import PwmMonitor from "@/components/pwm/PwmMonitor.vue";
