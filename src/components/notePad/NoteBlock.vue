@@ -2,16 +2,9 @@
   GOALS:
   [ ] place save button on the right
   [ ] fix positioning so that note is on left third of screen
-  [ ] fix modal container / mask / text-area sizing
-  [ ] sort map vs notes z-index properly
+  [X] fix modal container / mask / text-area sizing
+  [X] sort map vs notes z-index properly
  -->
-<script setup>
-// import { defineProps } from "vue";
-// eslint-disable-next-line no-undef
-const props = defineProps({
-  show: Boolean,
-});
-</script>
 
 <template>
   <div v-if="props.show" class="modal-mask">
@@ -35,10 +28,18 @@ const props = defineProps({
   </div>
 </template>
 
+<script setup>
+// import { defineProps } from "vue";
+// eslint-disable-next-line no-undef
+const props = defineProps({
+  show: Boolean,
+});
+</script>
+
 <style>
 .modal-mask {
   position: fixed;
-  z-index: auto;
+  z-index: 4;
   top: 0;
   left: 0;
   width: 100%;
@@ -72,7 +73,7 @@ const props = defineProps({
   float: right;
 }
 
-/*
+/* 
  * The following styles are auto-applied to elements with
  * transition="modal" when their visibility is toggled
  * by Vue.js.
@@ -81,7 +82,7 @@ const props = defineProps({
  * these styles.
  */
 
-/* .modal-enter-from {
+.modal-enter-from {
   opacity: 0;
 }
 
@@ -93,5 +94,5 @@ const props = defineProps({
 .modal-leave-to .modal-container {
   -webkit-transform: scale(1.1);
   transform: scale(1.1);
-} */
+}
 </style>

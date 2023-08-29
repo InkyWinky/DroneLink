@@ -8,12 +8,17 @@ TASKS:
 -->
 <template>
   <Teleport to="body">
+    <!-- blank note which shows up on mount -->
+    <noteDirectory :show="selectedNote.show" @close="selectedNote.show = false">
+    </noteDirectory>
+  </Teleport>
+  <Teleport to="body">
     <!-- use the modal component, pass in the prop -->
     <NoteBlock :show="selectedNote.show" @close="selectedNote.show = false">
       <template #header>
         <h3>{{ selectedNote.title }}</h3>
         <!-- clicking X will not save note, but clicking 'save' will -->
-        <button @click="selectedNote.show = false">X</button>
+        <button @click="clearNote()">X</button>
       </template>
       <template #body>
         <textarea
@@ -60,35 +65,26 @@ TASKS:
     </div>
   </div>
   <!-- below is kept for posterity, until I am sure that I want to get rid of it !! -->
-
-  <!-- <div class="uk-card uk-card-default uk-card-body" id="panel">
-    <h3>NOTES</h3>
-    <textarea ref="textarea" id="text-input" cols="30" rows="10"></textarea>
-    <button class="transparentBtn" id="open-note-btn">
-      <i
-        class="fa-solid fa-folder-open icon-btn-effect"
-        id="open-note-icon"
-      ></i>
-    </button>
-    <button class="transparentBtn" id="save-btn">
-      <i class="fa-solid fa-floppy-disk icon-btn-effect" id="save-icon"></i>
-    </button>
-  </div> -->
 </template>
 
 <script setup>
 import NoteBlock from "./NoteBlock.vue";
-import { ref } from "vue";
+import noteDirectory from "./noteDirectory.vue";
+import { onMounted, ref } from "vue";
 
 let id = -1; // starts at -1 so note 'id' starts from 0
 const newNote = ref("");
-const selectedNote = ref({
-  id: 0,
-  show: false,
-  title: "",
-  text: "",
-});
+const selectedNote = ref();
 
+onMounted(() => {
+  newNote.value = {
+    id: id++,
+    title: "New Note",
+    text: "",
+    modifiedDate: new Date().toLocaleDateString(),
+    show: true,
+  };
+});
 // array of objects containing each note
 const notes = ref([
   {
@@ -96,14 +92,12 @@ const notes = ref([
     title: "Albatross crashed",
     text: "",
     modifiedDate: new Date().toLocaleDateString(),
-    show: false,
   },
   {
     id: id++,
     title: "Albatross achieved hover",
     text: "",
     modifiedDate: new Date().toLocaleDateString(),
-    show: false,
   },
 ]);
 
@@ -131,6 +125,15 @@ function saveNote(noteToSave) {
   selectedNote.value = noteToSave;
   selectedNote.value.show = false;
   selectedNote.value.modifiedDate = new Date().toLocaleDateString();
+}
+
+function clearNote() {
+  selectedNote.value = {
+    id: 0,
+    show: false,
+    title: "",
+    text: "",
+  };
 }
 
 //Tried to add timestamps below but didn't work
