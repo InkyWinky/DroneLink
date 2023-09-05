@@ -12,32 +12,38 @@
   [ ] go button
  -->
 <template>
-  <div id="payload-info">
-    <!-- info about payload -->
+  <div id="video-feed"></div>
+  <div id="overlay">
+    <div id="payload-info">
+      <!-- info about payload -->
+      <p id="payload-height">{{ store?.live_data?.payload?.height }}</p>
+      <p id="payload-vel">{{ store?.live_data?.payload?.velocity }}</p>
+    </div>
+    <div id="aircraft-info">
+      <!-- info about aircraft -->
+      <p id="alb-height">{{ store?.live_data?.albatross?.ground_height }}</p>
+      <p id="alb-vel">{{ store?.live_data?.albatross?.velocity }}</p>
+    </div>
+    <div id="status-bar">
+      <span id="payload-status">Status: {{ status }}</span>
+    </div>
+    <div id="failsafe-one">
+      <button @click="failsafeOne()">Failsafe 1</button>
+    </div>
+    <div id="failsafe-two">
+      <button @click="failsafeTwo()">Failsafe 2</button>
+    </div>
+    <button @click="deploy()">Deploy Payload</button>
   </div>
-  <div id="aircraft-info">
-    <!-- info about aircraft -->
-  </div>
-  <div id="status-bar">
-    <span id="payload-status">Status: {{ status }}</span>
-  </div>
-  <div id="failsafe-one">
-    <button @click="failsafeOne()">Failsafe 1</button>
-  </div>
-  <div id="failsafe-two">
-    <button @click="failsafeTwo()">Failsafe 2</button>
-  </div>
-  <button @click="go()">Go</button>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import { store } from "@/store";
 
 const status = ref("");
 
-status.value = 3;
-
-function go() {
+function deploy() {
   if (confirm("Confirm deploy payload?")) {
     // send message to payload system to execute payload delivery
   }
