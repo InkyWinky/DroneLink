@@ -86,6 +86,9 @@
           </button>
         </span>
       </form>
+      <p>
+        <router-link to="/payload">Payload</router-link>
+      </p>
     </div>
   </div>
 </template>

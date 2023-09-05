@@ -1,7 +1,16 @@
 import { reactive, ref, computed } from "vue";
 
 export const store = reactive({
-  live_data: {},
+  live_data: {
+    albatross: {
+      ground_height: 0,
+      velocity: 0,
+    },
+    payload: {
+      height: 0,
+      velocity: 0,
+    },
+  },
   updateLiveData(data) {
     this.live_data = data;
   },
