@@ -21,9 +21,12 @@ class WebSocketServer(WebSocket):
        for client in clients:
           client.sendMessage(self.address[0] + u' - connected')
        clients.append(self)
+       clientData.append({'messagesCount': 0})
 
     def handleClose(self):
-       clients.remove(self)
+       index = clients.index(self)
+       clients.pop(index)
+       clientData.pop(index)
        print('[WEBSOCKET] ', self.address, 'closed')
        for client in clients:
           client.sendMessage(self.address[0] + u' - disconnected')
@@ -138,8 +141,15 @@ class LiveDataThread(threading.Thread):
             data = mp_socket.live_data
             data["ip"] = mp_socket.HOST
             # print("live_data:", data)
-            for client in clients:
+            for index, client in enumerate(clients):
+                messages_to_send = []
+                # print(clientData[index]['messagesCount'])
+                for message in mp_socket.messages[clientData[index]['messagesCount']:]:
+                    clientData[index]['messagesCount'] = clientData[index]['messagesCount'] + 1
+                    messages_to_send.append(message)
+                data['messages'] = messages_to_send
                 client.sendMessage(json.dumps(data))
+                # print('data:',data)
             mp_socket.live_data_mutex.release()
             time.sleep(self.data_interval)
         print("[TERMINATION] Closed LiveDataThread\n")
@@ -183,6 +193,8 @@ if __name__ == "__main__":
     # Web Socket Server
     global clients
     clients = []
+    global clientData
+    clientData = []
     global web_socket_server
     web_socket_server = WebSocketThread()
     web_socket_server.start()
