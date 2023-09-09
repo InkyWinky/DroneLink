@@ -38,10 +38,14 @@
       </div>
     </div>
   </Teleport>
-  <div class="uk-card uk-card-default uk-card-body" id="panel">
-    <h3>NOTES</h3>
-    <form v-bind:class="selectedNote">
-      <input v-model="selectedNote.title" placeholder="New Note" />
+
+  <div id="h-full">
+    <form v-bind:class="selectedNote" class="mb-2">
+      <input
+        v-model="selectedNote.title"
+        placeholder="New Note"
+        class="uk-input"
+      />
     </form>
     <!-- <button @click="loadNotes()">Load Saved Note</button> -->
     <textarea

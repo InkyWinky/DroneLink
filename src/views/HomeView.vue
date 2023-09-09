@@ -5,9 +5,8 @@
   <div id="speedIndicator">
     <SpeedIndicator :airspeed="0" :max="150" :min="0" />
   </div>
-  <div id="notePad">
-    <!-- <NotePad /> -->
-    <NotePad_new />
+  <div id="multiFunctionTab">
+    <MultiFunctionTab />
   </div>
   <div id="batteryStats">
     <BatteryStatistics />
@@ -25,11 +24,11 @@
 import PathPlanner from "@/components/pathPlanner/PathPlanner.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
-import NotePad_new from "@/components/notePad/NotePad_new.vue";
-// import NotePad from "@/components/notePad/NotePad.vue";
 import BatteryStatistics from "@/components/batteryStats/BatteryStatistics.vue";
 import CurrentMonitor from "@/components/currentMonitor/CurrentMonitor.vue";
 import PwmMonitor from "@/components/pwm/PwmMonitor.vue";
+import MultiFunctionTab from "@/components/multiFunctionTab/MultiFunctionTab.vue";
+
 // UIKit setup - should automatically propagate to the rest of the Vue app
 import UIkit from "uikit";
 import Icons from "uikit/dist/js/uikit-icons";
@@ -69,7 +68,7 @@ div {
   z-index: 0;
 }
 
-#notePad {
+#multiFunctionTab {
   position: absolute;
   justify-content: left;
   left: 35.5%;

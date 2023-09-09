@@ -31,7 +31,7 @@
 <script setup>
 import { ref } from "vue";
 import api from "../../api.js";
-import { store } from "./../../store";
+import { store } from "@/store";
 
 const isLoading = ref(false);
 const armConfirmed = ref(false);
