@@ -7,8 +7,10 @@
           : "Connect to Mission Planner"
       }}
     </p>
-    <router-link to="/">DroneLink</router-link>
-    <!-- <img id="logo-link" src="../public/logolink.png" alt="" /> -->
+    <router-link to="/" class="flex flex-row items-center justify-center">
+      <img src="../public/logo.png" class="h-10" />
+      <p>DroneLink</p>
+    </router-link>
 
     <div id="modal-center" class="uk-flex-top" uk-modal>
       <div
