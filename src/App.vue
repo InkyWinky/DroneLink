@@ -86,7 +86,7 @@ import api from "./api";
 import { ref } from "vue";
 import { store } from "./store";
 import SettingsMenu from "./components/settingsMenu/SettingsMenu.vue";
-import toggleSettingsMenu from "./store";
+// import toggleSettingsMenu from "./store";
 
 export default {
   setup() {
@@ -126,7 +126,7 @@ export default {
       connected_ip,
       onSubmit: handleSubmit(onSubmit),
       store,
-      toggleSettingsMenu,
+      // toggleSettingsMenu,
       connectionError,
       isLoading,
       isSuccess,
