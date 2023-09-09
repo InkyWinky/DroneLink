@@ -9,7 +9,10 @@
     </p>
     <div class="flex flex-row w-full justify-center">
       <p class="font-small">
-        <router-link to="/">DroneLink</router-link>
+        <router-link to="/" class="flex flex-row items-center justify-center">
+          <img src="../public/logo.png" class="h-10" />
+          <p>DroneLink</p>
+        </router-link>
       </p>
       <span
         uk-icon="refresh"
@@ -32,7 +35,6 @@
       ></span>
       <span>Status: {{ status }}</span>
     </div>
-    <!-- <img id="logo-link" src="../public/logolink.png" alt="" /> -->
 
     <div id="modal-center" class="uk-flex-top" uk-modal>
       <div
@@ -206,6 +208,7 @@ html {
 }
 body {
   height: 100%;
+  overflow-y: hidden;
   margin: 0;
 }
 nav {
