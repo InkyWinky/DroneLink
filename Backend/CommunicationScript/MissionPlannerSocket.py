@@ -28,6 +28,7 @@ class MissionPlannerSocket():
         self.live_data = {}
         self.s = None
         self.connected = False
+        self.messages = [] # the list containing all messages from mission planner
 
 
     def initialise_dronelink(self, ip):
@@ -37,7 +38,7 @@ class MissionPlannerSocket():
         self.HOST = ip
         # Create Socket and connect to address
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.chunk_size = 1024
+        self.chunk_size = 8192
         try:
             self.connect()
             self.connected = True
@@ -70,7 +71,19 @@ class MissionPlannerSocket():
         self.s.setblocking(0)
         while not self.quit:
             try:
-                data = self.s.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                data = ""
+                chunk_data = ""
+                # Receive until end of text sent
+                while not self.quit:
+                    chunk_data = self.s.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                    if chunk_data:
+                        m = len(chunk_data)
+                        # print('end: ' + chunk_data[m-2:m])
+                        data += chunk_data
+                        if chunk_data[m-2:m] == '\n\n':
+                            data = data.strip()
+                            break
+                    # print('[SOCKET STREAM]' + data)
                 # Check if data exists (polling due to non-blocking)
                 if data:
                     if data == 'quit': break
@@ -113,7 +126,11 @@ class MissionPlannerSocket():
                         # pass
                         try:
                             self.live_data_mutex.acquire()
-                            self.live_data = decoded_data["data"]
+                            data = decoded_data["data"]
+                            messages = data['messages']
+                            self.messages = self.messages + messages
+                            data['messages'] = []
+                            self.live_data = data
                             self.live_data_mutex.release()
                         except Exception as e:
                             pass
@@ -132,7 +149,7 @@ class MissionPlannerSocket():
         """Safely closes the Socket.
         """
         if self.s is not None:
-            self.s.sendall(bytes("quit"))
+            self.s.sendall(bytes("quit") + '\n\n')
             self.s.shutdown(1)
             self.s.close()  # close socket
             self.quit = True
@@ -147,7 +164,7 @@ class MissionPlannerSocket():
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
         data = json.dumps({"command":self.COMMANDS.OVERRIDE, "waypoints": waypoints})
-        self.s.sendall(data)
+        self.s.sendall(data + '\n\n')
     
     
     def override_flightplanner_waypoints(self, waypoints, takeoff_alt):
@@ -157,27 +174,27 @@ class MissionPlannerSocket():
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
         data = json.dumps({"command":self.COMMANDS.OVERRIDE_FLIGHTPLANNER, "waypoints": waypoints, "takeoff_alt":takeoff_alt})
-        self.s.sendall(data)
+        self.s.sendall(data  + '\n\n')
 
 
     def sync_script(self):
         """Sends a command to sync all the waypoints live on the drone to the mission planner script.
         """
         data = json.dumps({"command":self.COMMANDS.SYNC_SCRIPT})
-        self.s.sendall(data)
+        self.s.sendall(data  + '\n\n')
 
     def toggle_arm_aircraft(self):
         """Sends a command to toggle the arming state of the drone
         """
         data = json.dumps({"command":self.COMMANDS.TOGGLE_ARM})
-        self.s.sendall(data)
+        self.s.sendall(data  + '\n\n')
 
 
     def get_flightplanner_waypoints(self):
         """Sends a command to get all the waypoints in the flight planner.
         """
         data = json.dumps({"command":self.COMMANDS.GET_FLIGHTPLANNER_WAYPOINTS})
-        self.s.sendall(data)
+        self.s.sendall(data  + '\n\n')
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.

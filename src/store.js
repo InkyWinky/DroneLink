@@ -2,7 +2,12 @@ import { reactive, ref, computed } from "vue";
 
 export const store = reactive({
   live_data: {},
+  messages: [],
   updateLiveData(data) {
+    if (data["messages"].length > 0) {
+      console.log(data["messages"]);
+      data["messages"] = [];
+    }
     this.live_data = data;
   },
   settings: { default_alt: 20, takeoff_alt: 20, waypoint_type: 16 },
