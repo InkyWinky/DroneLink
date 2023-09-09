@@ -63,7 +63,7 @@ class MissionManager:
         self.addr = None  # The Address of the received Socket Connection
         self.PORT = port  # The port number that the application is running on (default 7766)
         self.chunk_size = chunk_size  # The chunk size of the data sent a received (default 1024)
-
+        self.messagesCount = 0 # The number of messages that have already been sent to the backend.
         # Attributes for Receive thread
         self.command_queue = [] # A queue of commands that were received
         self.command_queue_mutex = threading.Lock() # Mutex for command_queue
@@ -319,7 +319,6 @@ class MissionManager:
                         print("[TERMINATION] QUIT COMMAND WAS RECEIVED")
                         break  
                     self.handle_command(data)
-                    # self.connection.sendall('jsonify the data')  # echo data back!
             self.quit = True # stop the receive thread
             receive_thread.join()
             send_live_data_thread.join()
@@ -336,12 +335,22 @@ class MissionManager:
         self.s.setblocking(0)
         while not self.quit:
             try:
-                data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                data = ""
+                chunk_data = ""
+                # Receive until end of text sent
+                while not self.quit:
+                    chunk_data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                    m = len(chunk_data)
+                    # print('end: ' + chunk_data[m-2:m])
+                    data += chunk_data
+                    if chunk_data[m-2:m] == '\n\n':
+                        data = data.strip()
+                        break
+                    # print('[SOCKET STREAM]' + data)
                 # Check if data exists (polling due to non-blocking)
                 if data:
                     if data == 'quit': 
                         break
-                    print('sad data',data)
                     decoded_data = json.loads(data)
                     # Lock queue and insert new command
                     print('[INFO] Received Command: ' + decoded_data['command'])
@@ -411,9 +420,14 @@ class MissionManager:
     def send_live_data(self):
         """Sends live data from the drone to the backend. Is run as a thread and sends data every 'live_data_rate' ms.
         """
+        Script.Sleep(self.live_data_rate)
         while not self.quit:
             if self.cs_drone:
                 try:
+                    messages_to_send = []
+                    for message in self.cs_drone.messages[self.messagesCount:]:
+                        messages_to_send.append({'time': str(message[0]), 'message': message[1]})
+                        self.messagesCount += 1
                     data = json.dumps({
                         "command":Commands.LIVE_DRONE_DATA,
                         "data":{
@@ -425,9 +439,11 @@ class MissionManager:
                             "battery_remaining": float(self.cs_drone.battery_remaining),
                             "armed": self.cs_drone.armed,
                             "drone_connected": self.drone_connected,
+                            "messages": messages_to_send,
                             },
                         })
-                    self.connection.sendall(data)
+                    # print('[MESSAGES TO SEND]', messages_to_send)
+                    self.connection.sendall(data + '\n\n')
                     Script.Sleep(self.live_data_rate)
                 except Exception as e:
                     print("[ERROR] " + str(e))
@@ -552,7 +568,7 @@ class Commands:
                     "alt": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[7].Value), # Alt
                 })
             # print('Command List', res)
-            mission_manager.connection.send(bytes(json.dumps(res)))
+            mission_manager.connection.sendall(bytes(json.dumps(res) + '\n\n'))
             print("[COMMAND] GET_FLIGHTPLANNER_WAYPOINTS Command Executed.")
         except Exception as e:
             print("[ERROR] " + str(e))
