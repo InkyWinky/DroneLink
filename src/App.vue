@@ -86,9 +86,7 @@
     </div>
   </nav>
   <SettingsMenu />
-  <router-view>
-    <!-- include views for Payload -->
-  </router-view>
+  <router-view></router-view>
 </template>
 
 <script>

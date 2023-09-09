@@ -61,7 +61,10 @@ function failsafeTwo() {
   }
 }
 </script>
-<style>
+<style scoped>
+div {
+  height: auto;
+}
 #status-bar {
   color: blue;
 }
