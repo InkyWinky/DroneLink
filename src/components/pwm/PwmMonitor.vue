@@ -77,7 +77,10 @@ let rudderPwm = ref(0);
 let elevatorPwm = ref(0);
 </script>
 
-<style>
+<style scoped>
+div {
+  height: 100%;
+}
 #pwm-bg {
   background-image: url("../../../public/albatrossModelLabeled.png");
   background-repeat: no-repeat;

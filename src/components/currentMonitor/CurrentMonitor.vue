@@ -46,7 +46,10 @@ function increaseCurrent() {
     (120 / ((maxCurrent.value - minCurrent.value) / 2));
 }
 </script>
-<style>
+<style scoped>
+div {
+  height: 100%;
+}
 #current-display {
   background-image: url("../../../public/currentMonitor.png");
   background-repeat: no-repeat;

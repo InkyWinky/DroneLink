@@ -36,11 +36,10 @@ import Icons from "uikit/dist/js/uikit-icons";
 UIkit.use(Icons);
 </script>
 
-<style>
+<style scoped>
 body {
   background-color: #eeeeee;
   height: 100%;
-  overflow: hidden;
 }
 div {
   height: 100%;
