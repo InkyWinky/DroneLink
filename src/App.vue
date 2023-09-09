@@ -201,6 +201,7 @@ body {
   height: 100%;
   overflow-y: hidden;
   margin: 0;
+  background-color: #eeeeee;
 }
 nav {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
