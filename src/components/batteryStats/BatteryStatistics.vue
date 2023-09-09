@@ -119,6 +119,9 @@ const cellCount = ref(0);
 </script>
 
 <style scoped>
+div {
+  height: 100%;
+}
 /* Object stacks should have equal space between each other, but rely on the padding inherent to the container's parent */
 .cell-calculator-container {
   display: flex;

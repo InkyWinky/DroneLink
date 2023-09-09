@@ -154,7 +154,10 @@ function removeNote(note) {
 // }
 </script>
 
-<style>
+<style scoped>
+div {
+  height: 100%;
+}
 #panel {
   border-radius: 20px;
   width: 100%;
