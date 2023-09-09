@@ -31,7 +31,7 @@
 <script setup>
 import { ref } from "vue";
 import api from "../../api.js";
-import { store } from "./../../store";
+import { store } from "@/store";
 
 const isLoading = ref(false);
 const armConfirmed = ref(false);
@@ -50,12 +50,10 @@ async function toggleArm() {
   }
 
   console.log("toggleArm button pressed");
-  const commandResult = api.executeCommand("TOGGLE_ARM", {});
+  api.executeCommand("TOGGLE_ARM", {});
   setTimeout(function () {
     isLoading.value = false;
-    console.log("help");
   }, 3000);
-  console.log("TOGGLE_ARM Response: ", commandResult);
 }
 </script>
 
