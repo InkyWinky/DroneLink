@@ -347,7 +347,6 @@ ul {
   padding: 0;
   margin: 1px;
 }
-
 li {
   background-color: #eeeeee;
   border-radius: 5px;
