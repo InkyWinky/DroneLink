@@ -87,7 +87,9 @@
         </span>
       </form>
       <p>
-        <router-link to="/payload">Payload</router-link>
+        <router-link to="/payload" @click="toggleSettingsMenu">
+          Payload
+        </router-link>
       </p>
     </div>
   </div>
