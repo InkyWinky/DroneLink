@@ -61,14 +61,14 @@
           id="failsafe-one"
           @click="failsafeOne()"
         >
-          Failsafe 1
+          SMERF
         </button>
         <button
           class="uk-button uk-button-danger"
           id="failsafe-two"
           @click="failsafeTwo()"
         >
-          Failsafe 2
+          NERF
         </button>
       </div>
     </div>
