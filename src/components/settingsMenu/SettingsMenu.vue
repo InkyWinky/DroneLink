@@ -87,16 +87,21 @@
         </span>
       </form>
       <span class="flex flex-row justify-center w-full m-0 p-0">
-        <button>
-          <router-link
-            to="/payload"
+        <router-link
+          to="/payload"
+          custom
+          v-slot="{ navigate }"
+          @click="store.menuClosed.value = !store.menuClosed.value"
+        >
+          <button
+            class="uk-button uk-button-primary justify-center w-full"
             uk-toggle="target: #offcanvas-usage"
             type="button"
-            @click="store.menuClosed.value = !store.menuClosed.value"
+            @click="navigate"
           >
             Payload
-          </router-link>
-        </button>
+          </button>
+        </router-link>
       </span>
     </div>
   </div>
