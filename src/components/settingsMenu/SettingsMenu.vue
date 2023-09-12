@@ -86,11 +86,18 @@
           </button>
         </span>
       </form>
-      <p>
-        <router-link to="/payload" @click="toggleSettingsMenu">
-          Payload
-        </router-link>
-      </p>
+      <span class="flex flex-row justify-center w-full m-0 p-0">
+        <button>
+          <router-link
+            to="/payload"
+            uk-toggle="target: #offcanvas-usage"
+            type="button"
+            @click="store.menuClosed.value = !store.menuClosed.value"
+          >
+            Payload
+          </router-link>
+        </button>
+      </span>
     </div>
   </div>
 </template>
