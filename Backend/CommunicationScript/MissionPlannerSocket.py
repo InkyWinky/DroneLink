@@ -195,6 +195,12 @@ class MissionPlannerSocket():
         """
         data = json.dumps({"command":self.COMMANDS.GET_FLIGHTPLANNER_WAYPOINTS})
         self.s.sendall(data  + '\n\n')
+    
+    def set_cube_relay_pin(self):
+        """Sends a command to set the state of a chosen relay pin on the cube. 
+        """
+        data = json.dumps({"command":self.COMMANDS.SET_CUBE_RELAY_PIN})
+        self.s.sendall(data + '\n\n')
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
@@ -206,7 +212,7 @@ class Commands:
     TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
-    
+    SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN" 
 
 if __name__ == "__main__":
     # try:

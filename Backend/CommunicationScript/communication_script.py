@@ -468,6 +468,7 @@ class Commands:
     TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
+    SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
 
 
     def override(self, mission_manager, decoded_data):
@@ -583,7 +584,7 @@ class Commands:
             print("[COMMAND] ERROR: Handling GET_FLIGHTPLANNER_WAYPOINTS COMMAND.")
 
     
-    def set_cube_relay_pin(self, mission_manager, pin_num, pin_state):
+    def set_cube_relay_pin(self, mission_manager, decoded_data):
         """Sets a chosen relay pin on the cube either high or low
         
         Args:
@@ -593,6 +594,8 @@ class Commands:
         """
 
         try:
+            pin_num = decoded_data["pin_num"]
+            pin_state = decoded_data["pin_state"]
             mission_manager.set_cube_relay_pin(pin_num, pin_state)
             print("[COMMAND] MAV_CMD_DO_SET_RELAY Command Executed.")
 
