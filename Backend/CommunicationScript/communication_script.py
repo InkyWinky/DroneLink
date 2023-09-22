@@ -448,7 +448,15 @@ class MissionManager:
                 except Exception as e:
                     print("[ERROR] " + str(e))
         print("[TERMINATION] send_live_data_thread has successfully terminated")
-    
+
+   
+    def set_cube_relay_pin(self, pin_num, pin_val):
+        """Sets a chosen relay pin on the cube to either high (0V) or low (5V)
+        """
+
+        MAV.doCommand(MAVLink.MAV_CMD.DO_SET_RELAY, pin_num, pin_state)
+        pin_bool ='LOW' if pin_state == 0 else 'HIGH'
+        print(" [INFO] Set Relay Pin " + pin_num + " to " + pin_bool)
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
@@ -573,6 +581,24 @@ class Commands:
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling GET_FLIGHTPLANNER_WAYPOINTS COMMAND.")
+
+    
+    def set_cube_relay_pin(self, mission_manager, pin_num, pin_state):
+        """Sets a chosen relay pin on the cube either high or low
+        
+        Args:
+            mission_manager MissionManager: The mission manager class connected to the mission planner.
+            pin_num (Int): The pin number to assert (between 0 and 5)
+            pin_val (Int): The value (0 for low, 1 for high) that the chosen pin will be asserted to. 
+        """
+
+        try:
+            mission_manager.set_cube_relay_pin(pin_num, pin_state)
+            print("[COMMAND] MAV_CMD_DO_SET_RELAY Command Executed.")
+
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling MAV_CMD_DO_SET_RELAY COMMAND.")
         
 
 
