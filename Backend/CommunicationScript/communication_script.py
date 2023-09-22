@@ -450,7 +450,7 @@ class MissionManager:
         print("[TERMINATION] send_live_data_thread has successfully terminated")
 
    
-    def set_cube_relay_pin(self, pin_num, pin_val):
+    def set_cube_relay_pin(self, pin_num, pin_state):
         """Sets a chosen relay pin on the cube to either high (0V) or low (5V)
         """
 
