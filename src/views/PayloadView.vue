@@ -1,6 +1,15 @@
+<!-- TO DO:
+[ ] background image
+[ ] translucent overlay
+[ ] put stuff in correct place 
+-->
 <template>
-  <div id="video-feed">
-    <!-- space for video feeds -->
+  <div
+    id="video-feed"
+    class="uk-height-1-1 uk-background-cover"
+    data-src="../../public/videoFeedPlaceholder.jpeg"
+    uk-img
+  >
     <button
       class="uk-button uk-button-default"
       id="show-overlay-button"
@@ -10,14 +19,15 @@
     </button>
   </div>
   <Teleport to="#video-feed">
-    <div v-if="showOverlay" id="overlay">
-      <div id="video-feed-window">
-        <img
-          id="video-feed-placeholder"
-          src="../../public/videoFeedPlaceholder.jpeg"
-        />
-      </div>
-      <div id="stats-column">
+    <div v-if="showOverlay" id="overlay" class="uk-height-1-1">
+      <div
+        id="space-filler"
+        class="uk-align-left uk-width-3-4 uk-height-3-4"
+      ></div>
+      <div
+        id="stats-column"
+        class="uk-align-right uk-width-1-4 uk-height-3-4 uk-text-left"
+      >
         <div id="payload-info">
           <!-- info about payload -->
           <h2>Payload Stats</h2>
@@ -43,19 +53,17 @@
           </p>
         </div>
         <button
-          class="uk-button uk-button-default"
+          class="uk-button uk-button-primary uk-align-center"
           id="begin-button"
           @click="begin()"
         >
           Begin
         </button>
       </div>
-    </div>
-    <div id="options-bar">
-      <div id="payload-buttons">
-        <div id="payload-status">
-          <span>Status: {{ status }}</span>
-        </div>
+      <div id="options-bar" class="uk-align-center uk-width-1-1 uk-height-1-5">
+        <span class="uk-label uk-label-warning uk-text uk-text-center">
+          Status: {{ status }}
+        </span>
         <button
           class="uk-button uk-button-danger"
           id="failsafe-one"
@@ -103,36 +111,4 @@ function failsafeTwo() {
   }
 }
 </script>
-<style scoped>
-div {
-  height: auto;
-}
-#status-bar {
-  color: blue;
-}
-#overlay {
-  position: auto;
-}
-
-#stats-column {
-  float: right;
-}
-
-#show-overlay-button {
-  position: relative;
-  left: -10%;
-}
-/* #video-feed-window {
-  position: absolute;
-  margin-left: 20px;
-  min-width: 60%;
-  height: auto;
-} */
-#video-feed-placeholder {
-  position: relative;
-  margin-left: 20px;
-  margin-right: 20px;
-  min-width: 60%;
-  height: auto;
-}
-</style>
+<style scoped></style>
