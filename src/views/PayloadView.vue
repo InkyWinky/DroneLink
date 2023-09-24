@@ -4,64 +4,87 @@
 [ ] put stuff in correct place 
 -->
 <template>
-  <div id="video-feed" data-src="../../public/videoFeedPlaceholder.jpeg" uk-img>
-    <button id="show-overlay-button" @click="showOverlay = !showOverlay">
-      Show Overlay
-    </button>
+  <div class="w-full bg-green-900" id="payload-body">
+    <div id="payload-stats" class="w-full h-4/5"></div>
+
+    <div
+      id="video-feed"
+      data-src="../../public/videoFeedPlaceholder.jpeg"
+      uk-img
+    >
+      <button id="show-overlay-button" @click="showOverlay = !showOverlay">
+        Show Overlay
+      </button>
+    </div>
   </div>
-  <Teleport to="#video-feed" v-if="payloadInit">
-    <!-- <div v-if="showOverlay" id="overlay">
-      <div id="space-filler"></div>
-      <div id="stats-column">
-        <div id="payload-info">
-          info about payload
-          <h2>Payload Stats</h2>
-          <p id="payload-height">
-            Payload Height:
-            {{ store?.live_data?.payload?.height }}
-          </p>
-          <p id="payload-vel">
-            Payload Velocity:
-            {{ store?.live_data?.payload?.velocity }}
-          </p>
-          info about aircraft
-          <h2>Aircraft Stats</h2>
-          <p id="alb-height">
-            Albatross Ground Height:
-            {{ store?.live_data?.albatross?.ground_height }}
-          </p>
-          <p id="alb-vel">
-            Albatross Velocity:
-            {{ store?.live_data?.albatross?.velocity }}
-          </p>
-          <button id="begin-button" @click="begin()">Begin</button>
-          <span> Status: {{ status }} </span>
-          <button id="failsafe-one" @click="failsafeOne()">SMERF</button>
-          <button id="failsafe-two" @click="failsafeTwo()">NERF</button>
-        </div>
-        <div id="aircraft-info">
+
+  <Teleport to="#payload-stats" v-if="showOverlay">
+    <div
+      class="absolute w-1/5 h-5/6 right-0 m-10 p-2 rounded bg-gray-300 border border-black opacity-80"
+    >
+      <div id="overlay">
+        <div id="space-filler"></div>
+        <div id="stats-column">
+          <div id="payload-info">
+            <!-- info about payload -->
+            <h2 class="font-bold text-lg underline">Payload Stats</h2>
+            <p id="payload-height">
+              Payload Height:
+              {{ store?.live_data?.payload?.height }}
+            </p>
+            <p id="payload-vel">
+              Payload Velocity:
+              {{ store?.live_data?.payload?.velocity }}
+            </p>
+            <!-- info about aircraft -->
+            <h2 class="font-bold text-lg underline mt-8">Aircraft Stats</h2>
+            <p id="alb-height">
+              Albatross Ground Height:
+              {{ store?.live_data?.albatross?.ground_height }}
+            </p>
+            <p id="alb-vel">
+              Albatross Velocity:
+              {{ store?.live_data?.albatross?.velocity }}
+            </p>
+            <button id="begin-button" @click="begin()">Begin</button>
+            <span> Status: {{ status }} </span>
+            <div class="w-full flex">
+              <button
+                class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
+                id="failsafe-one"
+                @click="failsafeOne()"
+              >
+                SMERF
+              </button>
+              <button
+                class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
+                id="failsafe-two"
+                @click="failsafeTwo()"
+              >
+                NERF
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div> -->
+    </div>
   </Teleport>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 import { store } from "@/store";
 import api from "@/api";
 import mapboxgl from "mapbox-gl";
 
 const status = ref("");
-const payloadInit = ref(false);
 const showOverlay = ref(true);
 // const showMap = ref(false);
 // const mapLocation = ref("#map-container");
 const targetCoords = ref([145.13453, -37.90984]);
 const map = ref("");
-const mapBig = ref(false);
+// const mapBig = ref(false);
 
-onMounted(() => {});
 /**
  * begin() initialises the payload deployment procedure, beginning by manoeuvering the drone to the chosen point on the map,
  * and then executing payload deployment
@@ -132,4 +155,8 @@ function failsafeTwo() {
   }
 }
 </script>
-<style scoped></style>
+<style scoped>
+#payload-body {
+  height: calc(100vh - 70px) !important;
+}
+</style>
