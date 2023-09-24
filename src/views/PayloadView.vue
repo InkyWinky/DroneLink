@@ -5,7 +5,11 @@
 -->
 <template>
   <div class="w-full bg-green-900" id="payload-body">
-    <div id="payload-stats" class="w-full h-4/5"></div>
+    <img src="videoFeedPlaceholder.jpeg" class="w-full h-full" />
+    <div
+      id="payload-stats"
+      class="absolute w-1/5 h-5/6 right-0 top-12 m-10 p-2 rounded bg-gray-300 border border-black opacity-80"
+    ></div>
 
     <div
       id="video-feed"
@@ -19,51 +23,47 @@
   </div>
 
   <Teleport to="#payload-stats" v-if="showOverlay">
-    <div
-      class="absolute w-1/5 h-5/6 right-0 m-10 p-2 rounded bg-gray-300 border border-black opacity-80"
-    >
-      <div id="overlay">
-        <div id="space-filler"></div>
-        <div id="stats-column">
-          <div id="payload-info">
-            <!-- info about payload -->
-            <h2 class="font-bold text-lg underline">Payload Stats</h2>
-            <p id="payload-height">
-              Payload Height:
-              {{ store?.live_data?.payload?.height }}
-            </p>
-            <p id="payload-vel">
-              Payload Velocity:
-              {{ store?.live_data?.payload?.velocity }}
-            </p>
-            <!-- info about aircraft -->
-            <h2 class="font-bold text-lg underline mt-8">Aircraft Stats</h2>
-            <p id="alb-height">
-              Albatross Ground Height:
-              {{ store?.live_data?.albatross?.ground_height }}
-            </p>
-            <p id="alb-vel">
-              Albatross Velocity:
-              {{ store?.live_data?.albatross?.velocity }}
-            </p>
-            <button id="begin-button" @click="begin()">Begin</button>
-            <span> Status: {{ status }} </span>
-            <div class="w-full flex">
-              <button
-                class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
-                id="failsafe-one"
-                @click="failsafeOne()"
-              >
-                SMERF
-              </button>
-              <button
-                class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
-                id="failsafe-two"
-                @click="failsafeTwo()"
-              >
-                NERF
-              </button>
-            </div>
+    <div id="overlay">
+      <div id="space-filler"></div>
+      <div id="stats-column">
+        <div id="payload-info">
+          <!-- info about payload -->
+          <h2 class="font-bold text-lg underline">Payload Stats</h2>
+          <p id="payload-height">
+            Payload Height:
+            {{ store?.live_data?.payload?.height }}
+          </p>
+          <p id="payload-vel">
+            Payload Velocity:
+            {{ store?.live_data?.payload?.velocity }}
+          </p>
+          <!-- info about aircraft -->
+          <h2 class="font-bold text-lg underline mt-8">Aircraft Stats</h2>
+          <p id="alb-height">
+            Albatross Ground Height:
+            {{ store?.live_data?.albatross?.ground_height }}
+          </p>
+          <p id="alb-vel">
+            Albatross Velocity:
+            {{ store?.live_data?.albatross?.velocity }}
+          </p>
+          <button id="begin-button" @click="begin()">Begin</button>
+          <span> Status: {{ status }} </span>
+          <div class="w-full flex">
+            <button
+              class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
+              id="failsafe-one"
+              @click="failsafeOne()"
+            >
+              SMERF
+            </button>
+            <button
+              class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
+              id="failsafe-two"
+              @click="failsafeTwo()"
+            >
+              NERF
+            </button>
           </div>
         </div>
       </div>
