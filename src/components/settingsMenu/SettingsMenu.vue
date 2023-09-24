@@ -8,14 +8,14 @@
 
       <h3 class="font-bold text-xl">Settings</h3>
       <form class="uk-grid-small" uk-grid>
-        <div class="uk-width-1-1">
+        <div class="uk-width-1-1 uk-padding-remove-left">
           <p
             class="text-start font-bold text-sm"
             :class="{
               'text-blue-500': edited_default_alt.valueOf(),
             }"
           >
-            Default Waypoint Altitude
+            Cruise Altitude
           </p>
           <input
             @change="onDefaultAltChange"
@@ -26,14 +26,14 @@
             aria-label="100"
           />
         </div>
-        <div class="uk-width-1-1">
+        <div class="uk-width-1-1 uk-padding-remove-left">
           <p
             class="text-start font-bold text-sm"
             :class="{
               'text-blue-500': edited_takeoff_alt.valueOf(),
             }"
           >
-            Default Takeoff Altitude
+            Transition Altitude
           </p>
           <input
             @change="onTakeoffAltChange"
@@ -45,7 +45,7 @@
             color="secondary"
           />
         </div>
-        <div class="uk-width-1-1">
+        <div class="uk-width-1-1 uk-padding-remove-left">
           <p
             class="text-start font-bold text-sm"
             :class="{
@@ -86,7 +86,7 @@
           </button>
         </span>
       </form>
-      <span class="flex flex-row justify-center w-full m-0 p-0">
+      <span class="w-full flex m-4 pr-10">
         <router-link
           to="/payload"
           custom
