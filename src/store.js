@@ -11,6 +11,7 @@ export const store = reactive({
       velocity: 0,
     },
   },
+  messages: [],
   updateLiveData(data) {
     if (data["messages"].length > 0) {
       console.log(data["messages"]);
