@@ -458,6 +458,8 @@ class MissionManager:
         pin_bool ='LOW' if pin_state == 0 else 'HIGH'
         print(" [INFO] Set Relay Pin " + pin_num + " to " + pin_bool)
 
+
+
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
     The functions in this class will execute the command.
