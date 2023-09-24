@@ -196,10 +196,15 @@ class MissionPlannerSocket():
         data = json.dumps({"command":self.COMMANDS.GET_FLIGHTPLANNER_WAYPOINTS})
         self.s.sendall(data  + '\n\n')
     
-    def set_cube_relay_pin(self):
+
+    def set_cube_relay_pin(self, pin_num, pin_state):
         """Sends a command to set the state of a chosen relay pin on the cube. 
+        
+        Args: 
+            pin_num: the relay pin number on the cube
+            pin_state: the state the the user wishes to set the pin to (0 for high, or 1 for low)
         """
-        data = json.dumps({"command":self.COMMANDS.SET_CUBE_RELAY_PIN})
+        data = json.dumps({"command":self.COMMANDS.SET_CUBE_RELAY_PIN, "pin_num": pin_num, "pin_state": pin_state})
         self.s.sendall(data + '\n\n')
 
 class Commands:
