@@ -4,26 +4,36 @@
 [ ] put stuff in correct place 
 -->
 <template>
-  <div class="w-full bg-green-900" id="payload-body">
-    <div id="payload-stats" class="w-full h-4/5"></div>
-
+  <div
+    class="w-full"
+    id="payload-body"
+    style="background-image: videoFeedPlaceholder.jpeg"
+  >
+    <div id="big-vid-feed-fpv" v-if="!displayVisionLarge" class="w-full"></div>
     <div
-      id="video-feed"
-      data-src="../../public/videoFeedPlaceholder.jpeg"
-      uk-img
-    >
-      <button id="show-overlay-button" @click="showOverlay = !showOverlay">
-        Show Overlay
-      </button>
-    </div>
-  </div>
-
-  <Teleport to="#payload-stats" v-if="showOverlay">
+      id="big-vid-feed-vision"
+      v-if="displayVisionLarge"
+      class="w-full"
+    ></div>
     <div
-      class="absolute w-1/5 h-5/6 right-0 m-10 p-2 rounded bg-gray-300 border border-black opacity-80"
+      id="small-vid-feed-fpv"
+      class="w-1/5 h-1/4 absolute left-0 bottom-0 border-2 border-black m-2"
+      v-if="displayVisionLarge"
+    ></div>
+    <div
+      id="small-vid-feed-vision"
+      class="w-1/5 h-1/4 absolute left-0 bottom-0 border"
+      v-if="!displayVisionLarge"
+    ></div>
+    <div
+      id="payload-stats"
+      class="w-1/5 h-full absolute right-0"
+      v-if="showOverlay"
     >
-      <div id="overlay">
-        <div id="space-filler"></div>
+      <div
+        id="overlay"
+        class="m-10 p-2 rounded bg-gray-300 border border-black opacity-80"
+      >
         <div id="stats-column">
           <div id="payload-info">
             <!-- info about payload -->
@@ -46,8 +56,7 @@
               Albatross Velocity:
               {{ store?.live_data?.albatross?.velocity }}
             </p>
-            <button id="begin-button" @click="begin()">Begin</button>
-            <span> Status: {{ status }} </span>
+            <p class="text-medium">STATUS: {{ status }}</p>
             <div class="w-full flex">
               <button
                 class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
@@ -64,50 +73,67 @@
                 NERF
               </button>
             </div>
+            <div class="w-full flex" v-if="(showBegin = true)">
+              <button
+                class="bg-green-200 rounded-md text-black p-2 m-1 hover:bg-green-400 w-full"
+                id="begin-button"
+                @click="begin()"
+              >
+                Begin
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </Teleport>
+  </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { store } from "@/store";
 import api from "@/api";
 import mapboxgl from "mapbox-gl";
 
 const status = ref("");
 const showOverlay = ref(true);
-// const showMap = ref(false);
-// const mapLocation = ref("#map-container");
+const showMap = ref(false);
 const targetCoords = ref([145.13453, -37.90984]);
 const map = ref("");
-// const mapBig = ref(false);
+const mapBig = ref(false);
+const displayVisionLarge = ref(true); // boolean that determines which video feed is displayed large, and which small
+// eslint-disable-next-line
+const targetFound = computed(() => {
+  if (confirm("Confirm target found?")) {
+    return true;
+  } else {
+    return false;
+  }
+});
 
 /**
  * begin() initialises the payload deployment procedure, beginning by manoeuvering the drone to the chosen point on the map,
  * and then executing payload deployment
  * @param {obj} waypoint
  */
-
 // eslint-disable-next-line
 function setDeploymentLocation() {
   mapboxgl.accessToken =
     "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
 
-  map.value = new mapboxgl.Map({
-    container: "",
-    center: targetCoords, // lng, lat
-    zoom: 9,
-  });
+  if (mapBig.value) {
+    map.value = new mapboxgl.Map({
+      container: "",
+      center: targetCoords, // lng, lat
+      zoom: 9,
+    });
+  }
 
-  // get location of target
-  // use targetCoords for now
-  // future: targetLocation = store?.targetLocation;
+  // get location of target (use targetCoords for now, future: targetLocation = store?.targetLocation;)
 }
 function begin() {
   // show localised map around target and allow user to select a place to deliver payload
+  showMap.value = true;
 
   // implement nav command for chosen payload deployment location
 
@@ -135,7 +161,7 @@ function failsafeOne() {
       pin_num: 0,
       pin_state: 0,
     });
-  }
+  } else console.log("[ERROR] Improper State");
 }
 
 function failsafeTwo() {
