@@ -29,3 +29,4 @@ export const CLOSED_MENU_WIDTH = 0;
 export const menuWidth = computed(
   () => `${menuClosed.value ? CLOSED_MENU_WIDTH : MENU_WIDTH}px`
 );
+export const state = "IDLE";
