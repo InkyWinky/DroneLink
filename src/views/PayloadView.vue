@@ -4,7 +4,7 @@
 <template>
   <div class="w-full" id="payload-body">
     <div
-      v-if="(displayVisionLarge = true)"
+      v-if="displayVisionLarge.valueOf()"
       id="vid-feed-large-vision"
       class="w-full h-full bg-green-800"
     >
@@ -12,7 +12,7 @@
     </div>
     <div
       id="vid-feed-large-fpv"
-      v-else-if="(displayVisionLarge = false)"
+      v-else-if="!displayVisionLarge.valueOf()"
       class="w-full h-full bg-blue-800"
     >
       FPV
@@ -24,14 +24,14 @@
     >
       <div
         id="small-vid-feed-fpv"
-        v-if="(displayVisionLarge = true)"
+        v-if="displayVisionLarge.valueOf()"
         class="w-full h-full bg-blue-800"
       >
         FPV
       </div>
       <div
         id="small-vid-feed-vision"
-        v-else-if="(displayVisionLarge = false)"
+        v-else-if="!displayVisionLarge.valueOf()"
         class="w-full h-full bg-green-800"
       >
         VISION
@@ -98,7 +98,7 @@
         </div>
       </div>
     </div>
-    <div id="map-container" v-if="showMap"></div>
+    <div id="map-container" v-show="showMap"></div>
   </div>
 </template>
 
@@ -120,7 +120,7 @@ onMounted(() => {
     "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
   new mapboxgl.Map({
     container: "map-container",
-    center: targetCoords, // lng, lat
+    center: targetCoords.value, // lng, lat
     zoom: 9,
   });
 });
