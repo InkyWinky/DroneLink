@@ -4,34 +4,42 @@
 [ ] put stuff in correct place 
 -->
 <template>
-  <div
-    class="w-full"
-    id="payload-body"
-    style="background-image: videoFeedPlaceholder.jpeg"
-  >
-    <div id="big-vid-feed-fpv" v-if="!displayVisionLarge" class="w-full"></div>
+  <div class="w-full bg-green-800" id="payload-body">
     <div
-      id="big-vid-feed-vision"
+      id="vid-feed-large-fpv"
+      v-if="!displayVisionLarge"
+      class="w-full"
+      @click="switchFeed()"
+    >
+      FPV
+    </div>
+    <div
+      id="vid-feed-large-vision"
       v-if="displayVisionLarge"
       class="w-full"
-    ></div>
+      @click="switchFeed()"
+    >
+      VISION
+    </div>
     <div
       id="small-vid-feed-fpv"
       class="w-1/5 h-1/4 absolute left-0 bottom-0 border-2 border-black m-2"
       v-if="displayVisionLarge"
-    ></div>
+      @click="switchFeed()"
+    >
+      FPV
+    </div>
     <div
       id="small-vid-feed-vision"
       class="w-1/5 h-1/4 absolute left-0 bottom-0 border"
       v-if="!displayVisionLarge"
-    ></div>
-    <div
-      id="payload-stats"
-      class="w-1/5 h-full absolute right-0"
-      v-if="showOverlay"
+      @click="switchFeed()"
     >
+      VISION
+    </div>
+    <div id="overlay" class="w-1/5 h-full absolute right-0" v-if="showOverlay">
       <div
-        id="overlay"
+        id="payload-stats"
         class="m-10 p-2 rounded bg-gray-300 border border-black opacity-80"
       >
         <div id="stats-column">
@@ -86,22 +94,33 @@
         </div>
       </div>
     </div>
+    <div id="map-container" v-if="showMap"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { store } from "@/store";
 import api from "@/api";
+import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 
 const status = ref("");
 const showOverlay = ref(true);
 const showMap = ref(false);
 const targetCoords = ref([145.13453, -37.90984]);
-const map = ref("");
-const mapBig = ref(false);
 const displayVisionLarge = ref(true); // boolean that determines which video feed is displayed large, and which small
+// eslint-disable-next-line
+onMounted(() => {
+  mapboxgl.accessToken =
+    "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
+  new mapboxgl.Map({
+    container: "map-container",
+    center: targetCoords, // lng, lat
+    zoom: 9,
+  });
+});
+
 // eslint-disable-next-line
 const targetFound = computed(() => {
   if (confirm("Confirm target found?")) {
@@ -111,6 +130,10 @@ const targetFound = computed(() => {
   }
 });
 
+function switchFeed() {
+  displayVisionLarge.value = !displayVisionLarge.value;
+  console.log("[MESSAGE] switching feeds");
+}
 /**
  * begin() initialises the payload deployment procedure, beginning by manoeuvering the drone to the chosen point on the map,
  * and then executing payload deployment
@@ -118,19 +141,9 @@ const targetFound = computed(() => {
  */
 // eslint-disable-next-line
 function setDeploymentLocation() {
-  mapboxgl.accessToken =
-    "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
-
-  if (mapBig.value) {
-    map.value = new mapboxgl.Map({
-      container: "",
-      center: targetCoords, // lng, lat
-      zoom: 9,
-    });
-  }
-
   // get location of target (use targetCoords for now, future: targetLocation = store?.targetLocation;)
 }
+
 function begin() {
   // show localised map around target and allow user to select a place to deliver payload
   showMap.value = true;
