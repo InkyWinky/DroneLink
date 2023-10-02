@@ -158,6 +158,7 @@ class SearchPathGenerator:
     layer_distance = None  # Distance between each 'layer' of the flight path
     turn_type = None  # Turn type for the turns in search area mode
     search_area_coverage = None  # Coverage of search area in fraction that the plane can see if following the current path points
+    start_end_axis_flags = None
 
     error = False  # Flag for if an error occurred during runtime
 
@@ -252,7 +253,6 @@ class SearchPathGenerator:
             # print_waypoints(rough_points)
             self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
             self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
-            print("Breakpoint")
         elif validation is None:
             self.error = error_message
             self.print_debug()
@@ -335,12 +335,12 @@ class SearchPathGenerator:
         self.interpolate_all_turns()
 
     def create_turn_points(self):
-        if on_same_axis(self.path_waypoints[0].coords, self.path_waypoints[1].coords, self.orientation):
+        if self.start_end_axis_flags[0] == "on axis":
             start_offset = 1
         else:
             start_offset = 0
 
-        if on_same_axis(self.path_waypoints[-1].coords, self.path_waypoints[-2].coords, self.orientation):
+        if self.start_end_axis_flags[1] == "on axis":
             end_offset = 1
         else:
             end_offset = 0
@@ -528,9 +528,9 @@ class SearchPathGenerator:
     def generate_points(self):
         # Generate the first point depending on where the plane starts
         centroid = self.search_area.centroid
-        forwards_waypoints = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation, layer_distance=self.layer_distance, direction="forward")
+        forwards_waypoints, start_axis = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation, layer_distance=self.layer_distance, direction="forward")
         forwards_waypoints.pop(0)  # Remove the path start point
-        backwards_waypoints = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation + pi, layer_distance=self.layer_distance, direction="backward")
+        backwards_waypoints, end_axis = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=clamp_angle(self.orientation + pi), layer_distance=self.layer_distance, direction="backward")
         backwards_waypoints.pop(0)  # Remove the path start point
         backwards_waypoints.reverse()
 
@@ -542,12 +542,14 @@ class SearchPathGenerator:
         if len(rough_waypoints) < 1:
             return None
 
+        self.start_end_axis_flags = [start_axis, end_axis]
         # Find which end of the path is closest to the take-off location. Make the closest one the zeroth index by reversing if necessary
         if self.take_off_point is not None:
             distance_start = haversine_distance(self.take_off_point, rough_waypoints[0])
             distance_end = haversine_distance(self.take_off_point, rough_waypoints[-1])
             if distance_end < distance_start:
                 rough_waypoints.reverse()
+                self.start_end_axis_flags = [end_axis, start_axis]
 
         return rough_waypoints
 
@@ -719,7 +721,8 @@ def calculate_best_orientation(polygon=None):
 
 def raycast_to_polygon(origin=None, direction=None, polygon=None):
     # Define the ray as a line
-    ray = Segment(origin, Coord(origin.lat + polygon.maximum * math.sin(direction), origin.lon + polygon.maximum * math.cos(direction)))
+    ray = Segment(origin, create_point(origin, polygon.maximum, direction))
+
     # Look over each edge of polygon and check for intersection
     for index in range(len(polygon.vertices)):
         vertex1 = polygon.vertices[index]
@@ -997,7 +1000,6 @@ def calculate_single_centre_point(previous_waypoint=None, current_waypoint=None,
 
 def on_same_axis(point1=None, point2=None, orientation=None):
     angle_from_points = math.atan2(point1.lat - point2.lat, point1.lon - point2.lon)
-
     if round(angle_from_points, 10) == round(orientation, 10) or round(clamp_angle(angle_from_points + pi), 10) == round(orientation, 10):
         return True
     else:
@@ -1063,8 +1065,7 @@ def calculate_point_away_from_polygon(polygon=None, centre_vertex_index=None, di
 
     bisection_angle = calculate_bisection_angle(prev_vertex, centre_vertex, next_vertex)
 
-    path_start = Coord(centre_vertex.lat + distance * math.sin(bisection_angle),
-                       centre_vertex.lon + distance * math.cos(bisection_angle))
+    path_start = create_point(centre_vertex, distance, bisection_angle)
     return path_start
 
 def angle_between_points(pointA=None, pointB=None, pointC=None):
@@ -1133,7 +1134,11 @@ def calculate_points_along_polygon_distanced(start_point=None, polygon=None, ori
 
         # If reached the end of the path
         if new_point is None:
-            return rough_waypoints
+            # Set the on axis flags for the start and end of the paths
+            if directions[1] == "right" or directions[1] == "left":
+                return rough_waypoints, "on axis"
+            else:
+                return rough_waypoints, "off axis"
 
         # If the new point is the same as the previous point, disregard it
         if new_point != rough_waypoints[-1]:
@@ -1158,18 +1163,21 @@ def calculate_points_along_polygon_distanced(start_point=None, polygon=None, ori
         elif directions == ["right", "backward"]:
             directions = ["forward", "right"]
 
-    return rough_waypoints
-
 def get_projection(this_vector=None, on_this_vector=None):
     projection = this_vector.dot(on_this_vector) / on_this_vector.magnitude() ** 2
     return projection
 
 def handle_forward_backward_direction(origin=None, polygon=None, orientation=None, layer_distance=None):
     raycast_point = raycast_to_polygon(origin=origin, polygon=polygon, direction=orientation)
+    angleeraycast = math.atan2(raycast_point.lat - origin.lat, raycast_point.lon - origin.lon)
+
     if raycast_point is None:
         return None
     # TODO: Distancing the point like this doesn't really work for slanted surfaces
-    distant_point = create_point(raycast_point, layer_distance, orientation + pi)
+    raycast_point_distance = haversine_distance(origin, raycast_point)
+    distant_point = create_point(origin, raycast_point_distance - layer_distance, orientation)
+    # distant_point = create_point(raycast_point, layer_distance, orientation + pi)
+    anglee = math.atan2(distant_point.lat - origin.lat, distant_point.lon - origin.lon)
 
     # Make sure the distant point is not behind the origin point
     forward_direction = create_point(Coord(0, 0), 1, orientation)
@@ -1177,7 +1185,7 @@ def handle_forward_backward_direction(origin=None, polygon=None, orientation=Non
 
     projection = get_projection(this_vector=reference_point, on_this_vector=forward_direction)
     if projection <= 0:
-        return origin
+        return None
 
     return distant_point
 
@@ -1272,9 +1280,10 @@ def create_random_search_area(vertex_count, x_lim=None, y_lim=None):
 
     angle_percentages.sort()
 
+    origin = Coord(x_diff, y_diff)
     for index in range(vertex_count):
         angle = angle_percentages[index] * 2*pi
-        vertex = Coord(x_diff + max_dist * math.cos(angle), y_diff + max_dist * math.sin(angle))
+        vertex = create_point(origin, max_dist, angle)
         vertices.append(vertex)
     search_area = Polygon(vertices=vertices)
     return search_area
@@ -1341,22 +1350,20 @@ def earth_radius(latitude):
 
     return radius
 
-
 def do_entire_simulation(do_plot=True):
     search_area_polygon = create_random_search_area(7)
     layer_distance = create_random_layer_distance([0.5, 5])
     start_point = Coord(-38.387399, 144.932892)
 
-    F = 111319  # Metres
-    layer_distance = 0.005
+    layer_distance = 400  # Metres
+    minimum_turn_radius = 150  # Metres
 
     raw_waypoints = [Coord(-38.383944, 144.880181), Coord(-38.397322, 144.908826), Coord(-38.366840, 144.907242), Coord(-38.364585, 144.880813)]
     search_area_polygon = Polygon(raw_waypoints)
-    minimum_turn_radius = 0.002
     # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
     # search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
     # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
-    curve_resolution = 4
+    curve_resolution = 0.02
     # start_point = Point(6, 14)
     sensor_size = (12.8, 9.6)
     focal_length = 16
@@ -1410,7 +1417,7 @@ def main_function():
 
 def haversine_distance(coord1, coord2):
     # Radius of the Earth in kilometers
-    R = earth_radius(coord1.lat) / 1000
+    R = earth_radius(coord1.lat)
 
     # Convert latitude and longitude from degrees to radians
     lat1 = math.radians(coord1.lat)
@@ -1427,10 +1434,29 @@ def haversine_distance(coord1, coord2):
     # Calculate the distance
     distance = R * c
 
-    return distance * 1000
+    return distance
 
+
+def calculate_initial_bearing(origin, target):
+    lon1, lat1 = origin.lon, origin.lat
+    lon2, lat2 = target.lon, target.lat
+
+    delta_lon = lon2 - lon1
+
+    y = math.sin(delta_lon) * math.cos(lat2)
+    x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(delta_lon)
+
+    initial_bearing = math.atan2(y, x)
+
+    return initial_bearing
 
 if __name__ == "__main__":
-    # point = create_point(Coord(lon=144.881086, lat=-38.376412), 100, 3 * pi/4)
-    # print(point.lat, point.lon)
+    home_point = Coord(lon=144.8811719451221, lat=-38.3764202250312)
+    test_angle = pi / 4
+    point = create_point(home_point, 400, test_angle)
+    base_point = create_point(point, 400, test_angle + pi)
+    home_anglee = calculate_initial_bearing(home_point, point)
+
+    print(point.lat, point.lon)
+    print(base_point.lat, base_point.lon)
     main_function()
