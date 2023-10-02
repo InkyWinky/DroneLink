@@ -252,7 +252,6 @@ class SearchPathGenerator:
             # print_waypoints(rough_points)
             self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
             self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
-            print("Breakpoint")
         elif validation is None:
             self.error = error_message
             self.print_debug()
@@ -719,7 +718,8 @@ def calculate_best_orientation(polygon=None):
 
 def raycast_to_polygon(origin=None, direction=None, polygon=None):
     # Define the ray as a line
-    ray = Segment(origin, Coord(origin.lon + polygon.maximum * math.cos(direction), origin.lat + polygon.maximum * math.sin(direction)))
+    ray = Segment(origin, create_point(origin, polygon.maximum, direction))
+
     # Look over each edge of polygon and check for intersection
     # plt.plot([ray.start.x, ray.end.x], [ray.start.y, ray.end.y], '-.')
     for index in range(len(polygon.vertices)):
@@ -1064,8 +1064,7 @@ def calculate_point_away_from_polygon(polygon=None, centre_vertex_index=None, di
 
     bisection_angle = calculate_bisection_angle(prev_vertex, centre_vertex, next_vertex)
 
-    path_start = Coord(centre_vertex.lon + distance * math.cos(bisection_angle),
-                       centre_vertex.lat + distance * math.sin(bisection_angle))
+    path_start = create_point(centre_vertex, distance, bisection_angle)
     return path_start
 
 def angle_between_points(pointA=None, pointB=None, pointC=None):
@@ -1178,7 +1177,7 @@ def handle_forward_backward_direction(origin=None, polygon=None, orientation=Non
 
     projection = get_projection(this_vector=reference_point, on_this_vector=forward_direction)
     if projection <= 0:
-        return origin
+        return None
 
     return distant_point
 
@@ -1276,9 +1275,10 @@ def create_random_search_area(vertex_count, x_lim=None, y_lim=None):
 
     angle_percentages.sort()
 
+    origin = Coord(x_diff, y_diff)
     for index in range(vertex_count):
         angle = angle_percentages[index] * 2*pi
-        vertex = Coord(x_diff + max_dist * math.cos(angle), y_diff + max_dist * math.sin(angle))
+        vertex = create_point(origin, max_dist, angle)
         vertices.append(vertex)
     search_area = Polygon(vertices=vertices)
     return search_area
@@ -1308,15 +1308,34 @@ def print_waypoints(waypoints=None):
     for index, waypoint in enumerate(waypoints):
         print(index, " | ", waypoint.lon, waypoint.lat)
 
+def earth_radius(latitude):
+    # Constants for the WGS-84 ellipsoid (Earth)
+    a = 6378137  # Semi-major axis in metres
+    b = 6356752.314245  # Semi-minor axis in metres
+
+    # Calculate the radius at the given latitude using the formula
+    numerator = (a ** 2 * math.cos(latitude)) ** 2 + (b ** 2 * math.sin(latitude)) ** 2
+    denominator = (a * math.cos(latitude)) ** 2 + (b * math.sin(latitude)) ** 2
+    radius = math.sqrt(numerator / denominator)
+
+    return radius
+
 def do_entire_simulation(do_plot=True):
     search_area_polygon = create_random_search_area(7)
     layer_distance = create_random_layer_distance([0.5, 5])
     start_point = create_random_start_point()
 
-    raw_waypoints = [Coord(-38.383944, 144.880181), Coord(-38.397322, 144.908826), Coord(-38.366840, 144.907242), Coord(-38.364585, 144.880813)]
+    search_area_waypoints = [Coord(-38.383944, 144.880181), Coord(-38.397322, 144.908826), Coord(-38.366840, 144.907242), Coord(-38.364585, 144.880813)]
+    search_area_polygon = Polygon(search_area_waypoints)
+    scaling_factor = 111320 / math.cos(search_area_polygon.centroid.lat)
     layer_distance = 400  # Metres
-    minimum_turn_radius = 150  # Metres
-    curve_resolution = 4  # Waypoints per metre on turns
+    minimum_turn_radius = 280  # Metres
+    curve_resolution = 1  # Waypoints per metre on turns
+
+    layer_distance /= scaling_factor
+    minimum_turn_radius /= scaling_factor
+    curve_resolution *= scaling_factor
+
     # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
     # search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
     # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
