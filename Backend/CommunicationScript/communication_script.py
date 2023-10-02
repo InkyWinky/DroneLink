@@ -21,6 +21,7 @@ import threading
 import gc
 import time
 import datetime
+from GV_RTK_Pipeline.CubeConnection import CubeConnection
 
 # Importing MissionPlanner dependencies
 clr.AddReference("MissionPlanner")
@@ -605,6 +606,21 @@ class Commands:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling MAV_CMD_DO_SET_RELAY COMMAND.")
         
+# connection_string is the string used to define the connection to the network. The current connection string here is the string required to connect to SITL simulation
+# environment.
+# Link to connection string examples: https://mavlink.io/zh/mavgen_python/#connection_string
+connection_string = "tcp:127.0.0.1:5762" # Port 5762 is serial port 2 on the SITL simulated cube.
+# Set the source mavlink system as 1 (This will always be the case for us, unless we plan on having two albatrosses running on the same network)
+cube_connection = CubeConnection(connection_string, system=1)
+# Setting our filters which are the message types we want to receive as obtained from here: https://mavlink.io/en/messages/common.html
+status_filter = "STATUSTEXT"
+
+while True:
+    # Pull the next message. This is a BLOCKING operation by default, that is it waits until it receives ALL the message specified then returns the message here,
+    # specify tag with 'blocking=False' for otherwise, however the consequences in doing so is unknown. If this is a time sensitive task, it is best offload this into a
+    # separate thread.
+    msg = cube_connection.next_message(filters=status_filter)
+    print(msg)
 
 
 # ------------------------------------ End Classes ------------------------------------
