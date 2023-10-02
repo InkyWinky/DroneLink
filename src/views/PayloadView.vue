@@ -2,21 +2,31 @@
   [ ] Implement state checking !!
 -->
 <template>
-  <div class="w-full" id="payload-body">
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css"
+    rel="stylesheet"
+  />
+  <div class="w-full flex" id="payload-body">
     <div
-      v-if="displayVisionLarge.valueOf()"
-      id="vid-feed-large-vision"
-      class="w-full h-full bg-green-800"
+      id="video-feed-large"
+      :class="{ 'w-1/2': showMap.valueOf(), 'w-full': !showMap.valueOf() }"
     >
-      VISION
+      <div
+        v-if="displayVisionLarge.valueOf()"
+        id="vid-feed-large-vision"
+        class="w-full h-full bg-green-800"
+      >
+        VISION
+      </div>
+      <div
+        id="vid-feed-large-fpv"
+        v-else-if="!displayVisionLarge.valueOf()"
+        class="w-full h-full"
+      >
+        FPV
+      </div>
     </div>
-    <div
-      id="vid-feed-large-fpv"
-      v-else-if="!displayVisionLarge.valueOf()"
-      class="w-full h-full bg-blue-800"
-    >
-      FPV
-    </div>
+    <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
     <div
       id="small-vid-feed"
       class="w-1/5 h-1/4 absolute left-0 bottom-0 border-2 border-black m-2"
@@ -25,9 +35,9 @@
       <div
         id="small-vid-feed-fpv"
         v-if="displayVisionLarge.valueOf()"
-        class="w-full h-full bg-blue-800"
+        class="w-full h-full"
       >
-        FPV
+        <video ref="FPVCam">Stream Unavailable</video>
       </div>
       <div
         id="small-vid-feed-vision"
@@ -98,7 +108,6 @@
         </div>
       </div>
     </div>
-    <div id="map-container" v-show="showMap"></div>
   </div>
 </template>
 
@@ -113,17 +122,33 @@ const status = ref("");
 const showOverlay = ref(true);
 const showMap = ref(false);
 const targetCoords = ref([145.13453, -37.90984]);
-const displayVisionLarge = ref(false); // boolean that determines which video feed is displayed large, and which small
+const displayVisionLarge = ref(true); // boolean that determines which video feed is displayed large, and which small
+const FPVCam = ref(null);
 
 onMounted(() => {
   mapboxgl.accessToken =
     "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
   new mapboxgl.Map({
     container: "map-container",
+    style: "mapbox://styles/mapbox/streets-v12", // style URL
     center: targetCoords.value, // lng, lat
-    zoom: 9,
+    zoom: 18,
   });
+
+  startCapture();
 });
+
+function startCapture() {
+  navigator.mediaDevices
+    .getUserMedia({ video: true, audio: false })
+    .then((stream) => {
+      FPVCam.value.srcObject = stream;
+      FPVCam.value.play();
+    })
+    .catch((error) => {
+      console.log("[ERROR] FPVCam Error: " + error);
+    });
+}
 
 function switchFeed() {
   displayVisionLarge.value = !displayVisionLarge.value;
