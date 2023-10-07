@@ -35,7 +35,7 @@ import Icons from "uikit/dist/js/uikit-icons";
 UIkit.use(Icons);
 </script>
 
-<style scoped>
+<style>
 body {
   background-color: #eeeeee;
   height: 100%;
