@@ -434,6 +434,10 @@ class MissionManager:
                         "command":Commands.LIVE_DRONE_DATA,
                         "data":{
                             "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
+                            "lat": float(self.cs_drone.lat),
+                            "lng": float(self.cs_drone.lng),
+                            "distTraveled": float(self.cs_drone.distTraveled),
+                            "DistToHome": float(self.cs_drone.DistToHome),
                             "airspeed": float(self.cs_drone.airspeed),
                             "groundspeed": float(self.cs_drone.groundspeed),
                             "verticalspeed": float(self.cs_drone.verticalspeed),
