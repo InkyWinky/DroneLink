@@ -279,7 +279,8 @@ class MissionManager:
 
     def toggle_arm_aircraft(self):
         # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
-        # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0) 
+        # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
+        MissionPlanner.MainV2.comPort.setMode("MANUAL")
         if self.cs_drone and self.cs_drone.armed:
             MAV.doARM(False, True)
             print("[INFO] Toggled Drone to DISARMED")
@@ -289,6 +290,7 @@ class MissionManager:
             # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 0, 21196, 0, 0, 0, 0, 0, 0)
             MAV.doARM(True, True)
             print("[INFO] Toggled Drone to ARMED")
+        MissionPlanner.MainV2.comPort.setMode("AUTO")
 
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
@@ -448,7 +450,17 @@ class MissionManager:
                 except Exception as e:
                     print("[ERROR] " + str(e))
         print("[TERMINATION] send_live_data_thread has successfully terminated")
-    
+
+   
+    def set_cube_relay_pin(self, pin_num, pin_state):
+        """Sets a chosen relay pin on the cube to either high (0V) or low (5V)
+        """
+
+        MAV.doCommand(MAVLink.MAV_CMD.DO_SET_RELAY, pin_num, pin_state)
+        pin_bool ='LOW' if pin_state == 0 else 'HIGH'
+        print(" [INFO] Set Relay Pin " + pin_num + " to " + pin_bool)
+
+
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
@@ -460,6 +472,7 @@ class Commands:
     TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
+    SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
 
 
     def override(self, mission_manager, decoded_data):
@@ -573,6 +586,26 @@ class Commands:
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling GET_FLIGHTPLANNER_WAYPOINTS COMMAND.")
+
+    
+    def set_cube_relay_pin(self, mission_manager, decoded_data):
+        """Sets a chosen relay pin on the cube either high or low
+        
+        Args:
+            mission_manager MissionManager: The mission manager class connected to the mission planner.
+            pin_num (Int): The pin number to assert (between 0 and 5)
+            pin_val (Int): The value (0 for low, 1 for high) that the chosen pin will be asserted to. 
+        """
+
+        try:
+            pin_num = decoded_data["pin_num"]
+            pin_state = decoded_data["pin_state"]
+            mission_manager.set_cube_relay_pin(pin_num, pin_state)
+            print("[COMMAND] MAV_CMD_DO_SET_RELAY Command Executed.")
+
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling MAV_CMD_DO_SET_RELAY COMMAND.")
         
 
 
