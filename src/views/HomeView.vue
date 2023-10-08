@@ -4,7 +4,7 @@
   <div id="toggleBtn"><ToggleBtn /></div>
   <div id="speedIndicator">
     <SpeedIndicator
-      :airspeed="store?.live_data?.airspeed.toFixed(2) || 0"
+      :airspeed="store?.live_data?.airspeed?.toFixed(2) || 0"
       :max="150"
       :min="0"
     />
