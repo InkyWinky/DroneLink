@@ -3,7 +3,11 @@
 
   <div id="toggleBtn"><ToggleBtn /></div>
   <div id="speedIndicator">
-    <SpeedIndicator :airspeed="0" :max="150" :min="0" />
+    <SpeedIndicator
+      :airspeed="store?.live_data?.airspeed.toFixed(2)"
+      :max="150"
+      :min="0"
+    />
   </div>
   <div id="multiFunctionTab">
     <MultiFunctionTab />
@@ -28,6 +32,7 @@ import BatteryStatistics from "@/components/batteryStats/BatteryStatistics.vue";
 import CurrentMonitor from "@/components/currentMonitor/CurrentMonitor.vue";
 import PwmMonitor from "@/components/pwm/PwmMonitor.vue";
 import MultiFunctionTab from "@/components/multiFunctionTab/MultiFunctionTab.vue";
+import { store } from "@/store";
 
 // UIKit setup - should automatically propagate to the rest of the Vue app
 import UIkit from "uikit";
