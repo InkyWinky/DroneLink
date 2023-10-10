@@ -1,5 +1,11 @@
 <!-- TO DO:
   [ ] Implement state checking !!
+  [ ] Open PLB doors button
+  [ ] Load payload button
+  [ ] Deployment location selector on map
+  [ ] Read FPVcam footage and display instead of webcam
+  [ ] Retain video feed while switching between FPV and Vision
+  [ ] Print Vision footage onto other feed
 -->
 <template>
   <link
@@ -24,6 +30,7 @@
         class="w-full h-full"
       >
         FPV
+        <video ref="FPVCamLarge" muted>Stream Unavailable</video>
       </div>
     </div>
     <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
@@ -37,7 +44,7 @@
         v-if="displayVisionLarge.valueOf()"
         class="w-full h-full"
       >
-        <video ref="FPVCam">Stream Unavailable</video>
+        <video ref="FPVCamSmall" muted>Stream Unavailable</video>
       </div>
       <div
         id="small-vid-feed-vision"
@@ -118,40 +125,94 @@ import mapboxgl from "mapbox-gl";
 import store from "@/store";
 import api from "@/api";
 
-const status = ref("");
+const status = ref(null);
 const showOverlay = ref(true);
 const showMap = ref(false);
-const targetCoords = ref([145.13453, -37.90984]);
+const targetCoords = ref([145.13453, -37.90984]); // placeholder for actual target coords
+const deployCoords = ref(null);
 const displayVisionLarge = ref(true); // boolean that determines which video feed is displayed large, and which small
-const FPVCam = ref(null);
+const FPVCamLarge = ref(null);
+const FPVCamSmall = ref(null);
+const Map = ref(null);
 
 onMounted(() => {
   mapboxgl.accessToken =
     "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
-  new mapboxgl.Map({
+  Map.value = new mapboxgl.Map({
     container: "map-container",
     style: "mapbox://styles/mapbox/streets-v12", // style URL
     center: targetCoords.value, // lng, lat
     zoom: 18,
   });
+  Map.value.on("click", (e) => {
+    console.log("[DEPLOYMENT COORDS] " + e.lngLat);
+    deployCoords.value = e.lngLat;
+  });
 
-  startCapture();
+  startFPVCapture("small");
 });
 
-function startCapture() {
-  navigator.mediaDevices
-    .getUserMedia({ video: true, audio: false })
-    .then((stream) => {
-      FPVCam.value.srcObject = stream;
-      FPVCam.value.play();
-    })
-    .catch((error) => {
-      console.log("[ERROR] FPVCam Error: " + error);
-    });
+function startFPVCapture(orientation) {
+  if (orientation == "large") {
+    // stop small FPV feed
+    if (FPVCamSmall.value != null) {
+      try {
+        console.log("[MESSAGE] Stopping FPVCamSmall stream");
+        FPVCamSmall.value.srcObject.stream
+          .getTracks()
+          .forEach((track) => track.stop());
+      } catch (error) {
+        console.log("[ERROR] FPVCamSmall mediaStream object not found");
+      }
+    }
+
+    // initiate large FPV feed
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        FPVCamLarge.value.srcObject = stream;
+        FPVCamLarge.value.play();
+        console.log("[LARGE FPV STREAM] " + stream);
+      })
+      .catch((error) => {
+        console.log("[ERROR] FPVCam Error: " + error);
+      });
+  } else if (orientation == "small") {
+    // stop large FPV feed
+    if (FPVCamLarge.value != null) {
+      try {
+        console.log("[MESSAGE] Stopping FPVCamLarge stream");
+        FPVCamLarge.value.srcObject.stream
+          .getTracks()
+          .forEach((track) => track.stop());
+      } catch (error) {
+        console.log("[ERROR] FPVCamLarge mediaStream object not found");
+      }
+    }
+    // initiate small FPV feed
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        FPVCamSmall.value.srcObject = stream;
+        FPVCamSmall.value.play();
+        console.log("[SMALL FPV STREAM] " + stream);
+      })
+      .catch((error) => {
+        console.log("[ERROR] FPVCam Error: " + error);
+      });
+  } else {
+    console.log("[ERROR] Incorrect function call");
+  }
 }
 
 function switchFeed() {
   displayVisionLarge.value = !displayVisionLarge.value;
+
+  if (displayVisionLarge.value) {
+    startFPVCapture("small");
+  } else {
+    startFPVCapture("large");
+  }
   console.log("[MESSAGE] displayVisionLarge: " + displayVisionLarge.value);
 }
 /**
@@ -206,6 +267,7 @@ function failsafeTwo() {
   });
 }
 </script>
+
 <style scoped>
 #payload-body {
   height: calc(100vh - 70px) !important;

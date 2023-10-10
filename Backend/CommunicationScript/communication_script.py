@@ -606,6 +606,7 @@ class Commands:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling MAV_CMD_DO_SET_RELAY COMMAND.")
         
+"""
 # connection_string is the string used to define the connection to the network. The current connection string here is the string required to connect to SITL simulation
 # environment.
 # Link to connection string examples: https://mavlink.io/zh/mavgen_python/#connection_string
@@ -630,6 +631,7 @@ while True:
     
     if status_data["id"] == "0": # message is only in 1 chunk
         status = status_data["text"]
+"""
 
 
 # ------------------------------------ End Classes ------------------------------------
