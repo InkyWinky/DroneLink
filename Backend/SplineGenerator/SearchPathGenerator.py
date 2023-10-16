@@ -1,7 +1,6 @@
 from __future__ import division, print_function
 
 import time
-# Test 2
 import matplotlib.pyplot as plt
 import math
 import random
@@ -252,23 +251,27 @@ class SearchPathGenerator:
             # print_waypoints(rough_points)
             self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
             self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
+            if validation is None:
+                self.error = error_message
         elif validation is None:
             self.error = error_message
             self.print_debug()
             self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
 
     def plot_points(self, points=None, polygon=None, actual_waypoints=None):
-        # Plot all points
-        x_vals = [point.lon for point in points]
-        y_vals = [point.lat for point in points]
-        plt.plot(x_vals, y_vals, color='red')
-        plt.scatter(x_vals, y_vals, color='b', s=13)
+        plt.figure(dpi=500)  # Resolution for zoomin in
 
         # Plot original waypoints if given
         if actual_waypoints is not None:
             x_original = [point.coords.lon for point in actual_waypoints]
             y_original = [point.coords.lat for point in actual_waypoints]
             plt.scatter(x_original, y_original, color='black')
+
+        # Plot all points
+        x_vals = [point.lon for point in points]
+        y_vals = [point.lat for point in points]
+        plt.plot(x_vals, y_vals, color='red')
+        plt.scatter(x_vals, y_vals, color='b', s=13)
 
         # Plot polygon if given
         if polygon is not None:
@@ -291,12 +294,21 @@ class SearchPathGenerator:
     def calculate_path_points(self):
         if self.path_waypoints is None:
             return None
-        points = [self.path_waypoints[0].coords]
+
+        points = []
+        # Add the first waypoint's coords if it doesn't begin with a turn
+        if self.path_waypoints[0].centre_point is None:
+            points.append(self.path_waypoints[0].coords)
+        elif type(self.path_waypoints[0].curve_waypoints[0]) == list:
+            # Lightbulb turn
+            if not self.path_waypoints[0].curve_waypoints[0][0].equals(self.path_waypoints[0].coords):
+                points.append(self.path_waypoints[0].coords)
+        else:
+            # Circle or double circle turn
+            if not self.path_waypoints[0].curve_waypoints[0].equals(self.path_waypoints[0].coords):
+                points.append(self.path_waypoints[0].coords)
 
         for waypoint in self.path_waypoints:
-            if waypoint.centre_point is None:
-                points.append(waypoint.coords)
-                continue
 
             if waypoint.curve_waypoints is not None:
                 if type(waypoint.curve_waypoints[0]) == list:
@@ -307,6 +319,18 @@ class SearchPathGenerator:
                 else:
                     for point in waypoint.curve_waypoints:
                         points.append(point)
+
+        # Add the final waypoint's coords if it doesn't end in a turn
+        if self.path_waypoints[-1].centre_point is None:
+            points.append(self.path_waypoints[-1].coords)
+        elif type(self.path_waypoints[-1].curve_waypoints[0]) == list:
+            # Lightbulb turn
+            if not self.path_waypoints[-1].curve_waypoints[0][0].equals(self.path_waypoints[-1].coords):
+                points.append(self.path_waypoints[-1].coords)
+        else:
+            # Circle or double circle turn
+            if not self.path_waypoints[-1].curve_waypoints[0].equals(self.path_waypoints[-1].coords):
+                points.append(self.path_waypoints[-1].coords)
 
         return points
 
@@ -495,6 +519,20 @@ class SearchPathGenerator:
         if validation_flag is None:
             return validation_flag, error_message
 
+        # Check if there are any duplicate consecutive path points
+        validation_flag, error_message = self.validation_duplicate_path_points(self.path_points)
+        if validation_flag is None:
+            return validation_flag, error_message
+
+        return "All g", "All g"
+
+    def validation_duplicate_path_points(self, path_points):
+        for index in range(len(path_points) - 1):
+            point1 = path_points[index]
+            point2 = path_points[index + 1]
+            if point1.equals(point2):
+                return None, "Two consecutive points are equal"
+
         return "All g", "All g"
 
     def validation_point_outside_polygon(self, waypoints):
@@ -612,13 +650,54 @@ def calculate_curve_waypoints_for_lightbulb(waypoint=None, curve_resolution=None
         centre_direction = "counterclockwise"
         side_direction = "clockwise"
 
-    first_turn_points = curve_interpolation(centre_point=waypoint.centre_point[0], entrance_point=waypoint.lightbulb_pairs[0][0], exit_point=waypoint.lightbulb_pairs[0][1], turn_radius=radius, turn_direction=side_direction, curve_resolution=curve_resolution)
-    middle_turn_points = curve_interpolation(centre_point=waypoint.centre_point[1], entrance_point=waypoint.lightbulb_pairs[1][0], exit_point=waypoint.lightbulb_pairs[1][1], turn_radius=radius, turn_direction=centre_direction, curve_resolution=curve_resolution)
-    third_turn_points = curve_interpolation(centre_point=waypoint.centre_point[2], entrance_point=waypoint.lightbulb_pairs[2][0], exit_point=waypoint.lightbulb_pairs[2][1], turn_radius=radius, turn_direction=side_direction, curve_resolution=curve_resolution)
+    # Calculate the angle step for the entire three turns here. This is to ensure the distances between curve waypoints are the same
+    angle_step = calculate_angle_step(centre_points=waypoint.centre_point, entrance_exits=waypoint.lightbulb_pairs, turn_radius=radius, curve_resolution=curve_resolution, initial_turn_direction=side_direction)
+
+    first_turn_points, ending_angle, leftover = curve_interpolation(centre_point=waypoint.centre_point[0], entrance_point=waypoint.lightbulb_pairs[0][0], exit_point=waypoint.lightbulb_pairs[0][1], turn_radius=radius, turn_direction=side_direction, angle_step=angle_step, initial_angle=0, previous_leftover=0)
+    middle_turn_points, ending_angle, leftover = curve_interpolation(centre_point=waypoint.centre_point[1], entrance_point=waypoint.lightbulb_pairs[1][0], exit_point=waypoint.lightbulb_pairs[1][1], turn_radius=radius, turn_direction=centre_direction, angle_step=angle_step, initial_angle=ending_angle, previous_leftover=leftover)
+    third_turn_points, ending_angle, leftover = curve_interpolation(centre_point=waypoint.centre_point[2], entrance_point=waypoint.lightbulb_pairs[2][0], exit_point=waypoint.lightbulb_pairs[2][1], turn_radius=radius, turn_direction=side_direction, angle_step=angle_step, initial_angle=ending_angle, previous_leftover=leftover)
 
     return [first_turn_points, middle_turn_points, third_turn_points]
 
-def curve_interpolation(centre_point=None, entrance_point=None, exit_point=None, turn_radius=None, turn_direction=None, curve_resolution=None):
+def calculate_angle_step(centre_points=None, entrance_exits=None, turn_radius=None, curve_resolution=None, initial_turn_direction=None):
+    # Calculate the total amount of angle the plane will rotate about its yaw throughout the lightbulb turn
+    total_angle = 0
+
+    direction_list = ["clockwise", "counterclockwise"]
+    if initial_turn_direction == "counterclockwise":
+        direction_list.reverse()
+
+    # Add up the angle differences for each turn
+    for index in range(3):
+        # Find start angle
+        start_angle = calculate_angle_from_points(from_point=centre_points[index], to_point=entrance_exits[index][0])
+
+        # Find end angle
+        end_angle = calculate_angle_from_points(from_point=centre_points[index], to_point=entrance_exits[index][1])
+
+        # Find inbetween angle based on turn direction
+        if direction_list[index % 2] == "clockwise":
+            angle_difference = start_angle - end_angle
+        else:
+            angle_difference = end_angle - start_angle
+
+        if angle_difference < 0.0:
+            angle_difference += 2 * pi
+
+        total_angle += angle_difference
+
+    # Calculate the circumference travelled due to the angle difference
+    distance = turn_radius * total_angle
+
+    # Calculate the number of points required due to the curve resolution
+    number_of_points = int(math.ceil(distance * curve_resolution))
+
+    # Calculate the angle step for the given number of points
+    angle_step = total_angle / number_of_points
+
+    return angle_step
+
+def curve_interpolation(centre_point=None, entrance_point=None, exit_point=None, turn_radius=None, turn_direction=None, angle_step=None, initial_angle=None, previous_leftover=None):
     # Find start angle
     start_angle = calculate_angle_from_points(from_point=centre_point, to_point=entrance_point)
 
@@ -633,22 +712,31 @@ def curve_interpolation(centre_point=None, entrance_point=None, exit_point=None,
 
     if angle_difference < 0.0:
         angle_difference += 2 * pi
+    elif angle_difference > 2 * pi:
+        angle_difference -= 2 * pi
 
     # Find angle step
-    number_of_points, angle_step = calculate_angle_step_for_curve_interpolation(curve_resolution=curve_resolution, radius=turn_radius, angle_difference=angle_difference)
+    # number_of_points, angle_step = calculate_angle_step_for_curve_interpolation(curve_resolution=curve_resolution, radius=turn_radius, angle_difference=angle_difference)
 
     # Clockwise or counter-clockwise for angle step
     if turn_direction == "clockwise":
         angle_step = - angle_step
+        current_angle = start_angle - previous_leftover
+        angle_counter = initial_angle + previous_leftover
+    else:
+        current_angle = start_angle + previous_leftover
+        angle_counter = initial_angle + previous_leftover
 
     # Loop through and make the waypoints
     curve_waypoints = []
-    for index in range(number_of_points - 1):
-        current_angle = start_angle + angle_step * index
+    while round(angle_counter, 10) <= round(angle_difference + initial_angle, 10):
         new_point = create_point(centre_point, turn_radius, current_angle)
         curve_waypoints.append(new_point)
+        current_angle += angle_step
+        angle_counter += abs(angle_step)
 
-    return curve_waypoints
+    leftover = angle_counter - (angle_difference + initial_angle)
+    return curve_waypoints, angle_counter, leftover
 
 def calculate_curve_waypoints_for_double_circle_or_circle(waypoint=None, curve_resolution=None, radius=None, turn_type=None):
     # Find start angle
@@ -679,7 +767,7 @@ def calculate_curve_waypoints_for_double_circle_or_circle(waypoint=None, curve_r
 
     # Loop through and make the waypoints
     curve_waypoints = []
-    for index in range(number_of_points):
+    for index in range(number_of_points + 1):
         current_angle = start_angle + angle_step * index
         new_point = create_point(waypoint.centre_point, radius, current_angle)
         curve_waypoints.append(new_point)
@@ -1325,12 +1413,13 @@ def do_entire_simulation(do_plot=True):
     layer_distance = create_random_layer_distance([0.5, 5])
     start_point = create_random_start_point()
 
+    start_point = Coord(-38.395, 144.882)
     search_area_waypoints = [Coord(-38.383944, 144.880181), Coord(-38.397322, 144.908826), Coord(-38.366840, 144.907242), Coord(-38.364585, 144.880813)]
     search_area_polygon = Polygon(search_area_waypoints)
     scaling_factor = 111320 / math.cos(search_area_polygon.centroid.lat)
     layer_distance = 400  # Metres
-    minimum_turn_radius = 280  # Metres
-    curve_resolution = 1  # Waypoints per metre on turns
+    minimum_turn_radius = 170  # Metres
+    curve_resolution = 0.01  # Waypoints per metre on turns
 
     layer_distance /= scaling_factor
     minimum_turn_radius /= scaling_factor
@@ -1347,7 +1436,7 @@ def do_entire_simulation(do_plot=True):
 
     path_generator = SearchPathGenerator()
     path_generator.set_data(search_area=search_area_polygon)
-    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=None)
+    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
 
     path_generator.generate_path(do_plot=do_plot)
     return path_generator.error
