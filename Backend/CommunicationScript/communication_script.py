@@ -458,10 +458,17 @@ class MissionManager:
         pin_bool ='LOW' if pin_state == 0 else 'HIGH'
         print(" [INFO] Set Relay Pin " + pin_num + " to " + pin_bool)
 
-    def send_command_int(self, project_specifier, command_specifier):
+    def send_command_int(self, project_specifier, command_specifier, **kwargs):
         """Sends a COMMAND_INT command
+        Args:
+            project_specifier (Int): specifies which project the command is in relation to
+            command_specifier (Int): specifies which command inside the project is to be excecuted
+            kwargs (Dict):  contains 3 optional arguments
         """
-        MAV.doCommand(MAVLink.COMMAND_INT, 0, 0, 0, project_specifier, 0, 0, command_specifier, 0, 0, 0, 0, 0, 0)
+        arg1 = kwargs[kwargs.keys()[0]] if kwargs.keys()[0] else 0
+        arg2 = kwargs[kwargs.keys()[1]] if kwargs.keys()[1] else 0 
+        arg3 = kwargs[kwargs.keys()[2]] if kwargs.keys()[2] else 0
+        MAV.doCommand(MAVLink.COMMAND_INT, 0, 0, 0, project_specifier, 0, 0, command_specifier, arg1, arg2, arg3, 0, 0, 0)
 
 
 class Commands:
