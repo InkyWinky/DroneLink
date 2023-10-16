@@ -21,7 +21,6 @@ import threading
 import gc
 import time
 import datetime
-from GV_RTK_Pipeline.CubeConnection import CubeConnection
 
 # Importing MissionPlanner dependencies
 clr.AddReference("MissionPlanner")
@@ -459,6 +458,10 @@ class MissionManager:
         pin_bool ='LOW' if pin_state == 0 else 'HIGH'
         print(" [INFO] Set Relay Pin " + pin_num + " to " + pin_bool)
 
+    def send_command_int(self, project_specifier, command_specifier):
+        """Sends a COMMAND_INT command
+        """
+        MAV.doCommand(MAVLink.COMMAND_INT, 0, 0, 0, project_specifier, 0, 0, command_specifier, 0, 0, 0, 0, 0, 0)
 
 
 class Commands:
@@ -592,8 +595,7 @@ class Commands:
         
         Args:
             mission_manager MissionManager: The mission manager class connected to the mission planner.
-            pin_num (Int): The pin number to assert (between 0 and 5)
-            pin_val (Int): The value (0 for low, 1 for high) that the chosen pin will be asserted to. 
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend
         """
 
         try:
@@ -605,35 +607,23 @@ class Commands:
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling MAV_CMD_DO_SET_RELAY COMMAND.")
+
+    def send_command_int(self, mission_manager, decoded_data):
+        """Sends a COMMAND_INT message to Mission Planner
         
-"""
-# connection_string is the string used to define the connection to the network. The current connection string here is the string required to connect to SITL simulation
-# environment.
-# Link to connection string examples: https://mavlink.io/zh/mavgen_python/#connection_string
-connection_string = "tcp:127.0.0.1:5762" # Port 5762 is serial port 2 on the SITL simulated cube.
-# Set the source mavlink system as 1 (This will always be the case for us, unless we plan on having two albatrosses running on the same network)
-cube_connection = CubeConnection(connection_string, system=1)
-# Setting our filters which are the message types we want to receive as obtained from here: https://mavlink.io/en/messages/common.html
-filters = ["STATUSTEXT", "DISTANCE_SENSOR"]
+        Args:
+            mission_manager MissionManager: The mission manager class connected to the mission planner.
+            decoded_data (Dict): The data required to execute the command. Usually received from the backend
+        """
 
-while True:
-    # Pull the next message. This is a BLOCKING operation by default, that is it waits until it receives ALL the message specified then returns the message here,
-    # specify tag with 'blocking=False' for otherwise, however the consequences in doing so is unknown. If this is a time sensitive task, it is best offload this into a
-    # separate thread.
-    msg = cube_connection.next_message(filters=filters)
-    print("[MSG] " + msg)
-    print("[MESSAGE TYPE] " + type(msg))
+        try:
+            project_specifier = decoded_data["project_specifier"]
+            command_specifier = decoded_data["command_specifier"]
+            mission_manager.send_command_int(project_specifier, command_specifier)
 
-    # assume msg is a dictionary
-    lidar_data = msg["DISTANCE_SENSOR"]
-    ground_height = lidar_data["current_disance"]
-    status_data = msg["STATUSTEXT"]
-    
-    if status_data["id"] == "0": # message is only in 1 chunk
-        status = status_data["text"]
-"""
-
-
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[COMMAND] ERROR: Handling MAV_COMMAND_INT COMMAND")
 # ------------------------------------ End Classes ------------------------------------
 # def waypoint_mavlink_test():
 #     """Sets the current mission to hard-coded waypoints using MAVLink functions.
