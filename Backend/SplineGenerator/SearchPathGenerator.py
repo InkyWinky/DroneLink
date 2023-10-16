@@ -241,6 +241,22 @@ class SearchPathGenerator:
         rough_points = self.generate_points()
         self.smooth_rough_points(rough_points=rough_points)
 
+        # If a take-off point was specified, generate the points to get the plane from take-off to first waypoint
+        if self.take_off_point is not None:
+            # Determine the end orientation for this set of points
+            if type(self.path_waypoints[0].curve_waypoints[0]) == list:
+                # Lightbulb turn at the start
+                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[0].centre_point[0], to_point=self.path_waypoints[0].coords)
+            else:
+                # Double circle or circle turn
+                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[0].centre_point, to_point=self.path_waypoints[0].coords)
+            if self.path_waypoints[0].turn_direction == "clockwise":
+                end_orientation = angle_from_centre_to_coord + pi / 2
+            else:
+                end_orientation = angle_from_centre_to_coord - pi / 2
+
+            take_off_points = generate_points_to(start_point=self.take_off_point, end_point=rough_points[0], end_orientation=end_orientation, radius=self.turn_radius)
+
         # Calculate callable point
         self.path_points = self.calculate_path_points()
 
@@ -248,15 +264,15 @@ class SearchPathGenerator:
         if rough_points is not None:
             validation, error_message = self.do_post_validation_checks(waypoints=rough_points)
         if do_plot:
-            # print_waypoints(rough_points)
+        # print_waypoints(rough_points)
             self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
-            self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
-            if validation is None:
-                self.error = error_message
+        self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
+        if validation is None:
+            self.error = error_message
         elif validation is None:
             self.error = error_message
-            self.print_debug()
-            self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
+        self.print_debug()
+        self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
 
     def plot_points(self, points=None, polygon=None, actual_waypoints=None):
         plt.figure(dpi=500)  # Resolution for zoomin in
@@ -641,6 +657,19 @@ class SearchPathGenerator:
 """
 Functions. Mostly just math functions.
 """
+
+def generate_points_to(start_point=None, end_point=None, end_orientation=None, radius=None):
+    # Determine which direction the plane will rotate in
+    takeoff_orientation = calculate_angle_from_points(from_point=end_point, to_point=start_point)
+    centre_point_angle = end_orientation + pi / 2
+    # TODO
+
+    # Create centre point at correct angle
+    centre_point = create_point(end_point, radius, centre_point_angle)
+
+    # Define entrance and exit angles
+    entrance_angle, exit_angle = calculate_entrance_and_exit
+
 
 def calculate_curve_waypoints_for_lightbulb(waypoint=None, curve_resolution=None, radius=None):
     if waypoint.turn_direction == "clockwise":
