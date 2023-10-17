@@ -666,10 +666,24 @@ def generate_points_to(start_point=None, end_point=None, end_orientation=None, r
 
     # Create centre point at correct angle
     centre_point = create_point(end_point, radius, centre_point_angle)
+    turn_direction = calculate_turn_directions(previous_waypoint=start_point, current_waypoint=centre_point, next_waypoint=end_point)
 
     # Define entrance and exit angles
-    entrance_angle, exit_angle = calculate_entrance_and_exit
+    entrance_angle, exit_angle = calculate_entrance_and_exit_end_on_waypoint(start_point=start_point, centre_point=centre_point, radius=radius, direction=turn_direction)
 
+
+
+def calculate_entrance_and_exit_end_on_waypoint(start_point=None, centre_point=None, radius=None, direction=None):
+    distance = calculate_distance_between_points(start_point, centre_point)
+    alpha = math.atan2(start_point.lat - centre_point.lat, start_point.lon - centre_point.lon)
+
+    theta1 = math.acos(radius / distance) + alpha
+    theta2 = math.acos(radius / distance) - alpha
+
+    if direction == "clockwise":
+        return theta1, theta2
+    else:
+        return theta2, theta1
 
 def calculate_curve_waypoints_for_lightbulb(waypoint=None, curve_resolution=None, radius=None):
     if waypoint.turn_direction == "clockwise":
