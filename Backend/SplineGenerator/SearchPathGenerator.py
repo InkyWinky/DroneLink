@@ -246,25 +246,32 @@ class SearchPathGenerator:
             # Determine the end orientation for this set of points
             if type(self.path_waypoints[0].curve_waypoints[0]) == list:
                 # Lightbulb turn at the start
-                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[0].centre_point[0], to_point=self.path_waypoints[0].coords)
+                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[0].centre_point[0], to_point=self.path_waypoints[0].curve_waypoints[0][0])
             else:
                 # Double circle or circle turn
-                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[0].centre_point, to_point=self.path_waypoints[0].coords)
+                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[0].centre_point, to_point=self.path_waypoints[0].curve_waypoints[0])
             if self.path_waypoints[0].turn_direction == "clockwise":
                 end_orientation = angle_from_centre_to_coord + pi / 2
             else:
                 end_orientation = angle_from_centre_to_coord - pi / 2
 
-            take_off_points = generate_points_to(start_point=self.take_off_point, end_point=rough_points[0], end_orientation=end_orientation, radius=self.turn_radius)
+            take_off_points = generate_points_to(start_point=self.take_off_point, end_point=rough_points[0], end_orientation=end_orientation, radius=self.turn_radius, curve_resolution=self.curve_resolution)
+        else:
+            take_off_points = None
 
         # Calculate callable point
         self.path_points = self.calculate_path_points()
+        print(take_off_points)
+
+        # Add take off points if they exist
+        if take_off_points is not None and self.path_points is not None:
+            self.path_points = take_off_points + self.path_points
 
         # Complete post-calculation data validation checks
         if rough_points is not None:
             validation, error_message = self.do_post_validation_checks(waypoints=rough_points)
         if do_plot:
-        # print_waypoints(rough_points)
+            # print_waypoints(rough_points)
             self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
         self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
         if validation is None:
@@ -658,19 +665,56 @@ class SearchPathGenerator:
 Functions. Mostly just math functions.
 """
 
-def generate_points_to(start_point=None, end_point=None, end_orientation=None, radius=None):
+def generate_points_to(start_point=None, end_point=None, end_orientation=None, radius=None, curve_resolution=None):
     # Determine which direction the plane will rotate in
-    takeoff_orientation = calculate_angle_from_points(from_point=end_point, to_point=start_point)
-    centre_point_angle = end_orientation + pi / 2
-    # TODO
+    point_just_behind_end_point = create_point(end_point, 1, end_orientation + pi)
+    turn_direction = calculate_turn_directions(previous_waypoint=start_point, current_waypoint=point_just_behind_end_point, next_waypoint=end_point)
 
     # Create centre point at correct angle
-    centre_point = create_point(end_point, radius, centre_point_angle)
-    turn_direction = calculate_turn_directions(previous_waypoint=start_point, current_waypoint=centre_point, next_waypoint=end_point)
-
+    if turn_direction == "clockwise":
+        centre_point = create_point(end_point, radius, end_orientation + pi / 2)
+    else:
+        centre_point = create_point(end_point, radius, end_orientation - pi / 2)
     # Define entrance and exit angles
     entrance_angle, exit_angle = calculate_entrance_and_exit_end_on_waypoint(start_point=start_point, centre_point=centre_point, radius=radius, direction=turn_direction)
 
+    # Get the curve points
+    curve_points = general_curve_interpolation(start_angle=entrance_angle, end_point=end_point, centre_point=centre_point, radius=radius, turn_direction=turn_direction, curve_resolution=curve_resolution)
+    # Create list of points from start to end
+    points = [start_point] + curve_points
+    return points
+
+def general_curve_interpolation(start_point=None, start_angle=None, end_point=None, end_angle=None, centre_point=None, radius=None, turn_direction=None, curve_resolution=None):
+    if start_point is not None:
+        start_angle = calculate_angle_from_points(from_point=centre_point, to_point=start_point)
+
+    if end_point is not None:
+        end_angle = calculate_angle_from_points(from_point=centre_point, to_point=end_point)
+
+    # Find inbetween angle based on turn direction
+    if turn_direction == "clockwise":
+        angle_difference = start_angle - end_angle
+    else:
+        angle_difference = end_angle - start_angle
+
+    if angle_difference < 0.0:
+        angle_difference += 2 * pi
+
+    # Calculate number of points and the angle step
+    number_of_points, angle_step = calculate_angle_step_for_curve_interpolation(curve_resolution, radius, angle_difference)
+
+    # If clockwise, make angle step negative
+    if turn_direction == "clockwise":
+        angle_step = - angle_step
+
+    # Create a bunch of points for the curve
+    curve_points = []
+    for index in range(number_of_points):
+        current_angle = start_angle + index * angle_step
+        new_point = create_point(centre_point, radius, current_angle)
+        curve_points.append(new_point)
+
+    return curve_points
 
 
 def calculate_entrance_and_exit_end_on_waypoint(start_point=None, centre_point=None, radius=None, direction=None):
@@ -681,9 +725,9 @@ def calculate_entrance_and_exit_end_on_waypoint(start_point=None, centre_point=N
     theta2 = math.acos(radius / distance) - alpha
 
     if direction == "clockwise":
-        return theta1, theta2
-    else:
         return theta2, theta1
+    else:
+        return theta1, theta2
 
 def calculate_curve_waypoints_for_lightbulb(waypoint=None, curve_resolution=None, radius=None):
     if waypoint.turn_direction == "clockwise":
