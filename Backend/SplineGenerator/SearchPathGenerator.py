@@ -223,7 +223,7 @@ class SearchPathGenerator:
         if layer_distance is not None:
             self.layer_distance = layer_distance
 
-    def generate_path(self, do_plot=True):
+    def generate_search_area_path(self, do_plot=True):
         # Pre-algorithm calculations
         if self.sensor_size is not None and self.focal_length is not None and self.layer_distance is None:
             self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)
@@ -303,6 +303,9 @@ class SearchPathGenerator:
         if validation is None:
             self.error = error_message
             self.print_debug()
+
+    def generate_point_to_point_path(self, do_plot=True):
+
 
     def plot_points(self, points=None, polygon=None, actual_waypoints=None):
         plt.figure(dpi=200)  # Resolution for zoomin in
@@ -1561,7 +1564,7 @@ def do_entire_simulation(do_plot=True, do_random=True):
     path_generator.set_data(search_area=search_area_polygon)
     path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
 
-    path_generator.generate_path(do_plot=do_plot)
+    path_generator.generate_search_area_path(do_plot=do_plot)
     return path_generator.error
 
 def run_number_of_sims(count=None, plot=None, do_random=False):
