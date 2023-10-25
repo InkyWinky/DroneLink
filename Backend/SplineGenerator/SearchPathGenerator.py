@@ -159,6 +159,7 @@ class SearchPathGenerator:
     search_area_coverage = None  # Coverage of search area in fraction that the plane can see if following the current path points
 
     error = False  # Flag for if an error occurred during runtime
+    first_waypoint_index = 0  # Holds the index of the first waypoint after the take off points
 
     # Output Data
     path_waypoints = None  # Generated list of Waypoint class instances that make up the search path
@@ -240,28 +241,39 @@ class SearchPathGenerator:
         # Generate path points
         rough_points = self.generate_points()
         self.smooth_rough_points(rough_points=rough_points)
-
         # If a take-off point was specified, generate the points to get the plane from take-off to first waypoint
         if self.take_off_point is not None:
             # Determine the end orientation for this set of points
-            if type(self.path_waypoints[0].curve_waypoints[0]) == list:
+            if self.path_waypoints[0].curve_waypoints is not None:
+                # Curves start on the first waypoint
+                curve_start_index = 0
+            else:
+                # Curve start on the second waypoint
+                curve_start_index = 1
+
+            if type(self.path_waypoints[curve_start_index].curve_waypoints[0]) == list:
                 # Lightbulb turn at the start
-                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[0].centre_point[0], to_point=self.path_waypoints[0].curve_waypoints[0][0])
+                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[curve_start_index].centre_point[0], to_point=self.path_waypoints[curve_start_index].curve_waypoints[0][0])
+                if self.path_waypoints[curve_start_index].turn_direction == "clockwise":
+                    end_orientation = angle_from_centre_to_coord + pi / 2
+                else:
+                    end_orientation = angle_from_centre_to_coord - pi / 2
             else:
-                # Double circle or circle turn
-                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[0].centre_point, to_point=self.path_waypoints[0].curve_waypoints[0])
-            if self.path_waypoints[0].turn_direction == "clockwise":
-                end_orientation = angle_from_centre_to_coord + pi / 2
-            else:
-                end_orientation = angle_from_centre_to_coord - pi / 2
+                # Circle turn
+                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[curve_start_index].centre_point, to_point=self.path_waypoints[curve_start_index].curve_waypoints[0])
+
+                if self.path_waypoints[curve_start_index].turn_direction == "clockwise":
+                    end_orientation = angle_from_centre_to_coord - pi / 2
+                else:
+                    end_orientation = angle_from_centre_to_coord + pi / 2
 
             take_off_points = generate_points_to(start_point=self.take_off_point, end_point=rough_points[0], end_orientation=end_orientation, radius=self.turn_radius, curve_resolution=self.curve_resolution)
+            self.first_waypoint_index = len(take_off_points)
         else:
             take_off_points = None
 
         # Calculate callable point
         self.path_points = self.calculate_path_points()
-        print(take_off_points)
 
         # Add take off points if they exist
         if take_off_points is not None and self.path_points is not None:
@@ -276,13 +288,10 @@ class SearchPathGenerator:
         self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
         if validation is None:
             self.error = error_message
-        elif validation is None:
-            self.error = error_message
-        self.print_debug()
-        self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
+            self.print_debug()
 
     def plot_points(self, points=None, polygon=None, actual_waypoints=None):
-        plt.figure(dpi=500)  # Resolution for zoomin in
+        plt.figure(dpi=200)  # Resolution for zoomin in
 
         # Plot original waypoints if given
         if actual_waypoints is not None:
@@ -307,7 +316,7 @@ class SearchPathGenerator:
         if self.take_off_point is not None:
             plt.scatter(self.take_off_point.lon, self.take_off_point.lat, marker='^', color='black')
             plt.annotate("Takeoff", (self.take_off_point.lon, self.take_off_point.lat), textcoords="offset points", xytext=(0, 10), ha='center')
-        plt.annotate("First Waypoint", (self.path_points[0].lon, self.path_points[0].lat), textcoords="offset points", xytext=(0, 10), ha='center')
+        plt.annotate("First Waypoint", (self.path_points[self.first_waypoint_index].lon, self.path_points[self.first_waypoint_index].lat), textcoords="offset points", xytext=(0, 10), ha='center')
         plt.annotate("Final Waypoint", (self.path_points[-1].lon, self.path_points[-1].lat), textcoords="offset points", xytext=(0, 10), ha='center')
 
         # Plot it all
@@ -668,13 +677,13 @@ Functions. Mostly just math functions.
 def generate_points_to(start_point=None, end_point=None, end_orientation=None, radius=None, curve_resolution=None):
     # Determine which direction the plane will rotate in
     point_just_behind_end_point = create_point(end_point, 1, end_orientation + pi)
-    turn_direction = calculate_turn_directions(previous_waypoint=start_point, current_waypoint=point_just_behind_end_point, next_waypoint=end_point)
+    turn_direction, temp = calculate_turn_directions(previous_waypoint=start_point, current_waypoint=point_just_behind_end_point, next_waypoint=end_point)
 
     # Create centre point at correct angle
     if turn_direction == "clockwise":
-        centre_point = create_point(end_point, radius, end_orientation + pi / 2)
-    else:
         centre_point = create_point(end_point, radius, end_orientation - pi / 2)
+    else:
+        centre_point = create_point(end_point, radius, end_orientation + pi / 2)
     # Define entrance and exit angles
     entrance_angle, exit_angle = calculate_entrance_and_exit_end_on_waypoint(start_point=start_point, centre_point=centre_point, radius=radius, direction=turn_direction)
 
@@ -1495,27 +1504,25 @@ def earth_radius(latitude):
 
     return radius
 
-def do_entire_simulation(do_plot=True):
-    search_area_polygon = create_random_search_area(7)
-    layer_distance = create_random_layer_distance([0.5, 5])
-    start_point = create_random_start_point()
+def do_entire_simulation(do_plot=True, do_random=True):
+    if do_random:
+        search_area_polygon = create_random_search_area(7)
+        layer_distance = create_random_layer_distance([0.5, 5])
+        start_point = create_random_start_point()
+        minimum_turn_radius = random.uniform(0.1, 5)
+        curve_resolution = 5
+    else:
+        start_point = Coord(-38.37, 144.879)
+        search_area_waypoints = [Coord(-38.383944, 144.880181), Coord(-38.397322, 144.908826), Coord(-38.366840, 144.907242), Coord(-38.364585, 144.880813)]
+        search_area_polygon = Polygon(search_area_waypoints)
+        layer_distance = 400  # Metres
+        minimum_turn_radius = 150  # Metres
+        curve_resolution = 0.01  # Waypoints per metre on turns
+        scaling_factor = 111320 / math.cos(search_area_polygon.centroid.lat)
+        layer_distance /= scaling_factor
+        minimum_turn_radius /= scaling_factor
+        curve_resolution *= scaling_factor
 
-    start_point = Coord(-38.395, 144.882)
-    search_area_waypoints = [Coord(-38.383944, 144.880181), Coord(-38.397322, 144.908826), Coord(-38.366840, 144.907242), Coord(-38.364585, 144.880813)]
-    search_area_polygon = Polygon(search_area_waypoints)
-    scaling_factor = 111320 / math.cos(search_area_polygon.centroid.lat)
-    layer_distance = 400  # Metres
-    minimum_turn_radius = 170  # Metres
-    curve_resolution = 0.01  # Waypoints per metre on turns
-
-    layer_distance /= scaling_factor
-    minimum_turn_radius /= scaling_factor
-    curve_resolution *= scaling_factor
-
-    # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
-    # search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
-    # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
-    # start_point = Point(6, 14)
     sensor_size = (12.8, 9.6)
     focal_length = 16
     paint_overlap = 0.1
@@ -1528,43 +1535,19 @@ def do_entire_simulation(do_plot=True):
     path_generator.generate_path(do_plot=do_plot)
     return path_generator.error
 
-def run_number_of_sims(count=None, plot=None):
+def run_number_of_sims(count=None, plot=None, do_random=False):
     error_count = 0
     for index in range(count):
         if index % math.ceil(count / 10) == 0:
             print("Progress:", index / count * 100, "% |", index, "/", count)
-        error = do_entire_simulation(do_plot=plot)
+        error = do_entire_simulation(do_plot=plot, do_random=do_random)
         if error:
             error_count += 1
 
     print("Simulation Complete | Error count:", error_count, "/", count, "| Error percentage:", error_count / count * 100, "%")
 
 def main_function():
-    run_number_of_sims(1, plot=True)
-
-    # raw_waypoints = [[0, 0], [2, 4], [5, 2], [3, -2], [6, -2], [3, -5], [1, -4]]
-    # minimum_turn_radius = 2.5
-    # search_area = [[11.423, 24.070], [20.304, 24.139], [25.507, -0.470], [19.660, -0.329], [10, 1.617], [5, 2.745], [2.5, 7.510]]
-    # # search_area = [[0, 0], [0, 10], [10, 10], [10, 0]]
-    # # search_area = [[0, 0], [-4, 4], [0, 10], [10, 8], [14, 2]]
-    # curve_resolution = 4
-    # start_point = Point(26.637, 23.066)
-    # sensor_size = (12.8, 9.6)
-    # focal_length = 16
-    # paint_overlap = 0.1
-    # angle = None
-    # layer_distance = 4
-    #
-    # points = []
-    # for point in search_area:
-    #     points.append(Point(point[0], point[1]))
-    # search_area_polygon = Polygon(points)
-    #
-    # path_generator = SplineGenerator()
-    # path_generator.set_data(search_area=search_area_polygon)
-    # path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
-    #
-    # path_generator.generate_path(do_plot=True)
+    run_number_of_sims(1, plot=True, do_random=False)
 
 
 if __name__ == "__main__":
