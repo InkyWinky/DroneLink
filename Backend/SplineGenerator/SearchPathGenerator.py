@@ -241,6 +241,15 @@ class SearchPathGenerator:
         # Generate path points
         rough_points = self.generate_points()
         self.smooth_rough_points(rough_points=rough_points)
+
+        # Check if path waypoints is none meaning no waypoints could be produced for the case
+        if self.path_waypoints is None:
+            return None, "No path waypoints could be produced for the given case..."
+
+        # Check if only one or fewer waypoints are made
+        if len(self.path_waypoints) <= 1:
+            return None, "Only one waypoint..."
+
         # If a take-off point was specified, generate the points to get the plane from take-off to first waypoint
         if self.take_off_point is not None:
             # Determine the end orientation for this set of points
@@ -251,24 +260,29 @@ class SearchPathGenerator:
                 # Curve start on the second waypoint
                 curve_start_index = 1
 
-            if type(self.path_waypoints[curve_start_index].curve_waypoints[0]) == list:
-                # Lightbulb turn at the start
-                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[curve_start_index].centre_point[0], to_point=self.path_waypoints[curve_start_index].curve_waypoints[0][0])
-                if self.path_waypoints[curve_start_index].turn_direction == "clockwise":
-                    end_orientation = angle_from_centre_to_coord + pi / 2
+            # Check if curve waypoints exist at this index
+            if self.path_waypoints[curve_start_index].curve_waypoints is not None:
+                if type(self.path_waypoints[curve_start_index].curve_waypoints[0]) == list:
+                    # Lightbulb turn at the start
+                    angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[curve_start_index].centre_point[0], to_point=self.path_waypoints[curve_start_index].curve_waypoints[0][0])
+                    if self.path_waypoints[curve_start_index].turn_direction == "clockwise":
+                        end_orientation = angle_from_centre_to_coord + pi / 2
+                    else:
+                        end_orientation = angle_from_centre_to_coord - pi / 2
                 else:
-                    end_orientation = angle_from_centre_to_coord - pi / 2
+                    # Circle turn
+                    angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[curve_start_index].centre_point, to_point=self.path_waypoints[curve_start_index].curve_waypoints[0])
+
+                    if self.path_waypoints[curve_start_index].turn_direction == "clockwise":
+                        end_orientation = angle_from_centre_to_coord - pi / 2
+                    else:
+                        end_orientation = angle_from_centre_to_coord + pi / 2
+
+                take_off_points = generate_points_to(start_point=self.take_off_point, end_point=rough_points[0], end_orientation=end_orientation, radius=self.turn_radius, curve_resolution=self.curve_resolution)
+                if take_off_points is not None:
+                    self.first_waypoint_index = len(take_off_points)
             else:
-                # Circle turn
-                angle_from_centre_to_coord = calculate_angle_from_points(from_point=self.path_waypoints[curve_start_index].centre_point, to_point=self.path_waypoints[curve_start_index].curve_waypoints[0])
-
-                if self.path_waypoints[curve_start_index].turn_direction == "clockwise":
-                    end_orientation = angle_from_centre_to_coord - pi / 2
-                else:
-                    end_orientation = angle_from_centre_to_coord + pi / 2
-
-            take_off_points = generate_points_to(start_point=self.take_off_point, end_point=rough_points[0], end_orientation=end_orientation, radius=self.turn_radius, curve_resolution=self.curve_resolution)
-            self.first_waypoint_index = len(take_off_points)
+                take_off_points = None
         else:
             take_off_points = None
 
@@ -285,7 +299,7 @@ class SearchPathGenerator:
         if do_plot:
             # print_waypoints(rough_points)
             self.plot_waypoints(waypoints=rough_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
-        self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
+            self.plot_points(points=self.path_points, polygon=self.search_area, actual_waypoints=self.path_waypoints)
         if validation is None:
             self.error = error_message
             self.print_debug()
@@ -375,6 +389,8 @@ class SearchPathGenerator:
         print("\t\t", self.take_off_point.lon, self.take_off_point.lat)
         print("\tLayer Distance:")
         print("\t\t", self.layer_distance)
+        print("\tTurn Radius:")
+        print("\t\t", self.turn_radius)
 
     def smooth_rough_points(self, rough_points=None):
         if rough_points is None:
@@ -687,6 +703,10 @@ def generate_points_to(start_point=None, end_point=None, end_orientation=None, r
     # Define entrance and exit angles
     entrance_angle, exit_angle = calculate_entrance_and_exit_end_on_waypoint(start_point=start_point, centre_point=centre_point, radius=radius, direction=turn_direction)
 
+    # The radius is bigger than the distance from the take-off point to the first waypoint, then return none
+    if entrance_angle is None:
+        return None
+
     # Get the curve points
     curve_points = general_curve_interpolation(start_angle=entrance_angle, end_point=end_point, centre_point=centre_point, radius=radius, turn_direction=turn_direction, curve_resolution=curve_resolution)
     # Create list of points from start to end
@@ -728,6 +748,9 @@ def general_curve_interpolation(start_point=None, start_angle=None, end_point=No
 def calculate_entrance_and_exit_end_on_waypoint(start_point=None, centre_point=None, radius=None, direction=None):
     distance = calculate_distance_between_points(start_point, centre_point)
     alpha = math.atan2(start_point.lat - centre_point.lat, start_point.lon - centre_point.lon)
+
+    if not -1 <= radius / distance <= 1:
+        return None, None
 
     theta1 = math.acos(radius / distance) + alpha
     theta2 = math.acos(radius / distance) - alpha
@@ -824,7 +847,7 @@ def curve_interpolation(centre_point=None, entrance_point=None, exit_point=None,
 
     # Loop through and make the waypoints
     curve_waypoints = []
-    while round(angle_counter, 10) <= round(angle_difference + initial_angle, 10):
+    while angle_counter <= angle_difference + initial_angle:
         new_point = create_point(centre_point, turn_radius, current_angle)
         curve_waypoints.append(new_point)
         current_angle += angle_step
@@ -952,21 +975,25 @@ def do_segments_intersect(segment1=None, segment2=None):
         return True
 
     # Special Cases
-
+    # These special cases never seem to trigger
     # p1 , q1 and p2 are collinear and p2 lies on segment p1q1
     if (o1 == 0) and onSegment(p1, p2, q1):
+        print("Let Nic know about this. Colinnear case")
         return True
 
     # p1 , q1 and q2 are collinear and q2 lies on segment p1q1
     if (o2 == 0) and onSegment(p1, q2, q1):
+        print("Let Nic know about this. Colinnear case")
         return True
 
     # p2 , q2 and p1 are collinear and p1 lies on segment p2q2
     if (o3 == 0) and onSegment(p2, p1, q2):
+        print("Let Nic know about this. Colinnear case")
         return True
 
     # p2 , q2 and q1 are collinear and q1 lies on segment p2q2
     if (o4 == 0) and onSegment(p2, q1, q2):
+        print("Let Nic know about this. Colinnear case")
         return True
 
     # If none of the cases
@@ -1179,10 +1206,13 @@ def calculate_single_centre_point(previous_waypoint=None, current_waypoint=None,
     centre_point = create_point(current_waypoint, centre_radius, bisector_angle)
     return centre_point
 
+def fast_round(number, precision):
+    return int(number * precision + 0.5) / precision
+
 def on_same_axis(point1=None, point2=None, orientation=None):
     angle_from_points = math.atan2(point1.lat - point2.lat, point1.lon - point2.lon)
 
-    if round(angle_from_points, 10) == round(orientation, 10) or round(clamp_angle(angle_from_points + pi), 10) == round(orientation, 10):
+    if fast_round(angle_from_points, 10) == fast_round(orientation, 10) or fast_round(clamp_angle(angle_from_points + pi), 10) == fast_round(orientation, 10):
         return True
     else:
         return False
@@ -1546,7 +1576,8 @@ def run_number_of_sims(count=None, plot=None, do_random=False):
     print("Simulation Complete | Error count:", error_count, "/", count, "| Error percentage:", error_count / count * 100, "%")
 
 def main_function():
-    run_number_of_sims(1, plot=True, do_random=False)
+    print("You are running a test of the search area path generation. If any runtime errors occur please tell Nic in mission management thank you.")
+    run_number_of_sims(1, plot=True, do_random=True)
 
 
 if __name__ == "__main__":
