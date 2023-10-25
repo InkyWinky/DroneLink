@@ -725,7 +725,6 @@ def general_curve_interpolation(start_point=None, start_angle=None, end_point=No
 
     return curve_points
 
-
 def calculate_entrance_and_exit_end_on_waypoint(start_point=None, centre_point=None, radius=None, direction=None):
     distance = calculate_distance_between_points(start_point, centre_point)
     alpha = math.atan2(start_point.lat - centre_point.lat, start_point.lon - centre_point.lon)
@@ -734,9 +733,9 @@ def calculate_entrance_and_exit_end_on_waypoint(start_point=None, centre_point=N
     theta2 = math.acos(radius / distance) - alpha
 
     if direction == "clockwise":
-        return theta2, theta1
+        return -theta2, theta1
     else:
-        return theta1, theta2
+        return theta1, -theta2
 
 def calculate_curve_waypoints_for_lightbulb(waypoint=None, curve_resolution=None, radius=None):
     if waypoint.turn_direction == "clockwise":
@@ -1512,7 +1511,7 @@ def do_entire_simulation(do_plot=True, do_random=True):
         minimum_turn_radius = random.uniform(0.1, 5)
         curve_resolution = 5
     else:
-        start_point = Coord(-38.37, 144.879)
+        start_point = Coord(-38.40, 144.88)
         search_area_waypoints = [Coord(-38.383944, 144.880181), Coord(-38.397322, 144.908826), Coord(-38.366840, 144.907242), Coord(-38.364585, 144.880813)]
         search_area_polygon = Polygon(search_area_waypoints)
         layer_distance = 400  # Metres
