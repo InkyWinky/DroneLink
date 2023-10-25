@@ -1,5 +1,6 @@
 <template>
   <PathPlanner />
+  <!-- Add UI kit tab -->
 
   <div id="toggleBtn"><ToggleBtn /></div>
   <div id="speedIndicator">
