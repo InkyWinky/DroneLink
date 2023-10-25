@@ -109,9 +109,9 @@ class Segment:
 
 
 class Coord:
-    def __init__(self, x=None, y=None):
-        self.lon = x  # Longitude
-        self.lat = y  # Latitude
+    def __init__(self, lon=None, lat=None):
+        self.lon = lon  # Longitude
+        self.lat = lat  # Latitude
 
     def magnitude(self, point=None):
         if point is None:
@@ -303,9 +303,6 @@ class SearchPathGenerator:
         if validation is None:
             self.error = error_message
             self.print_debug()
-
-    def generate_point_to_point_path(self, do_plot=True):
-        pass
 
     def plot_points(self, points=None, polygon=None, actual_waypoints=None):
         plt.figure(dpi=200)  # Resolution for zoomin in
@@ -1580,7 +1577,7 @@ def run_number_of_sims(count=None, plot=None, do_random=False):
 
 def main_function():
     print("You are running a test of the search area path generation. If any runtime errors occur please tell Nic in mission management thank you.")
-    run_number_of_sims(1, plot=True, do_random=True)
+    run_number_of_sims(1, plot=True, do_random=False)
 
 
 if __name__ == "__main__":
