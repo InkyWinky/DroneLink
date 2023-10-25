@@ -305,7 +305,7 @@ class SearchPathGenerator:
             self.print_debug()
 
     def generate_point_to_point_path(self, do_plot=True):
-
+        pass
 
     def plot_points(self, points=None, polygon=None, actual_waypoints=None):
         plt.figure(dpi=200)  # Resolution for zoomin in
