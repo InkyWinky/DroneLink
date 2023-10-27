@@ -49,7 +49,7 @@ def main_function():
     path_generator.sensor_size = (12.8, 9.6)  # Size of the camera sensor in mm. Optional
     path_generator.focal_length = 16  # Focal length of the camera in mm. Use if sensor size is not None
     path_generator.layer_distance = 400  # Fixed distance between layers of the search path. Optional
-    path_generator.orientation = math.pi / 2  # Fixed axis of orientation for the search path. Optional
+    path_generator.orientation = math.pi  # Fixed axis of orientation for the search path. Optional
 
     # Optional parameters
     path_generator.do_plot = True  # If you want to plot the output

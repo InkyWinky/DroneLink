@@ -231,6 +231,9 @@ class SearchPathGenerator:
         if self.orientation is None:
             self.orientation = calculate_best_orientation(polygon=self.search_area)
 
+        if self.orientation > 0:
+            self.orientation -= self.orientation
+
         # Complete pre-calculation data and parameter validation checks
         validation, error_message = self.do_pre_validation_checks()
         if validation is None:
@@ -1577,7 +1580,7 @@ def run_number_of_sims(count=None, plot=None, do_random=False):
 
 def main_function():
     print("You are running a test of the search area path generation. If any runtime errors occur please tell Nic in mission management thank you.")
-    run_number_of_sims(1, plot=True, do_random=False)
+    run_number_of_sims(1, plot=True, do_random=True)
 
 
 if __name__ == "__main__":
