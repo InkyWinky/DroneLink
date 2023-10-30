@@ -279,7 +279,8 @@ class MissionManager:
 
     def toggle_arm_aircraft(self):
         # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
-        # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0) 
+        # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
+        MissionPlanner.MainV2.comPort.setMode("MANUAL")
         if self.cs_drone and self.cs_drone.armed:
             MAV.doARM(False, True)
             print("[INFO] Toggled Drone to DISARMED")
@@ -289,6 +290,7 @@ class MissionManager:
             # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 0, 21196, 0, 0, 0, 0, 0, 0)
             MAV.doARM(True, True)
             print("[INFO] Toggled Drone to ARMED")
+        MissionPlanner.MainV2.comPort.setMode("AUTO")
 
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
@@ -432,6 +434,10 @@ class MissionManager:
                         "command":Commands.LIVE_DRONE_DATA,
                         "data":{
                             "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
+                            "lat": float(self.cs_drone.lat),
+                            "lng": float(self.cs_drone.lng),
+                            "distTraveled": float(self.cs_drone.distTraveled),
+                            "DistToHome": float(self.cs_drone.DistToHome),
                             "airspeed": float(self.cs_drone.airspeed),
                             "groundspeed": float(self.cs_drone.groundspeed),
                             "verticalspeed": float(self.cs_drone.verticalspeed),
@@ -481,6 +487,7 @@ class Commands:
     TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
+    SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
 
 

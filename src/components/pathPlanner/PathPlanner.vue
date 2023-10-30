@@ -303,11 +303,22 @@ function addWaypointsFromTxt(csvText) {
 }
 
 onMounted(() => {
+  let droneLat = store?.live_data?.lat;
+  if (droneLat == null) {
+    droneLat = 145.24602266283097; //Default value
+  }
+  let droneLong = store?.live_data?.long;
+  if (droneLong == null) {
+    droneLong = -37.9616111291979;
+  }
   mapboxgl.accessToken =
     "pk.eyJ1IjoiaWxpbjAwMDUiLCJhIjoiY2xlYzh3aDhhMGF3czN3bnAzYTBqMWQ0ZyJ9.P2gZdcxMsZsxg1HdvKKEJQ";
   map.value = new mapboxgl.Map({
     container: "mapCon",
-    style: "mapbox://styles/mapbox/light-v9",
+    style: "mapbox://styles/mapbox/satellite-v9",
+    //Default center at melbourne Police Paddocks Dandenont
+    center: [droneLat, droneLong],
+    zoom: 17,
   });
   //Resize map to be full screen --need to find a better way to fix this problem
   map.value.on("idle", () => {
@@ -334,8 +345,13 @@ onMounted(() => {
 
   // Add the line to the map
   map.value.on("load", drawLine);
+  // disable map rotation using right click + drag
+  map.value.dragRotate.disable();
+  // disable map rotation using touch rotation gesture
+  map.value.touchZoomRotate.disableRotation();
 });
 </script>
+
 <style scoped>
 /* Background of waypoints panel */
 h3 {

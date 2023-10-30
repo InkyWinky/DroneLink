@@ -39,7 +39,7 @@
     </div>
   </Teleport>
 
-  <div id="h-full">
+  <div id="h-full" class="max-h-[90%]">
     <form v-bind:class="selectedNote" class="mb-2">
       <input
         v-model="selectedNote.title"
