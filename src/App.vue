@@ -7,35 +7,14 @@
           : "Connect to Mission Planner"
       }}
     </p>
-    <div class="flex flex-row w-full justify-center">
-      <p class="font-small">
-        <router-link to="/" class="flex flex-row items-center justify-center">
-          <img src="../public/logo.png" class="h-10" />
-          <p>DroneLink</p>
-        </router-link>
-      </p>
-      <span
-        uk-icon="refresh"
-        class="pr-2 cursor-pointer object-center"
-        @click="onRefreshClick()"
-      ></span>
-      <div
-        :id="
-          store.live_data?.drone_connected
-            ? 'connection-status-on'
-            : 'connection-status-off'
-        "
-      ></div>
-    </div>
-    <div id="status-bar">
-      <span
-        uk-icon="refresh"
-        class="pr-2 cursor-pointer"
-        @click="onRefreshClick()"
-      ></span>
-      <span>Status: {{ status }}</span>
-    </div>
-
+    <!-- <router-link to="/" class="flex flex-row items-center justify-center">
+      <img src="../public/logo.png" class="h-10" />
+      <p class="text-white">DroneLink</p>
+    </router-link> -->
+    <a href="/" class="flex flex-row items-center justify-center">
+      <img src="../public/logo.png" class="h-10" />
+      <p class="text-white">DroneLink</p>
+    </a>
     <div id="modal-center" class="uk-flex-top" uk-modal>
       <div
         class="uk-modal-dialog uk-modal-body uk-height-max-medium rounded-lg"
@@ -85,6 +64,21 @@
           </span>
         </form>
       </div>
+    </div>
+    <div id="drone-connection">
+      <span
+        uk-icon="refresh"
+        class="pr-2 cursor-pointer"
+        @click="onRefreshClick()"
+      ></span>
+      <span>Drone Connection</span>
+      <div
+        :id="
+          store.live_data?.drone_connected
+            ? 'connection-status-on'
+            : 'connection-status-off'
+        "
+      ></div>
     </div>
   </nav>
   <SettingsMenu />
@@ -260,15 +254,9 @@ nav a.router-link-exact-active {
   height: 10px;
   width: 10px;
   border-radius: 5px;
-  float: auto;
+  float: right;
   margin: 20px;
   margin-top: 16px;
   box-shadow: 0 0 5px 2px red;
-}
-
-#status-bar {
-  position: absolute;
-  right: 15px;
-  top: 13px;
 }
 </style>
