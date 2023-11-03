@@ -537,11 +537,14 @@ def generate_spline_including_boundary(waypoints=None, radius_range=(1.0, 3.0), 
     # Check if no solution was found.
     if output_entrances_and_exits is None:
         return None
-    print("TEST: PERPENDICULARITY BEFORE INTERPOLATION:", confirm_perpendicularity(output_entrances_and_exits))
-    print("TEST: WAYPOINT WITHIN ENTRANCE AND EXIT:", confirm_valid_entrance_exit_locations(output_entrances_and_exits))
+    if not confirm_perpendicularity(output_entrances_and_exits):
+        print("TEST: PERPENDICULARITY BEFORE INTERPOLATION:", confirm_perpendicularity(output_entrances_and_exits))
+    if not confirm_valid_entrance_exit_locations(output_entrances_and_exits):
+        print("TEST: WAYPOINT WITHIN ENTRANCE AND EXIT:", confirm_valid_entrance_exit_locations(output_entrances_and_exits))
     output_duplicates_ignored = ignore_duplicate_points(output_entrances_and_exits)
     output_interpolated = interpolate_all_curves(output_duplicates_ignored, curve_resolution)
-    print("TEST: PERPENDICULARITY AFTER INTERPOLATION:", confirm_perpendicularity(output_interpolated))
+    if not confirm_perpendicularity(output_interpolated):
+        print("TEST: PERPENDICULARITY AFTER INTERPOLATION:", confirm_perpendicularity(output_interpolated))
     return output_interpolated
 
 
