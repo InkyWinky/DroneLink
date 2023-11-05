@@ -7,14 +7,10 @@
           : "Connect to Mission Planner"
       }}
     </p>
-    <!-- <router-link to="/" class="flex flex-row items-center justify-center">
+    <router-link to="/" class="flex flex-row items-center justify-center">
       <img src="../public/logo.png" class="h-10" />
       <p class="text-white">DroneLink</p>
-    </router-link> -->
-    <a href="/" class="flex flex-row items-center justify-center">
-      <img src="../public/logo.png" class="h-10" />
-      <p class="text-white">DroneLink</p>
-    </a>
+    </router-link>
     <div id="modal-center" class="uk-flex-top" uk-modal>
       <div
         class="uk-modal-dialog uk-modal-body uk-height-max-medium rounded-lg"
@@ -155,7 +151,7 @@ export default {
   },
   methods: {
     onRefreshClick() {
-      console.log("SYNC SCRIPT button pressed");
+      console.log("[ACTION] SYNC SCRIPT button pressed");
       api.executeCommand("SYNC_SCRIPT", {});
     },
   },
