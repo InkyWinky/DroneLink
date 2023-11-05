@@ -85,7 +85,7 @@ const selectedNote = ref({
 
 onMounted(() => {
   selectedNote.value = blankNote.value;
-  console.log("New note initialised");
+  // console.log("New note initialised");
 });
 
 const showSaved = ref(false);

@@ -118,8 +118,8 @@ let edited_default_alt = ref(false);
 let edited_takeoff_alt = ref(false);
 let edited_waypoint_type = ref(false);
 
-console.log(store?.settings);
-console.log(store.settings.default_alt, default_alt);
+// console.log(store?.settings);
+// console.log(store.settings.default_alt, default_alt);
 
 const resetForm = () => {
   default_alt = store?.settings?.default_alt;
