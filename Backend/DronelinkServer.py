@@ -47,8 +47,8 @@ class ServerHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.do_HEAD()
 
-    def send_RESPONSE(self, statusCode):
-        self.send_response(statusCode)
+    def send_RESPONSE(self, statusCode, message=None):
+        self.send_response(statusCode, message=message)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header(
@@ -61,6 +61,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers.getheader("content-length", 0))
         post_message = self.rfile.read(content_length)
         statusCode = 200
+        message = None
         print('post_message', post_message)
         parsed_content = json.loads(post_message)
 
@@ -98,8 +99,10 @@ class ServerHandler(BaseHTTPRequestHandler):
             print("Executed ARM_AIRCRAFT")
         elif command == "CONNECTIP":
             result = mp_socket.initialise_dronelink(parsed_content['ip'])
+            message = "Successfully connected to Mission Planner."
             if not result:
                 statusCode = 400
+                message = "Could not initialise the connection to Mission Planner."
             print("Executed CONNECTIP: " + parsed_content['ip'])
         else:
             print("Command received does not exist.")
@@ -107,7 +110,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         # Get the data in a JSON readable format and send it back to whoever asked for it
         # self.wfile.write(json.dumps({'statusCode':'200', 'command':'Command Executed: ' + command}).encode("utf-8"))
         # Send headers
-        self.send_RESPONSE(statusCode)
+        self.send_RESPONSE(statusCode, message=message)
         print("Request finished at:", time.ctime())
 
 class WebSocketThread(threading.Thread):

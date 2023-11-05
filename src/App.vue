@@ -108,7 +108,7 @@ export default {
       connectionError.value = false;
       isLoading.value = true;
       api.executeCommand("CONNECTIP", { ip: ip }).then((res) => {
-        console.log({ res });
+        console.log("Connect IP: ", { res });
         if (res.status == 200) {
           document.getElementById("cancel_button").click();
           isSuccess.value = true;
