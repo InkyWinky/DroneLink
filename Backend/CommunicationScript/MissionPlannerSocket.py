@@ -59,8 +59,6 @@ class MissionPlannerSocket():
             handle_command_thread = threading.Thread(target=self.handle_command, name="handle_command_thread")
             receive_thread.start()
             handle_command_thread.start()
-                
-            # mp_socket_thread.join()
         except Exception as e:
             print("[ERROR] " + str(e))
             self.close()
@@ -75,12 +73,12 @@ class MissionPlannerSocket():
                 chunk_data = ""
                 # Receive until end of text sent
                 while not self.quit:
-                    chunk_data = self.s.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                    chunk_data = self.s.recv(self.chunk_size)  # receive data in chunks
                     if chunk_data:
                         m = len(chunk_data)
-                        # print('end: ' + chunk_data[m-2:m])
                         data += chunk_data
-                        if chunk_data[m-2:m] == '\n\n':
+                        # If the chunk is the end of a packet
+                        if chunk_data[m-2:m] == '\n\n': # Packets are delimited by double newline '\n\n'
                             data = data.strip()
                             break
                     # print('[SOCKET STREAM]' + data)
@@ -123,7 +121,6 @@ class MissionPlannerSocket():
                         print('\n[COMMAND] Received from get_flightplanner_waypoint: ' + str(decoded_data))
                     elif command == self.COMMANDS.LIVE_DRONE_DATA:
                         # print("[DATA] " + str(decoded_data["data"]))
-                        # pass
                         try:
                             self.live_data_mutex.acquire()
                             data = decoded_data["data"]
@@ -134,15 +131,13 @@ class MissionPlannerSocket():
                             self.live_data_mutex.release()
                         except Exception as e:
                             pass
-                        
-
                     else:
                         print("[ERROR] Unknown Command Was Given.")
                 except Exception as e:
                     print("[ERROR] " + str(e))
                     print("[COMMAND] ERROR: Unknown Command Was Given.")
         self.quit = True
-        print("\n[TERMINATION] handle_command_thread has successfully terminated.")
+        print("[TERMINATION] handle_command_thread has successfully terminated.")
         
 
     def close(self):
@@ -159,7 +154,6 @@ class MissionPlannerSocket():
 
     def override_waypoints(self, waypoints):
         """Sends a command to overwrite all the waypoints in mission planner.
-
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
@@ -169,7 +163,6 @@ class MissionPlannerSocket():
     
     def override_flightplanner_waypoints(self, waypoints, takeoff_alt):
         """Sends a command to overwrite all the waypoints in the flight planner GUI.
-
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
@@ -199,7 +192,6 @@ class MissionPlannerSocket():
 
     def set_cube_relay_pin(self, pin_num, pin_state):
         """Sends a command to set the state of a chosen relay pin on the cube. 
-        
         Args: 
             pin_num: the relay pin number on the cube
             pin_state: the state the the user wishes to set the pin to (0 for high, or 1 for low)
@@ -220,59 +212,50 @@ class Commands:
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN" 
 
 if __name__ == "__main__":
-    # try:
-        # host = "192.168.1.111"  # Hardcoded host IP. Can be found on the console in Mission Planner.
-        # host = "172.23.80.1"
-        host = raw_input("Enter IP to connect to: ")
+    host = raw_input("Enter IP to connect to: ")
 
-        
-        PORT = 7766  # port number of the connection.
-        mp_socket = MissionPlannerSocket(PORT)
-        mp_socket.initialise_dronelink(host)
+    
+    PORT = 7766  # port number of the connection.
+    mp_socket = MissionPlannerSocket(PORT)
+    mp_socket.initialise_dronelink(host)
 
-        # TESTING
-        test_waypoints = [{"lat":-37.8238872, "long":145.0538635, "alt":0},
-                            {"lat":-37.8408347, "long":145.2241516, "alt":100},
-                            {"lat":-37.8411058, "long":145.2569389, "alt":100},
-                            {"lat":-37.8657742, "long":145.2680969, "alt":100},
-                            {"lat":-37.8818991, "long":145.2234650, "alt":100}]
-        
-        # mp_socket.override_waypoints(test_waypoints)
-        # mp_socket.start_mission()
-        # mp_socket.go_to_waypoint()
-        # mp_socket.start_mission_from_waypoint(3)
-        option = ''
-        while True:
-            print("--------------------------------------------------------------------------------------")
-            print("[Command Selection Menu]")
-            print("These Commands will be sent and executed on the Mission Planner Communication Script!")
-            print("--------------------------------------------------------------------------------------")
-            print("[ 1 ]. OVERRIDE FLIGHTPLANNER WAYPOINTS (Hardcoded Waypoints)")
-            print("[ 2 ]. SYNC SCRIPT")
-            print("[ 3 ]. OVERRIDE WAYPOINTS on Live Drone (Hardcoded waypoints)")
-            print("[ 4 ]. ARM/DISARM AIRCRAFT")
-            print("[ 5 ]. GET FLIGHTPLANNER WAYPOINTS")
-            print("[ q ]. Quit")
-            print("--------------------------------------------------------------------------------------")
+    # TESTING
+    test_waypoints = [{"lat":-37.8238872, "long":145.0538635, "alt":0},
+                        {"lat":-37.8408347, "long":145.2241516, "alt":100},
+                        {"lat":-37.8411058, "long":145.2569389, "alt":100},
+                        {"lat":-37.8657742, "long":145.2680969, "alt":100},
+                        {"lat":-37.8818991, "long":145.2234650, "alt":100}]
+    
+    option = ''
+    while True:
+        print("--------------------------------------------------------------------------------------")
+        print("[Command Selection Menu]")
+        print("These Commands will be sent and executed on the Mission Planner Communication Script!")
+        print("--------------------------------------------------------------------------------------")
+        print("[ 1 ]. OVERRIDE FLIGHTPLANNER WAYPOINTS (Hardcoded Waypoints)")
+        print("[ 2 ]. SYNC SCRIPT")
+        print("[ 3 ]. OVERRIDE WAYPOINTS on Live Drone (Hardcoded waypoints)")
+        print("[ 4 ]. ARM/DISARM AIRCRAFT")
+        print("[ 5 ]. GET FLIGHTPLANNER WAYPOINTS")
+        print("[ q ]. Quit")
+        print("--------------------------------------------------------------------------------------")
 
-            option = raw_input("Select Command To Execute (Enter 'q' to Quit): ")
-            if option == '1':
-                mp_socket.override_flightplanner_waypoints(test_waypoints)
-            elif option == '2':
-                mp_socket.sync_script()
-            elif option == '3':
-                mp_socket.override_waypoints(test_waypoints)
-            elif option == '4':
-                mp_socket.toggle_arm_aircraft()
-            elif option == '5':
-                mp_socket.get_flightplanner_waypoints()
-            elif option == 'q':
-                break
-            else:
-                print("Invalid Option.")
-        mp_socket.close()
-    # except Exception as e:
-    #     print(e)
+        option = raw_input("Select Command To Execute (Enter 'q' to Quit): ")
+        if option == '1':
+            mp_socket.override_flightplanner_waypoints(test_waypoints)
+        elif option == '2':
+            mp_socket.sync_script()
+        elif option == '3':
+            mp_socket.override_waypoints(test_waypoints)
+        elif option == '4':
+            mp_socket.toggle_arm_aircraft()
+        elif option == '5':
+            mp_socket.get_flightplanner_waypoints()
+        elif option == 'q':
+            break
+        else:
+            print("Invalid Option.")
+    mp_socket.close()
 
 
 
