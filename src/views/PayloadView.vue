@@ -153,6 +153,11 @@ onMounted(() => {
 });
 
 function startFPVCapture(orientation) {
+  if (!navigator?.mediaDevices) {
+    console.log("[ERROR] Device does not have access to FPV.");
+    return;
+  }
+
   if (orientation == "large") {
     // stop small FPV feed
     if (FPVCamSmall.value != null) {
@@ -165,9 +170,8 @@ function startFPVCapture(orientation) {
         console.log("[ERROR] FPVCamSmall mediaStream object not found");
       }
     }
-
     // initiate large FPV feed
-    navigator.mediaDevices
+    navigator?.mediaDevices
       .getUserMedia({ video: true, audio: false })
       .then((stream) => {
         FPVCamLarge.value.srcObject = stream;
@@ -190,7 +194,7 @@ function startFPVCapture(orientation) {
       }
     }
     // initiate small FPV feed
-    navigator.mediaDevices
+    navigator?.mediaDevices
       .getUserMedia({ video: true, audio: false })
       .then((stream) => {
         FPVCamSmall.value.srcObject = stream;
