@@ -47,7 +47,7 @@ class WebSocketServer(WebSocket):
                 client.sendMessage(self.address[0] + u' - ' + self.data)
 
     def handleConnected(self):
-        print('[WEBSOCKET] ', self.address, 'connected')
+        print('[WEBSOCKET] ' + str(self.address) + ' connected')
         for client in clients:
             client.sendMessage(self.address[0] + u' - connected')
         clients.append(self)
@@ -57,7 +57,7 @@ class WebSocketServer(WebSocket):
         index = clients.index(self)
         clients.pop(index)
         clientData.pop(index)
-        print('[WEBSOCKET] ', self.address, 'closed')
+        print('[WEBSOCKET] ' + str(self.address) + ' closed')
         for client in clients:
             client.sendMessage(self.address[0] + u' - disconnected')
 

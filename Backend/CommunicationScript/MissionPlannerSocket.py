@@ -45,6 +45,7 @@ class MissionPlannerSocket():
             return True
         except Exception:
             print("[ERROR] Failed to initilise connection to dronelink.")
+            self.HOST = "CONNECT TO MISSION PLANNER"
             return False
 
 
