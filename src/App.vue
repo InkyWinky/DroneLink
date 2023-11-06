@@ -134,7 +134,7 @@ export default {
     };
   },
   created() {
-    console.log("Starting connection to WebSocket Server");
+    console.log("[INFO] Starting connection to WebSocket Server");
     // console.log(`ws:${window.location.host.split(":")[0]}:8081`);
     this.connection = new WebSocket(
       `ws:${window.location.host.split(":")[0]}:8081`
@@ -144,9 +144,18 @@ export default {
       store.updateLiveData(JSON.parse(event.data));
       // console.log("live_data_feed: ", JSON.parse(event.data));
     };
-    this.connection.onopen = function (event) {
-      console.log(event);
-      console.log("Successfully connected to the websocket server...");
+    this.connection.onopen = function () {
+      // console.log(event);
+      console.log("[INFO] Successfully connected to the WebSocket server");
+    };
+    this.connection.onclose = function () {
+      console.log("[INFO] Disconnected from the WebSocket server");
+    };
+    this.connection.onerror = function (event) {
+      console.log(
+        "[ERROR] Connection error occured on the WebSocket server",
+        event
+      );
     };
   },
   methods: {
