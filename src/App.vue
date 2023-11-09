@@ -1,9 +1,7 @@
 <template>
   <nav>
     <div class="flex w-full items-center">
-      <div class="w-1/3">
-        <ConnectionStatus />
-      </div>
+      <div class="w-1/3"></div>
 
       <router-link
         to="/"
@@ -12,9 +10,12 @@
         <img src="../public/logo.png" class="h-10" />
         <p class="text-white">DroneLink</p>
       </router-link>
+      <div class="w-1/3 flex justify-end">
+        <ConnectionStatus />
+      </div>
     </div>
 
-    <div id="drone-connection">
+    <!-- <div id="drone-connection">
       <span
         uk-icon="refresh"
         class="pr-2 cursor-pointer"
@@ -28,7 +29,7 @@
             : 'connection-status-off'
         "
       ></div>
-    </div>
+    </div> -->
   </nav>
   <SettingsMenu />
   <router-view></router-view>
@@ -46,12 +47,12 @@ export default {
     return { store, api };
   },
   components: { SettingsMenu, ConnectionStatus },
-  methods: {
-    onSyncDrone() {
-      console.log("[ACTION] SYNC SCRIPT button pressed");
-      api.executeCommand("SYNC_SCRIPT", {});
-    },
-  },
+  // methods: {
+  //   onSyncDrone() {
+  //     console.log("[ACTION] SYNC SCRIPT button pressed");
+  //     api.executeCommand("SYNC_SCRIPT", {});
+  //   },
+  // },
 };
 </script>
 
