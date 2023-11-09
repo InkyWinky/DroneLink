@@ -161,7 +161,7 @@
 import { useForm } from "vue-hooks-form";
 import api from "../api";
 import { ref, watch } from "vue";
-import { store } from "../store";
+import { store, fpv_cam } from "../store";
 // import toggleSettingsMenu from "./store";
 
 export default {
@@ -197,7 +197,20 @@ export default {
       );
       ws_connection.onmessage = function (event) {
         event;
-        store.updateLiveData(JSON.parse(event.data));
+        const data = JSON.parse(event.data);
+        switch (data.command) {
+          case "LIVE_DATA":
+            store.updateLiveData(data);
+            break;
+          case "FPV_CAM":
+            fpv_cam.value = data.image;
+            break;
+          default:
+            console.log(
+              `[INFO] Received unknown Command from Websocket: ${data.command}`
+            );
+        }
+
         // console.log("live_data_feed: ", JSON.parse(event.data));
       };
       ws_connection.onopen = function () {

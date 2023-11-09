@@ -1,6 +1,8 @@
 import threading
 import json
 import time
+import cv2
+import base64
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 
 class WebSocketThread(threading.Thread):
@@ -21,7 +23,9 @@ class WebSocketThread(threading.Thread):
     def run(self):
         self.server = SimpleWebSocketServer(self.host, 8081, WebSocketServer)
         self.live_data_thread = LiveDataThread(self.mp_socket)
+        self.camera_feed_thread = CameraFeedThread()
         self.live_data_thread.start()
+        self.camera_feed_thread.start()
         try:
             self.server.serveforever()
         except:
@@ -35,7 +39,9 @@ class WebSocketThread(threading.Thread):
             self.server.close()
         try:
             self.live_data_thread.close()
+            self.camera_feed_thread.close()
             self.live_data_thread.join()
+            self.camera_feed_thread.join()
         except:
             pass
         
@@ -85,6 +91,7 @@ class LiveDataThread(threading.Thread):
                     clientData[index]['messagesCount'] = clientData[index]['messagesCount'] + 1
                     messages_to_send.append(message)
                 data['messages'] = messages_to_send
+                data['command'] = "LIVE_DATA"
                 client.sendMessage(json.dumps(data))
                 # print('data:',data)
             self.mp_socket.live_data_mutex.release()
@@ -93,3 +100,33 @@ class LiveDataThread(threading.Thread):
 
     def close(self):
         self.quit = True
+
+class CameraFeedThread(threading.Thread):
+    # Sends Camera Feed Data taken from the onboard camera and other projects to all self.clients connected via WebSockets.
+    def __init__(self):
+        # clients: The WebSocket clients list
+        # mp_socket: The MissionPlannerSocket that talks to Mission Planner.
+        threading.Thread.__init__(self)
+        self.quit = False
+        self.camera = cv2.VideoCapture(0)
+        # Set camera resolution
+        # self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        # self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+    def run(self):
+        while not self.quit:
+            ret, frame = self.camera.read()
+            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 65]
+            # encode_param = [int(cv2.IMWRITE_PNG_COMPRESSION), 9]
+            man = cv2.imencode('.png', frame, encode_param)[1]
+            # convert image to base64 before sending
+            data = {"command": "FPV_CAM", "image": base64.b64encode(man.tobytes())}
+            # data = {"command": "FPV_CAM", "image": man.tobytes().decode('latin-1')}
+            for index, client in enumerate(clients):
+                client.sendMessage(json.dumps(data))
+
+        print("[TERMINATION] Closed CameraFeedThread")
+
+    def close(self):
+        self.quit = True
+        self.camera.release()
