@@ -39,11 +39,10 @@ print("[INFO] Starting Script...")
 class MissionManager:
     """The Mission Manager Class interfaces with Mission Planner/MAVLink to dynamically change waypoints during a mission.
     """
-    def __init__(self, sync=True, connect=True, chunk_size=1024, port=7766):
+    def __init__(self, connect=True, chunk_size=1024, port=7766):
         """Constructor
 
         Args:
-            sync (bool, optional): decides if we get the waypoints from Mission Planner on startup. Defaults to True.
             connect (bool, optional): decides if the connection to the backend server is opened on startup. Defaults to True
             chunk_size (int, optional): Defines the packet size of each TCP packet. Defaults to 1024
             port (int, optional): The ephemeral port number that the connection to the backend server will run on. 
@@ -69,9 +68,6 @@ class MissionManager:
         self.command_queue_mutex = threading.Lock() # Mutex for command_queue
         self.quit = False # Allows for threads to terminate correctly
 
-        # By default, the class will sync the waypoints from mission planner.
-        if sync:
-            self.sync()
         # Start connection to backend
         if connect:
             self.__establish_connection()  # open the connection
@@ -132,7 +128,8 @@ class MissionManager:
             self.drone_connected = True
             print("[INFO] Syncing Live Waypoints Successful")
         except:
-            print("[INFO] Syncing Live Waypoints Failed! The drone may not be connected.")
+            self.drone_connected = False
+            print("[INFO] Syncing Live Waypoints Failed! The vehicle may not be connected, trying again in 10 seconds...")
 
 
     def append(self, waypoint):
@@ -309,9 +306,18 @@ class MissionManager:
             send_live_data_thread = threading.Thread(target=self.send_live_data, name="send_live_data_thread")
             receive_thread.start()
             send_live_data_thread.start()
+
+            # Sync vehicle until successful
+            self.sync()
+            last_time = time.time() # Keep track on how often we should attempt to sync to a vehicle
+
             # Handle commands received
             while not self.quit:
-                # If there is a command
+                # Attempt to sync to the vehicle every 5 seconds if no connection
+                if not self.drone_connected and time.time() - last_time > 10:
+                    last_time = time.time()
+                    self.sync()
+                # If there is a command, handle it
                 if len(self.command_queue) > 0:
                     self.command_queue_mutex.acquire()
                     data = self.command_queue.pop(0)
@@ -487,7 +493,6 @@ class Commands:
     TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
-    SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
 
 
