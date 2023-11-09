@@ -20,17 +20,19 @@
       <div
         v-if="displayVisionLarge.valueOf()"
         id="vid-feed-large-vision"
-        class="w-full h-full bg-green-800"
+        class="flex flex-col w-full h-full"
       >
         VISION
+        <canvas ref="vision_large" class="bg-green-800 w-full h-full"></canvas>
       </div>
       <div
         id="vid-feed-large-fpv"
         v-else-if="!displayVisionLarge.valueOf()"
-        class="w-full h-full"
+        class="flex flex-col w-full h-full"
       >
         FPV
-        <video ref="FPVCamLarge" muted>Stream Unavailable</video>
+        <canvas ref="fpv_large" class="bg-blue-500 w-full h-full"></canvas>
+        <!-- <video ref="FPVCamLarge" muted>Stream Unavailable</video> -->
       </div>
     </div>
     <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
@@ -42,16 +44,20 @@
       <div
         id="small-vid-feed-fpv"
         v-if="displayVisionLarge.valueOf()"
-        class="w-full h-full"
+        class="flex flex-col w-full h-full bg-gray-200"
       >
-        <video ref="FPVCamSmall" muted>Stream Unavailable</video>
+        <p class="">FPV</p>
+        <canvas ref="fpv_small" class="bg-blue-500 w-full h-full"></canvas>
+
+        <!-- <video ref="FPVCamSmall" muted>Stream Unavailable</video> -->
       </div>
       <div
         id="small-vid-feed-vision"
         v-else-if="!displayVisionLarge.valueOf()"
-        class="w-full h-full bg-green-800"
+        class="flex flex-col w-full h-full bg-gray-200"
       >
         VISION
+        <canvas ref="vision_small" class="bg-green-800 w-full h-full"></canvas>
       </div>
     </div>
     <div
@@ -119,10 +125,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
-import store from "@/store";
+import { store, fpv_cam } from "@/store";
 import api from "@/api";
 
 const status = ref(null);
@@ -134,6 +140,29 @@ const displayVisionLarge = ref(true); // boolean that determines which video fee
 const FPVCamLarge = ref(null);
 const FPVCamSmall = ref(null);
 const Map = ref(null);
+// const fpv_small = document.getElementById("FPV-SMALL");
+const fpv_large = ref(null);
+const fpv_small = ref(null);
+const vision_large = ref(null);
+const vision_small = ref(null);
+
+watch(fpv_cam, (val) => {
+  if (fpv_large.value && !displayVisionLarge.value) {
+    let ctx = fpv_large.value.getContext("2d");
+    let image = new Image();
+    image.src = `data:image/png;base64,${val}`;
+    image.addEventListener("load", () => {
+      ctx.drawImage(image, 0, 0, fpv_large.value.width, fpv_large.value.height);
+    });
+  } else {
+    let ctx = fpv_small.value.getContext("2d");
+    let image = new Image();
+    image.src = `data:image/jpg;base64,${val}`;
+    image.addEventListener("load", () => {
+      ctx.drawImage(image, 0, 0, fpv_small.value.width, fpv_small.value.height);
+    });
+  }
+});
 
 onMounted(() => {
   mapboxgl.accessToken =
