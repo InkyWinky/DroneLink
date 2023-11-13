@@ -159,7 +159,8 @@ import api from "@/api";
 
 const status = ref(null);
 const showOverlay = ref(true);
-const showMap = ref(false);
+const showMap = ref(true);
+const deployMarker = ref(null);
 const targetCoords = ref([145.13453, -37.90984]); // placeholder for actual target coords
 const deployCoords = ref(null);
 const displayVisionLarge = ref(true); // boolean that determines which video feed is displayed large, and which small
@@ -205,8 +206,15 @@ onMounted(() => {
     zoom: 18,
   });
   Map.value.on("click", (e) => {
-    console.log("[DEPLOYMENT COORDS] " + e.lngLat);
+    console.log(`[DEPLOYMENT COORDS] ${e.lngLat.toArray()}`);
     deployCoords.value = e.lngLat;
+    if (deployMarker.value == null) {
+      deployMarker.value = new mapboxgl.Marker()
+        .setLngLat(e.lngLat)
+        .addTo(Map.value);
+    } else {
+      deployMarker.value.setLngLat(e.lngLat);
+    }
   });
 
   startFPVCapture("small");
@@ -294,7 +302,7 @@ function begin() {
   showMap.value = true;
   // implement nav command for chosen payload deployment location
   // set cube relay pin HIGH to initiate payload deployment
-  if (confirm("Confirm deploy payload?")) {
+  if (confirm(`Confirm deploy payload at ${deployCoords.value.toArray()}?`)) {
     console.log("Beginning deployment procedure");
     api.executeCommand("SET_CUBE_RELAY_PIN", {
       pin_num: 0,
