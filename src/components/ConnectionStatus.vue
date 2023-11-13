@@ -161,7 +161,7 @@
 import { useForm } from "vue-hooks-form";
 import api from "../api";
 import { ref, watch } from "vue";
-import { store, fpv_cam } from "../store";
+import { store, fpv_cam, fpv_cam_framerate } from "../store";
 // import toggleSettingsMenu from "./store";
 
 export default {
@@ -173,6 +173,8 @@ export default {
 
     // Connection States
     const isWebSocketConnected = ref(false);
+    const lastFPVCamTime = ref(Date.now());
+    const newTime = ref();
 
     watch(isWebSocketConnected, async (value) => {
       // Reset live data if no connection
@@ -203,6 +205,12 @@ export default {
             store.updateLiveData(data);
             break;
           case "FPV_CAM":
+            newTime.value = Date.now();
+            fpv_cam_framerate.value = (
+              1000 /
+              (newTime.value - lastFPVCamTime.value)
+            ).toFixed(0);
+            lastFPVCamTime.value = newTime.value;
             fpv_cam.value = data.image;
             break;
           default:

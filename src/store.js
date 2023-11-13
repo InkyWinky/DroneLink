@@ -23,6 +23,7 @@ export const store = reactive({
   settings: { default_alt: 20, takeoff_alt: 20, waypoint_type: 16 },
 });
 export const fpv_cam = ref();
+export const fpv_cam_framerate = ref(0);
 export const menuClosed = ref(false);
 export const toggleSettingsMenu = () => (menuClosed.value = !menuClosed.value);
 export const MENU_WIDTH = 400;
