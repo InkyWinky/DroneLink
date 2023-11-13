@@ -108,22 +108,33 @@ class CameraFeedThread(threading.Thread):
         # mp_socket: The MissionPlannerSocket that talks to Mission Planner.
         threading.Thread.__init__(self)
         self.quit = False
-        self.camera = cv2.VideoCapture(0)
-        # Set camera resolution
-        # self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        # self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.camera = None
+        self.fps = 5
+        
 
     def run(self):
+        soft_fps_period = 1 / self.fps
         while not self.quit:
-            ret, frame = self.camera.read()
-            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 65]
-            # encode_param = [int(cv2.IMWRITE_PNG_COMPRESSION), 9]
-            man = cv2.imencode('.png', frame, encode_param)[1]
-            # convert image to base64 before sending
-            data = {"command": "FPV_CAM", "image": base64.b64encode(man.tobytes())}
-            # data = {"command": "FPV_CAM", "image": man.tobytes().decode('latin-1')}
-            for index, client in enumerate(clients):
-                client.sendMessage(json.dumps(data))
+            time.sleep(soft_fps_period)
+            # If is no camera, try to connect.
+            if not self.camera:
+                try:
+                    self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                    # Set camera resolution
+                    self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920) # 1920 / 1280
+                    self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080) # 1080 / 720
+                except:
+                    self.camera = None
+                time.sleep(2)
+            else:
+                ret, frame = self.camera.read()
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
+                # encode_param = [int(cv2.IMWRITE_PNG_COMPRESSION), 1]
+                buffer = cv2.imencode('.jpg', frame, encode_param)[1]
+                # convert image to base64 before sending
+                data = {"command": "FPV_CAM", "image": "data:image/jpg;base64," + base64.b64encode(buffer)}
+                for index, client in enumerate(clients):
+                    client.sendMessage(json.dumps(data))
 
         print("[TERMINATION] Closed CameraFeedThread")
 

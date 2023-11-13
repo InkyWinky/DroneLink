@@ -31,7 +31,20 @@
         class="flex flex-col w-full h-full"
       >
         FPV
-        <canvas ref="fpv_large" class="bg-blue-500 w-full h-full"></canvas>
+        <div
+          class="w-full h-full bg-gray-800 outline outline-black flex flex-col"
+        >
+          <p class="text-white bg-transparent absolute text-2xl p-4">
+            {{ fpv_cam_framerate.valueOf() }}
+          </p>
+          <canvas
+            ref="fpv_large"
+            class="bg-blue-500 place-self-center aspect-ratio h-full"
+            :height="fpv_resolution.height"
+            :width="fpv_resolution.width"
+          ></canvas>
+        </div>
+
         <!-- <video ref="FPVCamLarge" muted>Stream Unavailable</video> -->
       </div>
     </div>
@@ -47,7 +60,20 @@
         class="flex flex-col w-full h-full bg-gray-200"
       >
         <p class="">FPV</p>
-        <canvas ref="fpv_small" class="bg-blue-500 w-full h-full"></canvas>
+        <div
+          class="w-full h-full bg-gray-800 outline outline-black flex flex-col"
+        >
+          <p class="text-white bg-transparent absolute text-2xl p-1">
+            {{ fpv_cam_framerate.valueOf() }}
+          </p>
+          <canvas
+            ref="fpv_small"
+            class="bg-blue-500 aspect-video h-full"
+            :height="fpv_resolution.height"
+            :width="fpv_resolution.width"
+          >
+          </canvas>
+        </div>
 
         <!-- <video ref="FPVCamSmall" muted>Stream Unavailable</video> -->
       </div>
@@ -125,10 +151,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, reactive } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
-import { store, fpv_cam } from "@/store";
+import { store, fpv_cam, fpv_cam_framerate } from "@/store";
 import api from "@/api";
 
 const status = ref(null);
@@ -145,19 +171,24 @@ const fpv_large = ref(null);
 const fpv_small = ref(null);
 const vision_large = ref(null);
 const vision_small = ref(null);
+const fpv_resolution = reactive({ width: 1920, height: 1080 });
 
 watch(fpv_cam, (val) => {
   if (fpv_large.value && !displayVisionLarge.value) {
     let ctx = fpv_large.value.getContext("2d");
     let image = new Image();
-    image.src = `data:image/png;base64,${val}`;
+    image.src = val;
+    // image.src = URL.createObjectURL(val);
     image.addEventListener("load", () => {
+      fpv_resolution.width = image.width;
+      fpv_resolution.height = image.height;
       ctx.drawImage(image, 0, 0, fpv_large.value.width, fpv_large.value.height);
     });
   } else {
     let ctx = fpv_small.value.getContext("2d");
     let image = new Image();
-    image.src = `data:image/jpg;base64,${val}`;
+    // image.src = URL.createObjectURL(val);
+    image.src = val;
     image.addEventListener("load", () => {
       ctx.drawImage(image, 0, 0, fpv_small.value.width, fpv_small.value.height);
     });
