@@ -477,6 +477,7 @@ class Commands:
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
+    TEST_WAYPOINTS = "TEST_WAYPOINTS"   
 
 
     def override(self, mission_manager, decoded_data):
