@@ -100,9 +100,11 @@ class ServerHandler(BaseHTTPRequestHandler):
                 message = "Could not initialise the connection to Mission Planner."
             print("Executed CONNECTIP: " + parsed_content['ip'])
         elif command =="SMERF":
-            mp_sock.send_command_int(1, 171, {"arg1": 0, "arg2": 0, "arg3": 0})
+            mp_sock.send_command_int(1, 171)
         elif command == "NERF":
-            mp_sock.send_command_int(2, 171, {"arg1": 0, "arg2": 0, "arg3": 0})
+            mp_sock.send_command_int(2, 171)
+        # elif command == "DISREGARD_TARGET":
+        #     mp_sock.
         else:
             print("Command received does not exist.")
 

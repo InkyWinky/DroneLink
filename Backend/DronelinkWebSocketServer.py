@@ -4,6 +4,7 @@ import time
 import cv2
 import base64
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
+from sys import platform
 
 class WebSocketThread(threading.Thread):
     def __init__(self, host, mp_socket):
@@ -119,7 +120,10 @@ class CameraFeedThread(threading.Thread):
             # If is no camera, try to connect.
             if not self.camera:
                 try:
-                    self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                    if platform == "win32":
+                        self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                    else:
+                        self.camera = cv2.VideoCapture(0)
                     # Set camera resolution
                     self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920) # 1920 / 1280
                     self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080) # 1080 / 720
