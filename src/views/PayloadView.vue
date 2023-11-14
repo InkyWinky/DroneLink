@@ -93,10 +93,10 @@
     >
       <div
         id="payload-stats"
-        class="m-10 p-2 rounded bg-gray-300 border border-black opacity-80"
+        class="m-10 p-2 rounded bg-gray-300 border border-black opacity-80 h-auto"
       >
-        <div id="stats-column">
-          <div id="payload-info">
+        <div id="stats-column" class="h-auto">
+          <div id="payload-info" class="h-auto">
             <!-- info about payload -->
             <h2 class="font-bold text-lg underline">Payload Stats</h2>
             <p id="payload-height">
@@ -119,7 +119,7 @@
             </p>
             <p class="text-medium">STATUS: {{ status }}</p>
           </div>
-          <div id="failsafe-buttons" class="w-full flex">
+          <div id="failsafe-buttons" class="w-full flex h-auto">
             <button
               class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
               id="failsafe-one"
@@ -135,7 +135,7 @@
               NERF
             </button>
           </div>
-          <div class="w-full flex" v-if="(showBegin = true)">
+          <div class="w-full flex h-auto" v-if="(showBegin = true)">
             <button
               class="bg-green-200 rounded-md text-black p-2 m-1 hover:bg-green-400 w-full"
               id="begin-button"
@@ -164,9 +164,9 @@ const deployMarker = ref(null);
 const targetCoords = ref([145.13453, -37.90984]); // placeholder for actual target coords
 const deployCoords = ref(null);
 const displayVisionLarge = ref(true); // boolean that determines which video feed is displayed large, and which small
+const Map = ref(null);
 const FPVCamLarge = ref(null);
 const FPVCamSmall = ref(null);
-const Map = ref(null);
 // const fpv_small = document.getElementById("FPV-SMALL");
 const fpv_large = ref(null);
 const fpv_small = ref(null);
@@ -208,13 +208,14 @@ onMounted(() => {
   Map.value.on("click", (e) => {
     console.log(`[DEPLOYMENT COORDS] ${e.lngLat.toArray()}`);
     deployCoords.value = e.lngLat;
-    if (deployMarker.value == null) {
+    if (!deployMarker.value) {
       deployMarker.value = new mapboxgl.Marker()
         .setLngLat(e.lngLat)
         .addTo(Map.value);
     } else {
       deployMarker.value.setLngLat(e.lngLat);
     }
+    console.log(`deployMarker: ${deployMarker.value}`);
   });
 
   startFPVCapture("small");
@@ -287,6 +288,7 @@ function switchFeed() {
   }
   console.log("[MESSAGE] displayVisionLarge: " + displayVisionLarge.value);
 }
+
 /**
  * begin() initialises the payload deployment procedure, beginning by manoeuvering the drone to the chosen point on the map,
  * and then executing payload deployment
