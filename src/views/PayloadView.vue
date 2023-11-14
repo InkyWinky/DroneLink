@@ -122,15 +122,15 @@
           <div id="failsafe-buttons" class="w-full flex h-auto">
             <button
               class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
-              id="failsafe-one"
-              @click="failsafeOne()"
+              id="failsafe-smerf"
+              @click="smerf()"
             >
               SMERF
             </button>
             <button
               class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
-              id="failsafe-two"
-              @click="failsafeTwo()"
+              id="failsafe-nerf"
+              @click="nerf()"
             >
               NERF
             </button>
@@ -306,39 +306,22 @@ function begin() {
   // set cube relay pin HIGH to initiate payload deployment
   if (confirm(`Confirm deploy payload at ${deployCoords.value.toArray()}?`)) {
     console.log("Beginning deployment procedure");
-    api.executeCommand("SET_CUBE_RELAY_PIN", {
-      pin_num: 0,
-      pin_state: 1,
-    });
+    // api.executeCommand("DEPLOY_PAYLOAD", {}); // only sent once drone returns and VTOLs over specified location
   }
 }
 
-function failsafeOne() {
-  if (confirm("Confirm failsafe 1?")) {
-    console.log("[MESSAGE] Executing Failsafe 1");
-    api.executeCommand("SET_CUBE_RELAY_PIN", {
-      pin_num: 0,
-      pin_state: 1,
-    });
+function smerf() {
+  if (confirm("Confirm SMERF?")) {
+    console.log("[SMERF] Executing SMERF");
+    api.executeCommand("SMERF", {});
   }
-  api.executeComand("SET_CUBE_RELAY_PIN", {
-    pin_num: 0,
-    pin_state: 0,
-  });
 }
 
-function failsafeTwo() {
+function nerf() {
   if (confirm("Confirm failsafe 2?")) {
-    console.log("[MESSAGE] Executing Failsafe 2");
-    api.executeCommand("SET_CUBE_RELAY_PIN", {
-      pin_num: 1,
-      pin_state: 1,
-    });
+    console.log("[NERF] Executing NERF");
+    api.executeCommand("NERF", {});
   }
-  api.executeComand("SET_CUBE_RELAY_PIN", {
-    pin_num: 0,
-    pin_state: 0,
-  });
 }
 </script>
 

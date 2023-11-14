@@ -200,6 +200,11 @@ class MissionPlannerSocket():
         data = json.dumps({"command":self.COMMANDS.SET_CUBE_RELAY_PIN, "pin_num": pin_num, "pin_state": pin_state})
         self.s.sendall(data + '\n\n')
 
+    def send_command_int(self, project_specifier, command_specifier, **kwargs):
+
+        data = json.dumps({"project_specifier": self.COMMANDS.SEND_COMMAND_INT, "project_specifier": project_specifier, "command_specifier": command_specifier, "args": kwargs})
+        self.s.sendall(data + '\n\n')
+
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
     The functions in this class will execute the command.
@@ -210,7 +215,8 @@ class Commands:
     TOGGLE_ARM = "TOGGLE_ARM"
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
-    SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN" 
+    SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
+    SEND_COMMAND_INT = "SEND_COMMAND_INT" 
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")
