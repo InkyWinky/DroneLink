@@ -328,13 +328,13 @@ onMounted(() => {
 
   map.value.on("click", (e) => {
     //Get longitude and latitude values based on mouse click position. Had an issue where the value returned was one viewport higher than what it should be, so I adjusted it with some maths, but the marker is still placed slightly inaccurately. Need to fix.
-    let container = map.value.getContainer();
-    let mapHeight = container.clientHeight;
-    console.log("mapHeight: " + mapHeight);
+    // let container = map.value.getContainer();
+    // let mapHeight = container.clientHeight;
+    // console.log("mapHeight: " + mapHeight);
     let yPixel = e.point.y;
     let xPixel = e.point.x;
-    let adjusted_yPixel = yPixel + mapHeight;
-    console.log("adjusted ypixel:" + adjusted_yPixel);
+    let adjusted_yPixel = yPixel;
+    // console.log("adjusted ypixel:" + adjusted_yPixel);
     let latitude = map.value.unproject([xPixel, adjusted_yPixel]).lat;
     long.value = e.lngLat.lng;
     lat.value = latitude;
