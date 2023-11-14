@@ -298,6 +298,11 @@ function switchFeed() {
 function setDeploymentLocation() {
   // get location of target (use targetCoords for now, future: targetLocation = store?.targetLocation;)
 }
+// eslint-disable-next-line
+function incorrectTarget() {
+  console.log(`[MESSAGE] Target disregarded - continuing mission.`);
+  api.executeCommand("DISREGARD_TARGET", {});
+}
 
 function begin() {
   // show localised map around target and allow user to select a place to deliver payload
