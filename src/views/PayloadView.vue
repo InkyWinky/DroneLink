@@ -201,7 +201,7 @@ onMounted(() => {
     "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
   Map.value = new mapboxgl.Map({
     container: "map-container",
-    style: "mapbox://styles/mapbox/streets-v12", // style URL
+    style: "mapbox://styles/mapbox/satellite-v9", // style URL
     center: targetCoords.value, // lng, lat
     zoom: 18,
   });
