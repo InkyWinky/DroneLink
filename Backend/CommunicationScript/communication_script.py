@@ -387,6 +387,7 @@ class MissionManager:
                         Commands.SYNC_SCRIPT: Commands.sync_script,
                         Commands.TOGGLE_ARM: Commands.toggle_arm_aircraft,
                         Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
+                        Commands.SEND_COMMAND_INT: Commands.send_command_int,
                         }  
         
         # run the command
@@ -494,6 +495,7 @@ class Commands:
     GET_FLIGHTPLANNER_WAYPOINTS = "GET_FLIGHTPLANNER_WAYPOINTS"
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
+    SEND_COMMAND_INT = "SEND_COMMAND_INT"
 
 
     def override(self, mission_manager, decoded_data):
@@ -638,7 +640,8 @@ class Commands:
         try:
             project_specifier = decoded_data["project_specifier"]
             command_specifier = decoded_data["command_specifier"]
-            mission_manager.send_command_int(project_specifier, command_specifier)
+            args = decoded_data["args"]
+            mission_manager.send_command_int(project_specifier, args)
 
         except Exception as e:
             print("[ERROR] " + str(e))
