@@ -183,12 +183,12 @@ class SearchPathGenerator:
     def get_waypoints(self):
         """
         Call this function to get a dictionary of every point in the path. The format is as follows:
-        [{"long": 101.24, "lat": 62.76, "alt": 100}, {"long": 98.64, "lat": 65.22, "alt": 100}, ...]
+        [{"lon": 101.24, "lat": 62.76, "alt": 100}, {"lon": 98.64, "lat": 65.22, "alt": 100}, ...]
         """
         dict_list = []
 
         for point in self.path_points:
-            new_dict_entry = {"long": point.lon, "lat": point.lat, "alt": 100}
+            new_dict_entry = {"lon": point.lon, "lat": point.lat, "alt": 100}
             dict_list.append(new_dict_entry)
 
         return dict_list
@@ -1141,11 +1141,11 @@ def calculate_current_direction(current_waypoint=None, next_waypoint=None, orien
     return clamp_angle(current_direction), previous_point, next_next_point
 
 def calculate_single_turn_entrance_exit(previous_waypoint=None, current_waypoint=None, next_waypoint=None, direction=None, radius=None):
+    # https://math.stackexchange.com/questions/797828/calculate-center-of-circle-tangent-to-two-lines-in-space
     angle_between = angle_between_points(previous_waypoint, current_waypoint, next_waypoint)
     bisector_angle = calculate_bisection_angle(previous_waypoint, current_waypoint, next_waypoint)
     centre_radius = radius / math.sin(angle_between / 2)
 
-    # https://math.stackexchange.com/questions/797828/calculate-center-of-circle-tangent-to-two-lines-in-space
     centre_point = create_point(current_waypoint, centre_radius, bisector_angle)
 
     # https://math.stackexchange.com/questions/4629284/looking-for-a-formula-to-find-the-angle-to-a-point-that-creates-two-perpendicula
