@@ -1,3 +1,3 @@
-[submodule "GV_RTK_Pipeline"]
-	path = GV_RTK_Pipeline
-	url = https://github.com/MonashUAS/GV_RTK_Pipeline.git
+[submodule "MAVLink_Pipeline"]
+	path = MAVLink_Pipeline
+	url = https://github.com/MonashUAS/MAVLink_Pipeline.git
