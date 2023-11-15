@@ -4,7 +4,7 @@ import time
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from CommunicationScript.MissionPlannerSocket import Commands
 import SplineGenerator.SearchPathGenerator as spliner
-
+from mav_enums import *
 
 class HTTPServerThread(threading.Thread):
     def __init__(self, host, mp_socket):
@@ -100,9 +100,9 @@ class ServerHandler(BaseHTTPRequestHandler):
                 message = "Could not initialise the connection to Mission Planner."
             print("Executed CONNECTIP: " + parsed_content['ip'])
         elif command =="SMERF":
-            mp_sock.send_command_int(1, 171)
+            mp_sock.send_command_int(1, MUASComponentID.LIFELINE, LifelineCommands.SMERF)
         elif command == "NERF":
-            mp_sock.send_command_int(2, 171)
+            mp_sock.send_command_int(1, MUASComponentID.LIFELINE, LifelineCommands.NERF)
         # elif command == "DISREGARD_TARGET":
         #     mp_sock.
         else:

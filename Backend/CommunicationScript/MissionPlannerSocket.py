@@ -200,9 +200,34 @@ class MissionPlannerSocket():
         data = json.dumps({"command":self.COMMANDS.SET_CUBE_RELAY_PIN, "pin_num": pin_num, "pin_state": pin_state})
         self.s.sendall(data + '\n\n')
 
-    def send_command_int(self, project_specifier, command_specifier, **kwargs):
-
-        data = json.dumps({"project_specifier": self.COMMANDS.SEND_COMMAND_INT, "project_specifier": project_specifier, "command_specifier": command_specifier, "args": kwargs})
+    def send_command_int(self, target_system, target_component, command_code, **kwargs):
+        """Sends a custom command that is defined by the team and each project section.
+        Also have a look at mav_enums.py in the 'MAVLink_Pipeline' Repository (Is a git submodule in Mission Management).
+        For more information refer to: https://mavlink.io/en/messages/common.html#COMMAND_INT
+        Args:
+            target_system (int): System ID
+            target_component (int): Component ID
+            command_code (int): The scheduled action for the mission item.
+            kwargs: {
+                frame (int, optional): The coordinate system of the COMMAND. Defaults to 0.
+                current (int, optional): Not used. Defaults to 0.
+                autocontinue (int, optional): Not used (set 0). Defaults to 0.
+                param1 (float, optional): A free parameter that can be used depending on the command. Defaults to 0.
+                param2 (float, optional):  A free parameter that can be used depending on the command. Defaults to 0.
+                param3 (float, optional):  A free parameter that can be used depending on the command. Defaults to 0.
+                param4 (float, optional):  A free parameter that can be used depending on the command. Defaults to 0.
+                x (int, optional): PARAM5 / local: x position in meters * 1e4, global: latitude in degrees * 10^7. Defaults to 0.
+                y (int, optional): PARAM6 / local: y position in meters * 1e4, global: longitude in degrees * 10^7. Defaults to 0.
+                z (float, optional): PARAM7 / z position: global: altitude in meters (relative or absolute, depending on frame). Defaults to 0.
+            }
+        """
+        data = json.dumps({
+            "command": self.COMMANDS.SEND_COMMAND_INT, 
+            "target_system": target_system, 
+            "target_component": target_component, 
+            "command_code": command_code,  
+            "kwargs": kwargs
+            })
         self.s.sendall(data + '\n\n')
 
 class Commands:

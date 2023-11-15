@@ -6,7 +6,61 @@ Utilises MavLink and is run as a Mission Planner Script.
 Script Usage
 From Mission Planner Home, navigate to "Simulation" -> "Plane" -> "Stable".
 On the left side, navigate to "Scripts" -> "Select Script" -> "Upload" ->
- -> "Run Script"
+-> "Run Script"
+
+When developing in the communication script, there are 3 main exposed classes that Mission Planner explicitly sets:
+    1. MAV
+    Alias for 'MissionPlanner.MainV2.comPort'
+    This class exposes the MAVLinkInterface that allows for us to use mavlink functions.
+    e.g. 'MAV.doARM(...)' will arm or disarm the vehicle.
+    
+    2. cs
+    Alias for 'MissionPlanner.MainV2.MAV.cs'
+    This class exposes the currentState of the vehicle. Using this, we will be able to access all variables under the 'Status' tab in mission planner.
+    e.g. 'cs.battery_remaining' will return an integer from 0..100 that represents the battery level of the vehicle.
+
+    3. Script / mavutil
+    Alias for 'this'
+    This class is run by Mission Planner that exposes all the other classes. It also provides some useful functions such as timing or getting params.
+    e.g. Script.Sleep() or mavutil.Sleep() will cause the script to delay its execution.
+
+All exposed classes:
+    -----------------------------------------------------------------------------------------------------------------------------------
+    Class: MAV
+    Alias: MainV2.comPort
+    Source Code: https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/ExtLibs/Utilities/IMAVLinkInterface.cs
+    -----------------------------------------------------------------------------------------------------------------------------------
+    Class: cs
+    Alias: MainV2.comPort.MAV.cs
+    Source Code: https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Script.cs
+    -----------------------------------------------------------------------------------------------------------------------------------
+    Class: Script / mavutil
+    Alias: this
+    Source Code: https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Script.cs
+    -----------------------------------------------------------------------------------------------------------------------------------
+    Class: MainV2
+    Alias: MainV2.instance
+    Source Code: https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/MainV2.cs
+    -----------------------------------------------------------------------------------------------------------------------------------
+    Class: FlightPlanner 
+    Alias: FlightPlanner.instance
+    Source Code: https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/GCSViews/FlightPlanner.cs
+    -----------------------------------------------------------------------------------------------------------------------------------
+    Class: FlightData
+    Alias: FlightData.instance
+    Source Code: https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/GCSViews/FlightData.cs
+    -----------------------------------------------------------------------------------------------------------------------------------
+    Class: Ports
+    Alias: MainV2.Comports
+    Source Code: N/A
+    -----------------------------------------------------------------------------------------------------------------------------------
+    Class: Joystick
+    Alias: MainV2.joystick
+    Source Code: N/A
+    -----------------------------------------------------------------------------------------------------------------------------------
+
+For more information, please refer to Using Python Scripts in Mission Planner:
+https://ardupilot.org/planner/docs/using-python-scripts-in-mission-planner.html
 """
 
 print("[INFO] Importing Dependencies...")
@@ -29,7 +83,7 @@ clr.AddReference("MissionPlanner.Utilities")
 from MissionPlanner.Utilities import Locationwp, WaypointFile
 # clr.AddReference("MAVLink")
 import MAVLink
-
+from MAVLink import mavlink_command_int_t
 # Importing C# List primitive dependency 
 clr.AddReference('System')
 from System.Collections.Generic import List
@@ -52,8 +106,7 @@ class MissionManager:
         self.waypoint_count = 0  # The number of waypoints
         self.waypoints = []  # list of the waypoints
         self.live_data_rate = 1000 # Data send rate from drone to backend (in ms)
-        self.FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner # Attribute to control FlightPlanner in MissionPlanner
-        self.cs_drone = MissionPlanner.MainV2.comPort.MAV.cs # current state of drone object
+        self.cs_drone = MAV.MAV.cs # current state of drone object
         self.drone_connected = False
         # Attributes for Socket connection.
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # The Python Socket class.
@@ -124,7 +177,7 @@ class MissionManager:
             print("[INFO] Syncing Live Waypoints...")
             self.waypoint_count = MAV.getWPCount()
             self.waypoints = [MAV.getWP(index) for index in range(MAV.getWPCount())]
-            self.cs_drone = MissionPlanner.MainV2.comPort.MAV.cs  # update current state of drone object
+            self.cs_drone = cs  # update current state of drone object
             self.drone_connected = True
             print("[INFO] Syncing Live Waypoints Successful")
         except:
@@ -277,7 +330,7 @@ class MissionManager:
     def toggle_arm_aircraft(self):
         # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
         # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
-        MissionPlanner.MainV2.comPort.setMode("MANUAL")
+        MAV.setMode("MANUAL")
         if self.cs_drone and self.cs_drone.armed:
             MAV.doARM(False, True)
             print("[INFO] Toggled Drone to DISARMED")
@@ -287,7 +340,7 @@ class MissionManager:
             # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 0, 21196, 0, 0, 0, 0, 0, 0)
             MAV.doARM(True, True)
             print("[INFO] Toggled Drone to ARMED")
-        MissionPlanner.MainV2.comPort.setMode("AUTO")
+        MAV.setMode("AUTO")
 
     def __establish_connection(self):
         """Creates an open socket connection for the backend to connect to.
@@ -471,18 +524,64 @@ class MissionManager:
         pin_bool ='LOW' if pin_state == 0 else 'HIGH'
         print(" [INFO] Set Relay Pin " + pin_num + " to " + pin_bool)
 
-    def send_command_int(self, project_specifier, command_specifier, **kwargs):
-        """Sends a COMMAND_INT command
+    def send_command_int(self, target_system, target_component, command_code, kwargs):
+        """Sends a custom command that is defined by the team and each project section.
+        Also have a look at mav_enums.py in the 'MAVLink_Pipeline' Repository (Is a git submodule in Mission Management).
+        For more information refer to: https://mavlink.io/en/messages/common.html#COMMAND_INT
         Args:
-            project_specifier (Int): specifies which project the command is in relation to
-            command_specifier (Int): specifies which command inside the project is to be excecuted
-            kwargs (Dict):  contains 3 optional arguments
+            target_system (int): System ID
+            target_component (int): Component ID
+            command_code (int): The scheduled action for the mission item.
+            kwargs (dict): {
+                frame (int, optional): The coordinate system of the COMMAND. Defaults to 0.
+                current (int, optional): Not used. Defaults to 0.
+                autocontinue (int, optional): Not used (set 0). Defaults to 0.
+                param1 (float, optional): A free parameter that can be used depending on the command. Defaults to 0.
+                param2 (float, optional):  A free parameter that can be used depending on the command. Defaults to 0.
+                param3 (float, optional):  A free parameter that can be used depending on the command. Defaults to 0.
+                param4 (float, optional):  A free parameter that can be used depending on the command. Defaults to 0.
+                x (int, optional): PARAM5 / local: x position in meters * 1e4, global: latitude in degrees * 10^7. Defaults to 0.
+                y (int, optional): PARAM6 / local: y position in meters * 1e4, global: longitude in degrees * 10^7. Defaults to 0.
+                z (float, optional): PARAM7 / z position: global: altitude in meters (relative or absolute, depending on frame). Defaults to 0.
+            }
         """
-        arg1 = kwargs[kwargs.keys()[0]] if kwargs.keys()[0] else 0
-        arg2 = kwargs[kwargs.keys()[1]] if kwargs.keys()[1] else 0 
-        arg3 = kwargs[kwargs.keys()[2]] if kwargs.keys()[2] else 0
-        MAV.doCommand(MAVLink.COMMAND_INT, 0, 0, 0, project_specifier, 0, 0, command_specifier, arg1, arg2, arg3, 0, 0, 0)
+        try:
+            keys = kwargs.keys()
+            frame = kwargs["frame"] if "frame" in keys else 0
+            current = kwargs["current"] if "current" in keys else 0
+            autocontinue = kwargs["autocontinue"] if "autocontinue" in keys else 0
+            param1 = kwargs["param1"] if "param1" in keys else 0
+            param2 = kwargs["param2"] if "param2" in keys else 0
+            param3 = kwargs["param3"] if "param3" in keys else 0
+            param4 = kwargs["param4"] if "param4" in keys else 0
+            x = kwargs["x"] if "x" in keys else 0
+            y = kwargs["y"] if "y" in keys else 0
+            z = kwargs["z"] if "z" in keys else 0
+            # print('WUT', MAVLink.MAV_CMD.WAYPOINT)
+            commandIntPacket = mavlink_command_int_t()
+            mavlink_command_int_t.target_system.SetValue(commandIntPacket, target_system)
+            mavlink_command_int_t.target_component.SetValue(commandIntPacket, target_component)
+            mavlink_command_int_t.command.SetValue(commandIntPacket, command_code)
+            mavlink_command_int_t.frame.SetValue(commandIntPacket, frame)
+            mavlink_command_int_t.current.SetValue(commandIntPacket, current)
+            mavlink_command_int_t.autocontinue.SetValue(commandIntPacket, autocontinue)
+            mavlink_command_int_t.param1.SetValue(commandIntPacket, param1)
+            mavlink_command_int_t.param2.SetValue(commandIntPacket, param2)
+            mavlink_command_int_t.param3.SetValue(commandIntPacket, param3)
+            mavlink_command_int_t.param4.SetValue(commandIntPacket, param4)
+            mavlink_command_int_t.x.SetValue(commandIntPacket, x)
+            mavlink_command_int_t.y.SetValue(commandIntPacket, y)
+            mavlink_command_int_t.z.SetValue(commandIntPacket, z)
+            # command , target sysid, target compid   used to keep track of the remote state
+            MAV.sendPacket(commandIntPacket, target_system, target_component)
 
+            # Cannot do this as command_code must be a c# MAV_CMD enum
+            # return MAV.doCommandInt(target_system, target_component, command_code, current, autocontinue, param1, param2, param3, param4, x, y, z)
+            print("[INFO] Sending COMMAND INT Successful")
+        except Exception as e:
+            print("[ERROR] " + str(e))
+            print("[ERROR] Failed to send COMMAND INT")
+        
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
@@ -527,7 +626,7 @@ class Commands:
             Locationwp.id.SetValue(recv_waypoints[1], int(MAVLink.MAV_CMD.LOITER_TURNS))
             recv_waypoints.insert(1,mission_manager.create_wp(0, 0, 20, id=int(MAVLink.MAV_CMD.TAKEOFF)))    
             recv_waypoints.append(mission_manager.create_wp(0, 0, 20, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
-            mission_manager.FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
+            FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
             print("[COMMAND] TEST_FLIGHTPLANNER Waypoints Command Executed.")
         except Exception as e:
             print("[ERROR] " + str(e))
@@ -550,7 +649,7 @@ class Commands:
             print("takeoff_alt: ", decoded_data["takeoff_alt"])
             recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.TAKEOFF)))  
             recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
-            mission_manager.FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
+            FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
             print("[COMMAND] OVERRIDE_FLIGHTPLANNER Waypoints Command Executed.")
         except Exception as e:
             print("[ERROR] " + str(e))
@@ -598,10 +697,10 @@ class Commands:
             res = {"command": Commands.GET_FLIGHTPLANNER_WAYPOINTS, "waypoints":[]}
             for i in range(n):
                 res["waypoints"].append({
-                    "id": int(mission_manager.FlightPlanner.getCmdID(mission_manager.FlightPlanner.Commands.Rows[i].Cells[0].Value)), # Command as a string
-                    "lat": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[5].Value), # Lat
-                    "long": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[6].Value), # Lng
-                    "alt": float(mission_manager.FlightPlanner.Commands.Rows[i].Cells[7].Value), # Alt
+                    "id": int(FlightPlanner.getCmdID(FlightPlanner.Commands.Rows[i].Cells[0].Value)), # Command as a string
+                    "lat": float(FlightPlanner.Commands.Rows[i].Cells[5].Value), # Lat
+                    "long": float(FlightPlanner.Commands.Rows[i].Cells[6].Value), # Lng
+                    "alt": float(FlightPlanner.Commands.Rows[i].Cells[7].Value), # Alt
                 })
             # print('Command List', res)
             mission_manager.connection.sendall(bytes(json.dumps(res) + '\n\n'))
@@ -638,10 +737,13 @@ class Commands:
         """
 
         try:
-            project_specifier = decoded_data["project_specifier"]
-            command_specifier = decoded_data["command_specifier"]
-            args = decoded_data["args"]
-            mission_manager.send_command_int(project_specifier, args)
+            target_system = decoded_data["target_system"]
+            target_component = decoded_data["target_component"]
+            command_code = decoded_data["command_code"]
+            kwargs = decoded_data["kwargs"]
+
+            kwargs = decoded_data["kwargs"]
+            mission_manager.send_command_int(target_system, target_component, command_code, kwargs)
 
         except Exception as e:
             print("[ERROR] " + str(e))
@@ -740,52 +842,5 @@ get_ip()  # Print out the IPs of the device running Mission Planner.
 mm = MissionManager(chunk_size=8192)  # Create a mission manager class.
 del mm # garbage collect MissionManager to fully delete socket/port resources
 gc.collect() # force manual garbage collect
-# id = int(MAVLink.MAV_CMD.WAYPOINT)
-# wp1 = Locationwp().Set(-37.8408347, 145.2241516, 100, id)
-# wp2 = Locationwp().Set(-37.8411058, 145.2569389, 100, id)
-# wp3 = Locationwp().Set(-37.8657742, 145.2680969, 100, id)
-# wp4 = Locationwp().Set(-37.8818991, 145.2234650, 100, id)
-
-# FlightPlanner = MissionPlanner.MainV2.instance.FlightPlanner
-# FlightPlanner.WPtoScreen(List[Locationwp]([wp1, wp2, wp3, wp4]))
-# FlightPlanner().AddWPToMap(-37.8408347, 145.2241516, 100)
-# print(flightPlanner.GetCommandList())
-# MissionPlanner.MainV2.FlightPlanner.WPtoScreen(List[Locationwp]([wp1, wp2, wp3, wp4]))
-# MissionPlanner.MainV2.instance.FlightPlanner.AddWPToMap(-37.8408347, 145.2241516, 100)
-# MissionPlanner.MainV2.instance.FlightPlanner.AddWPToMap(-37.8411058, 145.2569389, 100)
-# flightPlanner.readQGC110wpfile('./test.waypoints')
-
-# print(MissionPlanner.MainV2.instance.FlightPlanner.Commands.Rows)
-# MissionPlanner.MainV2.instance.FlightPlanner.AddWPToMap(lat, lng, alt)
-# MissionPlanner.MainV2.instance.FlightPlanner.AddCommand(cmd, p1, p2, p3, p4, x, y, z, tag=null)
-# MissionPlanner.MainV2.instance.FlightPlanner.InsertCommand(index, cmd, p1, p2, p3, p4, x, u, z, tag)
-# MissionPlanner.MainV2.instance.FlightPlanner.readQGC110wpfile('file location')
-# MissionPlanner.MainV2.instance.FlightPlanner.WPtoScreen(List[Locationwp]([wp1, wp1, wp2, wp3, wp4]))
-# print(FlightPlanner.Commands.Rows.Count, FlightPlanner.Commands.Rows[0].Cells.Count)
-# print(FlightPlanner.Commands.Rows[0].Cells)
-# print(FlightPlanner.Commands.Rows[0].Cells[0].Value) # Command as a string
-# print(FlightPlanner.Commands.Rows[0].Cells[1].Value) # param 1
-# print(FlightPlanner.Commands.Rows[0].Cells[2].Value) # param 2
-# print(FlightPlanner.Commands.Rows[0].Cells[3].Value) # param 3
-# print(FlightPlanner.Commands.Rows[0].Cells[4].Value) # param 4
-# print(FlightPlanner.Commands.Rows[0].Cells[5].Value) # Lat
-# print(FlightPlanner.Commands.Rows[0].Cells[6].Value) # Lng
-# print(FlightPlanner.Commands.Rows[0].Cells[7].Value) # Alt
-# print(FlightPlanner.Commands.Rows[0].Cells[8].Value) #
-# print(FlightPlanner.Commands.Rows[0].Cells[9].Value) #
-# print(FlightPlanner.Commands.Rows[0].Cells[10].Value) #
-# print(FlightPlanner.Commands.Rows[0].Cells[11].Value) #
-# print(FlightPlanner.Commands.Rows[0].Cells[12].Value) #
-# print(FlightPlanner.Commands.Rows[0].Cells[13].Value) # X
-# print(FlightPlanner.Commands.Rows[0].Cells[14].Value) # Up btn
-# print(FlightPlanner.Commands.Rows[0].Cells[15].Value) # Down btn
-# print(FlightPlanner.Commands.Rows[0].Cells[16].Value) # Grad %
-# print(FlightPlanner.Commands.Rows[0].Cells[17].Value) # Angle
-# print(FlightPlanner.Commands.Rows[0].Cells[18].Value) # Dist
-# print(FlightPlanner.Commands.Rows[0].Cells[19].Value) # AZ
-
-# print(MissionPlanner.Plugin.GetWPs())
-# print(MissionPlanner.Plugin.PluginHost.GetWPs())
-# print(int(MAVLink.MAV_CMD.WAYPOINT)) # 16
 print("[TERMINATION] Script Terminated!")
 
