@@ -1,12 +1,3 @@
-<!-- TO DO:
-  [ ] Implement state checking !!
-  [ ] Open PLB doors button
-  [ ] Load payload button
-  [ ] Deployment location selector on map
-  [ ] Read FPVcam footage and display instead of webcam
-  [ ] Retain video feed while switching between FPV and Vision
-  [ ] Print Vision footage onto other feed
--->
 <template>
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css"
@@ -74,8 +65,6 @@
           >
           </canvas>
         </div>
-
-        <!-- <video ref="FPVCamSmall" muted>Stream Unavailable</video> -->
       </div>
       <div
         id="small-vid-feed-vision"
@@ -119,7 +108,9 @@
             </p>
             <p class="text-medium">STATUS: {{ status }}</p>
           </div>
-          <div id="failsafe-buttons" class="w-full flex h-auto">
+        </div>
+        <div id="buttons" class="w-full flex h-auto">
+          <div id="failsafe-btns" class="w-full flex h-auto">
             <button
               class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
               id="failsafe-smerf"
@@ -135,15 +126,24 @@
               NERF
             </button>
           </div>
-          <div class="w-full flex h-auto" v-if="(showBegin = true)">
-            <button
-              class="bg-green-200 rounded-md text-black p-2 m-1 hover:bg-green-400 w-full"
-              id="begin-button"
-              @click="begin()"
-            >
-              Begin
-            </button>
-          </div>
+        </div>
+        <div class="w-full flex h-auto" v-if="(showBegin = true)">
+          <button
+            class="bg-green-200 rounded-md text-black p-2 m-1 hover:bg-green-400 w-full"
+            id="begin-button"
+            @click="beginDeployment()"
+          >
+            Begin
+          </button>
+        </div>
+        <div class="w-full flex h-auto">
+          <button
+            class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
+            id="target-found-test-btn"
+            @click="confirmTarget()"
+          >
+            TARGET FOUND
+          </button>
         </div>
       </div>
     </div>
@@ -159,7 +159,7 @@ import api from "@/api";
 
 const status = ref(null);
 const showOverlay = ref(true);
-const showMap = ref(true);
+const showMap = ref(false);
 const deployMarker = ref(null);
 const targetCoords = ref([145.13453, -37.90984]); // placeholder for actual target coords
 const deployCoords = ref(null);
@@ -203,7 +203,7 @@ onMounted(() => {
     container: "map-container",
     style: "mapbox://styles/mapbox/satellite-v9", // style URL
     center: targetCoords.value, // lng, lat
-    zoom: 18,
+    zoom: 15,
   });
   Map.value.on("click", (e) => {
     console.log(`[DEPLOYMENT COORDS] ${e.lngLat.toArray()}`);
@@ -289,29 +289,24 @@ function switchFeed() {
   console.log("[MESSAGE] displayVisionLarge: " + displayVisionLarge.value);
 }
 
-/**
- * begin() initialises the payload deployment procedure, beginning by manoeuvering the drone to the chosen point on the map,
- * and then executing payload deployment
- * @param {obj} waypoint
- */
-// eslint-disable-next-line
-function setDeploymentLocation() {
-  // get location of target (use targetCoords for now, future: targetLocation = store?.targetLocation;)
-}
-// eslint-disable-next-line
-function incorrectTarget() {
-  console.log(`[MESSAGE] Target disregarded - continuing mission.`);
-  api.executeCommand("DISREGARD_TARGET", {});
+function confirmTarget() {
+  if (confirm("Confirm target?")) {
+    api.executeCommand("RETURN_TO_TARGET", {});
+    targetCoords.value = store?.targetCoords;
+    showMap.value = true;
+  }
 }
 
-function begin() {
-  // show localised map around target and allow user to select a place to deliver payload
-  showMap.value = true;
-  // implement nav command for chosen payload deployment location
-  // set cube relay pin HIGH to initiate payload deployment
+/**
+ * beginDeployment() begins the lifeline deployment procedure by sending the Albatross back to the confirmed target
+ * and then orbiting until the pilot chooses a payload drop location
+ */
+function beginDeployment() {
   if (confirm(`Confirm deploy payload at ${deployCoords.value.toArray()}?`)) {
     console.log("Beginning deployment procedure");
-    // api.executeCommand("DEPLOY_PAYLOAD", {}); // only sent once drone returns and VTOLs over specified location
+    api.executeCommand("DEPLOY_PAYLOAD", {
+      targetCoords: targetCoords.value,
+    });
   }
 }
 
