@@ -1,3 +1,3 @@
-[submodule "MAVLink_Pipeline"]
-	path = MAVLink_Pipeline
+[submodule "Backend/MAVLink_Pipeline"]
+	path = Backend/MAVLink_Pipeline
 	url = https://github.com/MonashUAS/MAVLink_Pipeline.git
