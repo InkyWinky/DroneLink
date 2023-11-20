@@ -24,7 +24,7 @@ class Polygon:
             y_sum += vertex.lat
         x_avg = x_sum / self.count
         y_avg = y_sum / self.count
-        centroid = Coord(x_avg, y_avg)
+        centroid = Coord(lon=x_avg, lat=y_avg)
         return centroid
 
     def calculate_maximum_length(self):
@@ -89,7 +89,7 @@ class Polygon:
 
 class Waypoint:
     def __init__(self, x=None, y=None):
-        self.coords = Coord(x, y)  # Point instance that stores location of waypoint
+        self.coords = Coord(lon=x, lat=y)  # Point instance that stores location of waypoint
         self.centre_point = None  # Point instance
         self.turn_type = None  # "circle", "double circle" "lightbulb", "lightbulb angled"
         self.entrance = None  # Point instance for where the Albatross starts turning
@@ -109,9 +109,9 @@ class Segment:
 
 
 class Coord:
-    def __init__(self, lon=None, lat=None):
-        self.lon = lon  # Longitude
+    def __init__(self, lat=None, lon=None):
         self.lat = lat  # Latitude
+        self.lon = lon  # Longitude
 
     def magnitude(self, point=None):
         if point is None:
@@ -123,7 +123,7 @@ class Coord:
         return self.lon * point_2.lon + self.lat * point_2.lat
 
     def multiply(self, scalar):
-        return Coord(self.lon * scalar, self.lat * scalar)
+        return Coord(lon=self.lon * scalar, lat=self.lat * scalar)
 
     def equals(self, point=None):
         if self.lon == point.lon and self.lat == point.lat:
@@ -174,7 +174,7 @@ class SearchPathGenerator:
         """
         points = []
         for waypoint in waypoints:
-            new_point = Coord(waypoint["long"], waypoint["lat"])
+            new_point = Coord(lon=waypoint["long"], lat=waypoint["lat"])
             points.append(new_point)
 
         search_area = Polygon(points)
@@ -1023,7 +1023,7 @@ def calculate_turn_directions(previous_waypoint=None, current_waypoint=None, nex
     return current_waypoint_turn_direction, next_waypoint_turn_direction
 
 def extend_point_to_match(point1=None, point2=None, direction=None):
-    orientation_vector = create_point(Coord(0, 0), 1, direction)
+    orientation_vector = create_point(Coord(lat=0, lon=0), 1, direction)
 
     point1_proj = get_projection(this_vector=point1, on_this_vector=orientation_vector)
     point2_proj = get_projection(this_vector=point2, on_this_vector=orientation_vector)
@@ -1039,7 +1039,7 @@ def extend_point_to_match(point1=None, point2=None, direction=None):
     return furthest_point, extended_point
 
 def extend_point_to_match_original_order(point1=None, point2=None, direction=None):
-    orientation_vector = create_point(Coord(0, 0), 1, direction)
+    orientation_vector = create_point(Coord(lat=0, lon=0), 1, direction)
 
     point1_proj = get_projection(this_vector=point1, on_this_vector=orientation_vector)
     point2_proj = get_projection(this_vector=point2, on_this_vector=orientation_vector)
@@ -1053,7 +1053,7 @@ def extend_point_to_match_original_order(point1=None, point2=None, direction=Non
     return point1, point2
 
 def calculate_furthest_point(point1=None, point2=None, direction=None):
-    orientation_vector = create_point(Coord(0, 0), 1, direction)
+    orientation_vector = create_point(Coord(lat=0, lon=0), 1, direction)
 
     point1_proj = get_projection(this_vector=point1, on_this_vector=orientation_vector)
     point2_proj = get_projection(this_vector=point2, on_this_vector=orientation_vector)
@@ -1167,7 +1167,7 @@ def create_centre_points(current_waypoint=None, next_waypoint=None, orientation=
         if current_direction is not None:
             current_waypoint, next_waypoint = extend_point_to_match_original_order(current_waypoint, next_waypoint, current_direction)
 
-        circle_centres = (Coord((current_waypoint.lon + next_waypoint.lon) / 2, (current_waypoint.lat + next_waypoint.lat) / 2), None)
+        circle_centres = (Coord(lon=(current_waypoint.lon + next_waypoint.lon) / 2, lat=(current_waypoint.lat + next_waypoint.lat) / 2), None)
 
     if turn_type == "double circle":
         turn_point1 = calculate_single_centre_point(previous_point, current_waypoint, next_waypoint, turn_radius)
@@ -1191,13 +1191,13 @@ def create_centre_points_for_lightbulb(current_waypoint=None, next_waypoint=None
         next_waypoint_centre = create_point(next_waypoint, turn_radius, current_direction + pi / 2)
 
     # Find location of middle centre point
-    centre_of_waypoints = Coord((current_waypoint.lon + next_waypoint.lon) / 2, (current_waypoint.lat + next_waypoint.lat) / 2)
+    centre_of_waypoints = Coord(lon=(current_waypoint.lon + next_waypoint.lon) / 2, lat=(current_waypoint.lat + next_waypoint.lat) / 2)
     distance_forwards = math.sqrt(4 * turn_radius ** 2 - (turn_radius + layer_distance / 2) ** 2)
 
     centre_x = centre_of_waypoints.lon + distance_forwards * math.cos(current_direction)
     centre_y = centre_of_waypoints.lat + distance_forwards * math.sin(current_direction)
 
-    middle_centre = Coord(centre_x, centre_y)
+    middle_centre = Coord(lon=centre_x, lat=centre_y)
     circle_centres = ([current_waypoint_centre, middle_centre, next_waypoint_centre], None)
     return circle_centres
 
@@ -1237,23 +1237,23 @@ def create_waypoints_from_points(points=None):
     return waypoints
 
 def calculate_closest_point_on_segment_to_point(segment_start=None, segment_end=None, reference_point=None):
-    segment_vector = Coord(segment_end.lon - segment_start.lon, segment_end.lat - segment_start.lat)
-    segment_to_reference = Coord(reference_point.lon - segment_start.lon, reference_point.lat - segment_start.lat)
+    segment_vector = Coord(lon=segment_end.lon - segment_start.lon, lat=segment_end.lat - segment_start.lat)
+    segment_to_reference = Coord(lon=reference_point.lon - segment_start.lon, lat=reference_point.lat - segment_start.lat)
     percentage_along_segment = (segment_to_reference.lon * segment_vector.lon + segment_to_reference.lat * segment_vector.lat) / (segment_vector.lon ** 2 + segment_vector.lat ** 2)
     percentage_along_segment = max(0, min(percentage_along_segment, 1))
-    closest_point = Coord(segment_start.lon + percentage_along_segment * segment_vector.lon, segment_start.lat + percentage_along_segment * segment_vector.lat)
+    closest_point = Coord(lon=segment_start.lon + percentage_along_segment * segment_vector.lon, lat=segment_start.lat + percentage_along_segment * segment_vector.lat)
     return closest_point
 
 def clamp_angle(angle):
     return math.atan2(math.sin(angle), math.cos(angle))
 
 def calculate_closest_perpendicular_vertex(polygon=None, orientation=None, start_point=None):
-    perpendicular_direction = Coord(math.sin(orientation), - math.cos(orientation))
+    perpendicular_direction = Coord(lon=math.sin(orientation), lat=- math.cos(orientation))
     furthest_vertices = [0, 0]
     furthest_projections = [0, 0]
     vertex_count = 0
     for vertex in polygon.vertices:
-        starting_to_vertex = Coord(vertex.lon - start_point.lon, vertex.lat - start_point.lat)
+        starting_to_vertex = Coord(lon=vertex.lon - start_point.lon, lat=vertex.lat - start_point.lat)
         projection = starting_to_vertex.dot(perpendicular_direction) / perpendicular_direction.magnitude() ** 2
         if projection < furthest_projections[0]:
             furthest_vertices[0] = vertex_count
@@ -1284,8 +1284,8 @@ def calculate_point_away_from_polygon(polygon=None, centre_vertex_index=None, di
     return path_start
 
 def angle_between_points(pointA=None, pointB=None, pointC=None):
-    AB = Coord(pointB.lon - pointA.lon, pointB.lat - pointA.lat)
-    BC = Coord(pointC.lon - pointB.lon, pointC.lat - pointB.lat)
+    AB = Coord(lon=pointB.lon - pointA.lon, lat=pointB.lat - pointA.lat)
+    BC = Coord(lon=pointC.lon - pointB.lon, lat=pointC.lat - pointB.lat)
     if AB.dot(BC) / (AB.magnitude() * BC.magnitude()) > 1 or AB.dot(BC) / (AB.magnitude() * BC.magnitude()) < -1:
         angle = pi
         return angle
@@ -1388,8 +1388,8 @@ def handle_forward_backward_direction(origin=None, polygon=None, orientation=Non
     distant_point = create_point(raycast_point, layer_distance, orientation + pi)
 
     # Make sure the distant point is not behind the origin point
-    forward_direction = create_point(Coord(0, 0), 1, orientation)
-    reference_point = Coord(distant_point.lon - origin.lon, distant_point.lat - origin.lat)
+    forward_direction = create_point(Coord(lon=0, lat=0), 1, orientation)
+    reference_point = Coord(lon=distant_point.lon - origin.lon, lat=distant_point.lat - origin.lat)
 
     projection = get_projection(this_vector=reference_point, on_this_vector=forward_direction)
     if projection <= 0:
@@ -1457,11 +1457,11 @@ def find_closest_intersection_point(ray_origin=None, ray_direction=None, polygon
     return minimum_found_intersection_point
 
 def create_point(point=None, dist=None, angle=None):
-    return Coord(point.lon + dist * math.cos(angle), point.lat + dist * math.sin(angle))
+    return Coord(lon=point.lon + dist * math.cos(angle), lat=point.lat + dist * math.sin(angle))
 
 def find_segment_intersection(segment1, segment2):
-    xdiff = Coord(segment1.start.lon - segment1.end.lon, segment2.start.lon - segment2.end.lon)
-    ydiff = Coord(segment1.start.lat - segment1.end.lat, segment2.start.lat - segment2.end.lat)
+    xdiff = Coord(lon=segment1.start.lon - segment1.end.lon, lat=segment2.start.lon - segment2.end.lon)
+    ydiff = Coord(lon=segment1.start.lat - segment1.end.lat, lat=segment2.start.lat - segment2.end.lat)
 
     def det(a, b):
         return a.lon * b.lat - a.lat * b.lon
@@ -1470,10 +1470,10 @@ def find_segment_intersection(segment1, segment2):
     if div == 0:
         return None
 
-    d = Coord(det(segment1.start, segment1.end), det(segment2.start, segment2.end))
+    d = Coord(lon=det(segment1.start, segment1.end), lat=det(segment2.start, segment2.end))
     x = det(d, xdiff) / div
     y = det(d, ydiff) / div
-    return Coord(x, y)
+    return Coord(lon=x, lat=y)
 
 def create_random_search_area(vertex_count, x_lim=None, y_lim=None):
     if y_lim is None:
@@ -1491,7 +1491,7 @@ def create_random_search_area(vertex_count, x_lim=None, y_lim=None):
 
     angle_percentages.sort()
 
-    origin = Coord(x_diff, y_diff)
+    origin = Coord(lon=x_diff, lat=y_diff)
     for index in range(vertex_count):
         angle = angle_percentages[index] * 2*pi
         vertex = create_point(origin, max_dist, angle)
@@ -1514,7 +1514,7 @@ def create_random_start_point(x_lim=None, y_lim=None):
     x_diff = x_lim[1] * 2 - x_lim[0] * 2
     y_diff = y_lim[1] * 2 - y_lim[0] * 2
 
-    random_start = Coord(random.uniform(x_diff - abs(x_diff) / 2, x_diff + abs(x_diff) / 2), random.uniform(y_diff - abs(y_diff) / 2, y_diff + abs(y_diff) / 2))
+    random_start = Coord(lon=random.uniform(x_diff - abs(x_diff) / 2, x_diff + abs(x_diff) / 2), lat=random.uniform(y_diff - abs(y_diff) / 2, y_diff + abs(y_diff) / 2))
     return random_start
 
 def calculate_distance_between_points(point_1=None, point_2=None):
@@ -1544,8 +1544,8 @@ def do_entire_simulation(do_plot=True, do_random=True):
         minimum_turn_radius = random.uniform(0.1, 5)
         curve_resolution = 5
     else:
-        start_point = Coord(-38.40, 144.88)
-        search_area_waypoints = [Coord(-38.383944, 144.880181), Coord(-38.397322, 144.908826), Coord(-38.366840, 144.907242), Coord(-38.364585, 144.880813)]
+        start_point = Coord(lat=-38.40, lon=144.88)
+        search_area_waypoints = [Coord(lat=-38.383944, lon=144.880181), Coord(lat=-38.397322, lon=144.908826), Coord(lat=-38.366840, lon=144.907242), Coord(lat=-38.364585, lon=144.880813)]
         search_area_polygon = Polygon(search_area_waypoints)
         layer_distance = 400  # Metres
         minimum_turn_radius = 150  # Metres

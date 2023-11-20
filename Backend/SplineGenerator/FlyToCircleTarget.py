@@ -1,3 +1,4 @@
+from __future__ import division, print_function
 import math
 import matplotlib.pyplot as plt
 from PathGenerator import *
@@ -9,6 +10,7 @@ class FlyToCircleTarget:
     def __init__(self):
         # Input
         self.existing_path = None  # List of Coord classes that outline the path the plane is currently on
+        self.current_path_index = None  # Index of the existing path that shows the previous waypoint the plane has travelled through
         self.plane_location = None  # Coord of plane
         self.plane_bearing = None  # Bearing of the plane when the pilot wants to go to the target
         self.target_location = None  # Coord of target
@@ -28,8 +30,16 @@ class FlyToCircleTarget:
         # Output
         self.formatted_points = None  # A returnable format for the generated spline
 
-    def set_parameters(self):
-        pass
+    def set_parameters(self, plane_location=None, plane_bearing=None, target_location=None, turn_radius=None, target_circle_radius=None, minimum_distance_to_start=None, times_to_circle=None, curve_resolution=None):
+        self.plane_location = plane_location
+        self.plane_bearing = plane_bearing
+        self.target_location = target_location
+        scaling_factor = 111320 / math.cos(self.plane_location.lat)
+        self.turn_radius = turn_radius / scaling_factor
+        self.target_circle_radius = target_circle_radius / scaling_factor
+        self.minimum_distance_to_start = minimum_distance_to_start / scaling_factor
+        self.times_to_circle = times_to_circle
+        self.curve_resolution = curve_resolution * scaling_factor
 
     def set_data(self):
         pass
@@ -38,6 +48,7 @@ class FlyToCircleTarget:
         coords = []
         for coord in coord_dictionary:
             new_coord = Coord(lat=coord["lat"], lon=coord["lon"])
+            coords.append(new_coord)
 
         self.existing_path = coords
 
@@ -49,7 +60,7 @@ class FlyToCircleTarget:
         dict_list = []
 
         for point in self.path_points:
-            new_dict_entry = {"long": point.lon, "lat": point.lat, "alt": 100}
+            new_dict_entry = {"lon": point.lon, "lat": point.lat, "alt": 100}
             dict_list.append(new_dict_entry)
 
         return dict_list
@@ -79,11 +90,12 @@ class FlyToCircleTarget:
         circle_points = self.generate_circle_points()
 
         # Return the joined points
-        return turn_points.extend(circle_points)
+        turn_points.extend(circle_points)
+        return turn_points
 
     def generate_circle_points(self):
         # Get the points from a general interpolation
-        circle_points = general_curve_interpolation_v2(start_point=self.target_circle_start_point, centre_point=self.target_location, turn_direction=self.target_rotation_direction, number_of_turns=10, radius=self.target_circle_radius, curve_resolution=self.curve_resolution)
+        circle_points = general_curve_interpolation_v2(start_point=self.target_circle_start_point, centre_point=self.target_location, turn_direction=self.target_rotation_direction, number_of_turns=self.times_to_circle, radius=self.target_circle_radius, curve_resolution=self.curve_resolution)
         return circle_points
 
     def generate_turn_points(self):
@@ -94,12 +106,20 @@ class FlyToCircleTarget:
         turn_points = self.turn_points_generate_points_to_target_radius()
 
         # Create turn points complete list
-        return turn_points.insert(0, self.start_point)
+        turn_points.insert(0, self.start_point)
+        return turn_points
 
     def turn_points_determine_start_point(self):
+        # Check if a start bearing and start point were included
+        if self.plane_location is not None and self.plane_bearing is not None:
+            self.start_bearing = self.plane_bearing
+            return self.plane_location
+
         # Loop through the points and add the distances up to determine where the turn should start
         distance_sum = 0
         path_index = 0
+        next_point = None
+        current_point = None
         while distance_sum < self.minimum_distance_to_start:
             current_point = self.existing_path[path_index]
             next_point = self.existing_path[path_index + 1]
@@ -155,7 +175,7 @@ def calculate_distance_between_points(point_1=None, point_2=None):
     return math.sqrt((point_1.lon - point_2.lon) ** 2 + (point_1.lat - point_2.lat) ** 2)
 
 def create_point(point=None, dist=None, angle=None):
-    return Coord(point.lon + dist * math.cos(angle), point.lat + dist * math.sin(angle))
+    return Coord(lon=point.lon + dist * math.cos(angle), lat=point.lat + dist * math.sin(angle))
 
 def intersection_orientation(p, q, r):
     # To find the orientation of an ordered triplet (p,q,r)
@@ -177,24 +197,15 @@ def get_tangency_angle(start_centre=None, end_centre=None, start_radius=None, en
     distance = calculate_distance_between_points(start_centre, end_centre)
     reference_angle = math.atan2(end_centre.lat - start_centre.lat, end_centre.lon - start_centre.lon)
 
-    # Check if circles are too close together
-    if calculate_distance_between_points(start_centre, end_centre) <= start_radius + end_radius:
-        print("====================================\n\tWAYPOINTS TOO CLOSE TOGETHER\n\tWaypoints:")
-        print("\t\t", start_centre.lon, start_centre.lat, "\n\t\t", end_centre.lon, end_centre.lat)
-        print("\tMinimum distance allowed:", start_radius + end_radius)
-        print("\tCurrent distance:", calculate_distance_between_points(start_centre, end_centre), "\n====================================")
-        return None, None
+    beta = math.acos((radius_current - radius_next) / distance)
 
     if turn_direction == "clockwise":
-        angle_exit = math.acos((radius_current + radius_next) / distance) + reference_angle
+        angle_exit = reference_angle + beta
+        return angle_exit, angle_exit
     else:
-        angle_exit = math.acos((radius_current + radius_next) / distance) - reference_angle
-    angle_entrance = math.pi - angle_exit
+        angle_exit = reference_angle - beta
+        return angle_exit, angle_exit
 
-    if turn_direction == "clockwise":
-        return angle_exit, -angle_entrance
-    else:
-        return -angle_exit, angle_entrance
 
 def general_curve_interpolation(start_point=None, start_angle=None, end_point=None, end_angle=None, centre_point=None, radius=None, number_of_turns=None, turn_direction=None, curve_resolution=None):
     if start_point is not None:
@@ -246,15 +257,9 @@ def calculate_angle_from_points(from_point=None, to_point=None):
 
 def general_curve_interpolation_v2(start_point=None, start_angle=None, centre_point=None, turn_direction=None, number_of_turns=None, radius=None, curve_resolution=None):
     if start_point is not None:
-        start_angle = math.atan2(start_point.lat, start_point.lon)
+        start_angle = math.atan2(start_point.lat - centre_point.lat, start_point.lon - centre_point.lon)
 
     angle_to_complete = number_of_turns * pi * 2
-
-    if turn_direction == "clockwise":
-        end_angle = start_angle - angle_to_complete
-    else:
-        end_angle = start_angle + angle_to_complete
-
     number_of_points, angle_step = calculate_angle_step_for_curve_interpolation(curve_resolution=curve_resolution, radius=radius, angle_difference=angle_to_complete)
 
     # If clockwise, make angle step negative
@@ -270,10 +275,39 @@ def general_curve_interpolation_v2(start_point=None, start_angle=None, centre_po
 
     return curve_points
 
+def plot_waypoints(points_dict=None, points_path=None, point1=None):
+    plt.figure(dpi=400)  # Resolution for zoomin in
+
+    if points_dict is not None:
+        x_vals = []
+        y_vals = []
+
+        for point in points_dict:
+            x_vals.append(point["lon"])
+            y_vals.append(point["lat"])
+
+        plt.plot(x_vals, y_vals)
+        plt.scatter(x_vals, y_vals, color='red', s=5)
+
+    if points_path is not None:
+        x_vals = []
+        y_vals = []
+
+        for point in points_path:
+            x_vals.append(point["lon"])
+            y_vals.append(point["lat"])
+
+        plt.plot(x_vals, y_vals)
+
+    plt.scatter(point1.lon, point1.lat, color='purple', s=19)
+
+    plt.axis('equal')
+    plt.show()
+
 def main_function():
     path_generator = PathGenerator()
 
-    path_generator.take_off_point = Coord(-38.40, 144.88)  # Optional
+    path_generator.take_off_point = Coord(lat=-38.40, lon=144.88)  # Optional
     path_generator.path_generation_type = PathGenerationType.SEARCH_AREA
     path_generator.minimum_turn_radius = 280  # Metres
     path_generator.curve_resolution = 0.015  # 0.015 waypoints per metre on curves or 1 / 0.015 metres between each waypoint
@@ -293,7 +327,19 @@ def main_function():
     # Fill in parameters
     fly_to_target = FlyToCircleTarget()
     fly_to_target.set_existing_waypoints(path_points)
-    fly_to_target.set_parameters(plane_location=)
+    fly_to_target.set_parameters(plane_location=path_generator.take_off_point,
+                                 plane_bearing=-pi,
+                                 target_location=Coord(lat=-38.37, lon=144.88),
+                                 turn_radius=280,
+                                 target_circle_radius=900,
+                                 minimum_distance_to_start=20,
+                                 times_to_circle=0.85,
+                                 curve_resolution=0.015)
+
+    path = fly_to_target.generate_path()
+    print(path)
+
+    plot_waypoints(points_dict=path, points_path=path_points, point1=fly_to_target.target_location)
 
     # self.plane_location = None  # Coord of plane
     # self.target_location = None  # Coord of target
