@@ -206,7 +206,6 @@ def get_tangency_angle(start_centre=None, end_centre=None, start_radius=None, en
         angle_exit = reference_angle - beta
         return angle_exit, angle_exit
 
-
 def general_curve_interpolation(start_point=None, start_angle=None, end_point=None, end_angle=None, centre_point=None, radius=None, number_of_turns=None, turn_direction=None, curve_resolution=None):
     if start_point is not None:
         start_angle = calculate_angle_from_points(from_point=centre_point, to_point=start_point)
