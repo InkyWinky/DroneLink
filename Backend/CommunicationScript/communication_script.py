@@ -755,8 +755,6 @@ class Commands:
             # https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example2.py
             # https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example10.py
 
-        # if raw_packet.msgid != 75:
-            
         # if component id corresponds to payload
         try:
             if raw_packet.compid == 171:
