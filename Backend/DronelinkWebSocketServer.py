@@ -121,12 +121,12 @@ class CameraFeedThread(threading.Thread):
             if not self.camera:
                 try:
                     if platform == "win32":
-                        self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                        self.camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
                     else:
-                        self.camera = cv2.VideoCapture(0)
+                        self.camera = cv2.VideoCapture(1)
                     # Set camera resolution
-                    self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920) # 1920 / 1280
-                    self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080) # 1080 / 720
+                    self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640) # 1920 / 1280
+                    self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) # 1080 / 720
                 except:
                     self.camera = None
                 time.sleep(2)
