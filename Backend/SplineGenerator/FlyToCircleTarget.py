@@ -1,4 +1,4 @@
-from __future__ import division, print_function
+#from __future__ import division, print_function
 import math
 import matplotlib.pyplot as plt
 from PathGenerator import *
@@ -115,6 +115,8 @@ class FlyToCircleTarget:
             self.start_bearing = self.plane_bearing
             return self.plane_location
 
+        # TODO: If the plane is within the target radius, move the start point in the direction of plane bearing
+
         # Loop through the points and add the distances up to determine where the turn should start
         distance_sum = 0
         path_index = 0
@@ -144,8 +146,8 @@ class FlyToCircleTarget:
         elif turn_direction == 2:
             turn_direction = "counterclockwise"
         else:
-            print("Collinear oops")
-            return None
+            print("Collinear")
+            turn_direction = "clockwise"
 
         # Calculate initial turn circle centre
         self.target_rotation_direction = turn_direction
@@ -196,6 +198,11 @@ def get_tangency_angle(start_centre=None, end_centre=None, start_radius=None, en
     radius_next = end_radius
     distance = calculate_distance_between_points(start_centre, end_centre)
     reference_angle = math.atan2(end_centre.lat - start_centre.lat, end_centre.lon - start_centre.lon)
+
+    # Check if the plane is within the target radius
+    min_distance = start_radius + end_radius
+    if distance < min_distance:
+        assert ValueError("Plane is within the target's view radius")
 
     beta = math.acos((radius_current - radius_next) / distance)
 
@@ -275,6 +282,7 @@ def general_curve_interpolation_v2(start_point=None, start_angle=None, centre_po
     return curve_points
 
 def plot_waypoints(points_dict=None, points_path=None, point1=None):
+
     plt.figure(dpi=400)  # Resolution for zoomin in
 
     if points_dict is not None:
@@ -326,13 +334,13 @@ def main_function():
     # Fill in parameters
     fly_to_target = FlyToCircleTarget()
     fly_to_target.set_existing_waypoints(path_points)
-    fly_to_target.set_parameters(plane_location=path_generator.take_off_point,
-                                 plane_bearing=-pi,
+    fly_to_target.set_parameters(plane_location=Coord(lat=-38.369, lon=144.883),
+                                 plane_bearing=0,
                                  target_location=Coord(lat=-38.37, lon=144.88),
                                  turn_radius=280,
                                  target_circle_radius=900,
                                  minimum_distance_to_start=20,
-                                 times_to_circle=0.85,
+                                 times_to_circle=0.7,
                                  curve_resolution=0.015)
 
     path = fly_to_target.generate_path()
@@ -347,6 +355,7 @@ def main_function():
     # self.minimum_distance_to_start = None  # Minimum distance along the existing before the plane starts turning
     # self.times_to_circle = None  # Number of times to circle the target
     # self.curve_resolution = None  # The number of waypoints per metre
+
 
 
 if __name__ == "__main__":
