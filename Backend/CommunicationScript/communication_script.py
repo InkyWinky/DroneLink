@@ -14,7 +14,7 @@ When developing in the communication script, there are 3 main exposed classes th
     This class exposes the MAVLinkInterface that allows for us to use mavlink functions.
     e.g. 'MAV.doARM(...)' will arm or disarm the vehicle.
     
-    2. cs
+    2. cs (a.k.a current state)
     Alias for 'MissionPlanner.MainV2.MAV.cs'
     This class exposes the currentState of the vehicle. Using this, we will be able to access all variables under the 'Status' tab in mission planner.
     e.g. 'cs.battery_remaining' will return an integer from 0..100 that represents the battery level of the vehicle.
@@ -87,6 +87,7 @@ from MAVLink import mavlink_command_int_t
 # Importing C# List primitive dependency 
 clr.AddReference('System')
 from System.Collections.Generic import List
+from System import Func
 print("[INFO] Starting Script...")
 
 
@@ -748,6 +749,32 @@ class Commands:
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling MAV_COMMAND_INT COMMAND")
+    
+    def handle_message_packet(self, raw_packet):
+        # taking from:
+            # https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example2.py
+            # https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example10.py
+
+        # if raw_packet.msgid != 75:
+            
+        # if component id corresponds to payload
+        try:
+            if raw_packet.compid == 171:
+                print("[TIME TO CELEBRATE]")
+                print(bytes(raw_packet.data))
+        except Exception as e:
+            print(e)
+        
+    def command_int_success(self, message):
+        print("[MESSAGE] Successfully subscribed to command_int")
+        print(message.data)
+        return True
+    
+    def subscribe_to_packet_type(self):
+        sub = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT.value__, Func[MAVLink.MAVLinkMessage, bool] (self.command_int_success))
+
+        MAV.OnPacketReceived += self.handle_message_packet
+
 # ------------------------------------ End Classes ------------------------------------
 # def waypoint_mavlink_test():
 #     """Sets the current mission to hard-coded waypoints using MAVLink functions.
