@@ -4,6 +4,7 @@ import time
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from CommunicationScript.MissionPlannerSocket import Commands
 import SplineGenerator.SearchPathGenerator as spliner
+import SplineGenerator.PathGenerator as directSpliner
 from mav_enums import *
 
 class HTTPServerThread(threading.Thread):
@@ -84,7 +85,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             # mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
         elif command == Commands.DIRECT_WAYPOINTS:
-            waypoint_spliner=spliner.PathGenerator()
+            waypoint_spliner=directSpliner.PathGenerator()
+            mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
         elif command == Commands.SYNC_SCRIPT:
             mp_sock.sync_script()
             print("Executed SYNC SCRIPT")
