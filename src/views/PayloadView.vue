@@ -17,7 +17,17 @@
         class="flex flex-col w-full h-full"
       >
         VISION
-        <canvas ref="vision_large" class="bg-green-800 w-full h-full"></canvas>
+        <canvas ref="vision_large" class="bg-green-800 w-full h-full"> </canvas>
+        <div
+          id="bounding-box"
+          :style="{
+            height: width + '%',
+            width: width + '%',
+            top: y_perc - width / 2 + '%',
+            right: x_perc - width / 2 + '%',
+          }"
+          v-show="width > 0"
+        ></div>
       </div>
       <div
         id="vid-feed-large-fpv"
@@ -168,6 +178,32 @@
             TARGET FOUND
           </button>
         </div>
+        <div id="bbox-testing">
+          <label for="x"> xperc</label>
+          <input
+            id="x"
+            class="bbox-test-input"
+            type="number"
+            v-model="x_perc"
+            style="width: 100px"
+          />
+          <label for="y">yperc</label>
+          <input
+            id="y"
+            class="bbox-test-input"
+            type="number"
+            v-model="y_perc"
+            style="width: 100px"
+          />
+          <label for="width"> width</label>
+          <input
+            id="width"
+            class="bbox-test-input"
+            type="number"
+            v-model="width"
+            style="width: 100px"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -198,9 +234,9 @@ const vision_large = ref(null);
 const vision_small = ref(null);
 const fpv_resolution = reactive({ width: 1920, height: 1080 });
 //Bounding box data (all are percentages)
-// const x_perc = ref(0);
-// const y_perc = ref(0);
-// const width = ref(0);
+const x_perc = ref(50);
+const y_perc = ref(50);
+const width = ref(50);
 
 watch(fpv_cam, (val) => {
   if (fpv_large.value && !displayVisionLarge.value) {
@@ -357,5 +393,13 @@ function nerf() {
 <style scoped>
 #payload-body {
   height: calc(100vh - 70px) !important;
+}
+#bounding-box {
+  position: absolute;
+  border: 5px solid red;
+  z-index: 999;
+}
+#bbox-test-input {
+  width: 100px;
 }
 </style>
