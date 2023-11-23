@@ -198,16 +198,16 @@ const vision_large = ref(null);
 const vision_small = ref(null);
 const fpv_resolution = reactive({ width: 1920, height: 1080 });
 //Bounding box data (all are percentages)
-const x_perc = ref(0);
-const y_perc = ref(0);
-const width = ref(0);
+// const x_perc = ref(0);
+// const y_perc = ref(0);
+// const width = ref(0);
 
 watch(fpv_cam, (val) => {
   if (fpv_large.value && !displayVisionLarge.value) {
     let ctx = fpv_large.value.getContext("2d");
     let image = new Image();
     image.src = val;
-    // image.src = URL.createObjectURL(val);
+    // image.src = URL.createObjectURL(val)gi;
     image.addEventListener("load", () => {
       fpv_resolution.width = image.width;
       fpv_resolution.height = image.height;
