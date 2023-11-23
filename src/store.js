@@ -14,7 +14,7 @@ export const store = reactive({
   messages: [],
   updateLiveData(data) {
     if (data["messages"].length > 0) {
-      console.log(data["messages"]);
+      console.log("MESSAGES" + data["messages"]);
       this.messages = this.messages.concat(data["messages"]);
       data["messages"] = [];
     }
