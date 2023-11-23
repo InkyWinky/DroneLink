@@ -1,3 +1,6 @@
+<!-- TODO
+[ ] After comfirmation of target, show potential spline path for confirmation
+-->
 <template>
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css"
