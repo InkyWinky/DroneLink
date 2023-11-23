@@ -33,9 +33,9 @@ import NotePad_new from "@/components/notePad/NotePad_new.vue";
 import RawDataDisplay from "@/components/rawDataDisplay/RawDataDisplay.vue";
 import { ref } from "vue";
 const tabs = [
-  { name: "Notes", component: <NotePad_new /> },
   { name: "Messages", component: <MessagesDisplay /> },
   { name: "Raw Data", component: <RawDataDisplay /> },
+  { name: "Notes", component: <NotePad_new /> },
 ];
 let tab = ref("Notes");
 
