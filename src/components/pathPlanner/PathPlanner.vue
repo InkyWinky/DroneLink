@@ -299,7 +299,28 @@ async function formatWaypoints() {
   console.log("outputArr", outputArr);
   return outputArr;
 }
-
+async function testWaypoints() {
+  const takeoff_alt = store?.settings?.takeoff_alt || 20;
+  console.log(waypoints.value);
+  let WAYPOINT_ID = store?.settings?.waypoint_type || 16;
+  console.log(WAYPOINT_ID);
+  let outputArr = [];
+  for (let i = 0; i < waypoints.value.length; i++) {
+    let wp = waypoints.value[i];
+    let wp_obj = {
+      long: parseFloat(wp.long),
+      lat: parseFloat(wp.lat),
+      alt: parseFloat(wp.alt),
+      id: WAYPOINT_ID,
+    };
+    outputArr.push(wp_obj);
+  }
+  const commandResult = await api.executeCommand("OVERRIDE_FLIGHTPLANNER", {
+    waypoints: outputArr,
+    takeoff_alt: takeoff_alt,
+  });
+  console.log("commandResult", commandResult);
+}
 function readFile(formInput) {
   //The function readFile reads the waypoiants from the csv file chosen in the input form and turns it into text
   //Input: formInput is the file that was selected when you click "import waypoints from csv" button

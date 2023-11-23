@@ -83,6 +83,8 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             # mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
+        elif command == Commands.DIRECT_WAYPOINTS:
+            waypoint_spliner=spliner.PathGenerator()
         elif command == Commands.SYNC_SCRIPT:
             mp_sock.sync_script()
             print("Executed SYNC SCRIPT")
