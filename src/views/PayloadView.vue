@@ -112,19 +112,39 @@
         <div id="buttons" class="w-full flex h-auto">
           <div id="failsafe-btns" class="w-full flex h-auto">
             <button
+              data-tooltip-target="tooltip-smerf"
               class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
               id="failsafe-smerf"
               @click="smerf()"
             >
               SMERF
             </button>
+            <div
+              id="tooltip-smerf"
+              role="tooltip"
+              class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
+            >
+              Drop payload (Somewhat Minor Emergency Release Failsafe)
+              <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+
             <button
+              data-tooltip-target="tooltip-nerf"
               class="bg-red-800 rounded-md text-white p-2 m-1 hover:bg-red-900 w-1/2"
               id="failsafe-nerf"
               @click="nerf()"
             >
               NERF
             </button>
+
+            <div
+              id="tooltip-nerf"
+              role="tooltip"
+              class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
+            >
+              Burn rope (Nichrome Emergency Release Failsafe)
+              <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
           </div>
         </div>
         <div class="w-full flex h-auto" v-if="(showBegin = true)">
@@ -154,6 +174,7 @@
 import { ref, onMounted, watch, reactive } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
+import { initFlowbite } from "flowbite";
 import { store, fpv_cam, fpv_cam_framerate } from "@/store";
 import api from "@/api";
 
@@ -173,6 +194,10 @@ const fpv_small = ref(null);
 const vision_large = ref(null);
 const vision_small = ref(null);
 const fpv_resolution = reactive({ width: 1920, height: 1080 });
+//Bounding box data (all are percentages)
+const x_perc = ref(0);
+const y_perc = ref(0);
+const width = ref(0);
 
 watch(fpv_cam, (val) => {
   if (fpv_large.value && !displayVisionLarge.value) {
@@ -197,6 +222,7 @@ watch(fpv_cam, (val) => {
 });
 
 onMounted(() => {
+  initFlowbite();
   mapboxgl.accessToken =
     "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
   Map.value = new mapboxgl.Map({

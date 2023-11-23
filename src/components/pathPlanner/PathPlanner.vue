@@ -69,11 +69,24 @@
       </form>
     </div>
     <label for="importBtn">
-      <i class="fa-solid fa-file-csv icon-btn-effect" id="importIcon"></i>
+      <i
+        class="fa-solid fa-file-csv icon-btn-effect"
+        data-tooltip-target="tooltip-csv"
+        id="importIcon"
+      ></i>
     </label>
     <input id="importBtn" type="file" accept=".csv" @change="readFile" hidden />
+    <div
+      id="tooltip-csv"
+      role="tooltip"
+      class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
+    >
+      Import waypoints as csv file
+      <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
 
     <button
+      data-tooltip-target="tooltip-spline"
       class="transparentBtn"
       id="splineBtn"
       type="button"
@@ -83,6 +96,35 @@
         timeline
       </span>
     </button>
+    <div
+      id="tooltip-spline"
+      role="tooltip"
+      class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
+    >
+      Spline search path given boundary coordinates
+      <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
+    <button
+      data-tooltip-target="tooltip-test"
+      class="transparentBtn"
+      id="testBtn"
+      type="button"
+      @click="testWaypoints()"
+    >
+      <i
+        class="fa-solid fa-plane icon-btn-effect"
+        style="color: lightslategray"
+      ></i>
+    </button>
+    <!-- Tooltip for testing button -->
+    <div
+      id="tooltip-test"
+      role="tooltip"
+      class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
+    >
+      Fly splined path to waypoints
+      <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
   </div>
 </template>
 
@@ -95,6 +137,7 @@ import mapboxgl from "mapbox-gl";
 import { onMounted } from "vue";
 import api from "../../api.js";
 import { store } from "@/store";
+import { initFlowbite } from "flowbite";
 
 // give each waypoint a unique id
 const showMap = ref(false);
@@ -294,7 +337,6 @@ function addWaypointsFromTxt(csvText) {
     center: [waypoints.value[0].long, waypoints.value[0].lat],
     zoom: 15,
   }); //Center map to first waypoint in list
-
   updateLine(coordinates.value);
   nextTick(() => {
     //Keep scroll at bottom of list
@@ -303,6 +345,7 @@ function addWaypointsFromTxt(csvText) {
 }
 
 onMounted(() => {
+  initFlowbite();
   let droneLat = store?.live_data?.lat;
   if (droneLat == null) {
     droneLat = 145.24602266283097; //Default value
@@ -458,8 +501,17 @@ label {
   position: absolute;
   bottom: 15px;
   left: 15px;
-  font-size: 3em;
-  color: grey;
+  font-size: 2.5em;
+  color: lightslategrey;
+  z-index: 0.99;
+}
+
+#testBtn {
+  position: absolute;
+  bottom: 5px;
+  right: 80px;
+  font-size: 2em;
+  color: lightslategrey;
   z-index: 0.99;
 }
 
@@ -482,12 +534,12 @@ label {
 .mapboxgl-ctrl-bottom-right {
   display: none;
 }
-#splineIcon {
+#splineBtn {
   position: absolute;
-  top: 92%;
-  right: 15px;
-  font-size: 3em;
-  color: grey;
+  bottom: 20px;
+  right: 10px;
+  font-size: 2em;
+  color: lightslategray;
   padding: 0;
   height: 40px;
 }
