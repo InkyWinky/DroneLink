@@ -14,7 +14,7 @@ When developing in the communication script, there are 3 main exposed classes th
     This class exposes the MAVLinkInterface that allows for us to use mavlink functions.
     e.g. 'MAV.doARM(...)' will arm or disarm the vehicle.
     
-    2. cs
+    2. cs (a.k.a current state)
     Alias for 'MissionPlanner.MainV2.MAV.cs'
     This class exposes the currentState of the vehicle. Using this, we will be able to access all variables under the 'Status' tab in mission planner.
     e.g. 'cs.battery_remaining' will return an integer from 0..100 that represents the battery level of the vehicle.
@@ -87,6 +87,7 @@ from MAVLink import mavlink_command_int_t
 # Importing C# List primitive dependency 
 clr.AddReference('System')
 from System.Collections.Generic import List
+from System import Func
 print("[INFO] Starting Script...")
 
 
@@ -121,6 +122,7 @@ class MissionManager:
         self.command_queue_mutex = threading.Lock() # Mutex for command_queue
         self.quit = False # Allows for threads to terminate correctly
 
+        self.subscribe_to_mavlink_msg()
         # Start connection to backend
         if connect:
             self.__establish_connection()  # open the connection
@@ -581,6 +583,57 @@ class MissionManager:
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[ERROR] Failed to send COMMAND INT")
+
+    def handle_message_packet(self, raw_packet):
+        """Handles any MAVLink message packets received, and prints if they are command_int or debug_vect messages
+        architecture taken from:
+         - https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example2.py
+         - https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example10.py
+
+        Args:
+            MAVLink.MAVLinkMessage raw_packet: The MAVLink message packet received
+        """
+
+        # if component id corresponds to payload
+        try:
+            if raw_packet.msgid == 250: # debug_vect
+                if raw_packet.name == "GEOTAG_GPS":
+                    target_lat = raw_packet.x
+                    target_lon = raw_packet.y
+                    target_height = raw_packet.z 
+                elif raw_packet.name == "GEOTAG_BOX":
+                    # 3 floats represent bounding box coords
+                    box_x = int(raw_packet.x)
+                    box_y = int(raw_packet.y)
+                    box_h = int(raw_packet.z)
+            elif raw_packet.msgid == 75 and raw_packet.compid == 172: # command_int specifying MM
+                    print("[TIME TO CELEBRATE]")
+                    print(bytes(raw_packet.data))
+
+        except Exception as e:
+            print("[ERROR] " + e)
+        
+    def subscribe_success(self, message):
+        """ Callback function called if SubscribeToPacketType succeeds, and prints the message data
+
+        Args:
+            MAVLink.MAVLinkMessage message: The MAVLink message packet received
+        """
+
+        print("[MESSAGE] Successfully subscribed to message")
+        print(message.data)
+        return True
+    
+    def subscribe_to_mavlink_msg(self):
+        """Function to subscribe to command_int MAVLink messages (enum value: 75) """
+        # subscribe to command_ints for lifeline
+        sub_command_int = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT, Func[MAVLink.MAVLinkMessage, bool] (self.subscribe_success), 1, 171)
+        # subscribe to debug_vects for vision
+        # sub_debug_vect = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__, Func[MAVLink.MAVLinkMessage, bool] (self.subscribe_success))
+
+        #  to unsubscribe: MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT.value__, sub);
+        #  to unsubscribe: MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__, sub);
+        MAV.OnPacketReceived += self.handle_message_packet
         
 
 class Commands:
@@ -748,6 +801,7 @@ class Commands:
         except Exception as e:
             print("[ERROR] " + str(e))
             print("[COMMAND] ERROR: Handling MAV_COMMAND_INT COMMAND")
+
 # ------------------------------------ End Classes ------------------------------------
 # def waypoint_mavlink_test():
 #     """Sets the current mission to hard-coded waypoints using MAVLink functions.
