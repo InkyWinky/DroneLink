@@ -110,31 +110,16 @@ class FlyToCircleTarget:
         return turn_points
 
     def turn_points_determine_start_point(self):
-        # Check if a start bearing and start point were included
-        if self.plane_location is not None and self.plane_bearing is not None:
+        # Check if plane is within the target radius
+        distance = calculate_distance_between_points(self.plane_location, self.target_location)
+        self.start_bearing = self.plane_bearing
+        if distance < self.target_circle_radius:
+            distance_required = self.target_circle_radius - distance
+            # Create a point that distance away
+            return create_point(self.plane_location, distance_required, self.plane_bearing)
+        else:
             self.start_bearing = self.plane_bearing
             return self.plane_location
-
-        # TODO: If the plane is within the target radius, move the start point in the direction of plane bearing
-
-        # Loop through the points and add the distances up to determine where the turn should start
-        distance_sum = 0
-        path_index = 0
-        next_point = None
-        current_point = None
-        while distance_sum < self.minimum_distance_to_start:
-            current_point = self.existing_path[path_index]
-            next_point = self.existing_path[path_index + 1]
-
-            distance_between_points = calculate_distance_between_points(current_point, next_point)
-            distance_sum += distance_between_points
-
-        # Find out how far from the current point the start can be
-        distance_required = distance_sum - self.minimum_distance_to_start
-
-        # Create a point that distance away
-        self.start_bearing = math.atan2(next_point.lat - current_point.lat, next_point.lon - current_point.lon)
-        return create_point(current_point, distance_required, self.start_bearing)
 
     def turn_points_generate_points_to_target_radius(self):
         # Determine turn direction
@@ -334,7 +319,7 @@ def main_function():
     # Fill in parameters
     fly_to_target = FlyToCircleTarget()
     fly_to_target.set_existing_waypoints(path_points)
-    fly_to_target.set_parameters(plane_location=Coord(lat=-38.369, lon=144.883),
+    fly_to_target.set_parameters(plane_location=Coord(lat=-38.369, lon=144.882),
                                  plane_bearing=0,
                                  target_location=Coord(lat=-38.37, lon=144.88),
                                  turn_radius=280,
