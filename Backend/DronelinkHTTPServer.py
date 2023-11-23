@@ -8,13 +8,15 @@ import SplineGenerator.PathGenerator as directSpliner
 from mav_enums import *
 
 class HTTPServerThread(threading.Thread):
-    def __init__(self, host, mp_socket):
+    def __init__(self, host, mp_socket, vision_websocket_url):
         # host: IP of the host to run the server on.
         # mp_socket: The MissionPlannerSocket that talks to Mission Planner.
+        # vision_websocket_url: The WebSocket URL for Vision's Server for video feed.
         threading.Thread.__init__(self)
         self.server = None
         self.host = host
         self.mp_socket = mp_socket
+        self.vision_websocket_url = vision_websocket_url
         global mp_sock
         mp_sock = mp_socket
 
