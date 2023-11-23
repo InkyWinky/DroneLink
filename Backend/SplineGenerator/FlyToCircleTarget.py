@@ -16,7 +16,7 @@ class FlyToCircleTarget:
         self.target_location = None  # Coord of target
         self.turn_radius = None  # Turn radius of the plane
         self.target_circle_radius = None  # Radius to circle the target at
-        self.minimum_distance_to_start = None  # Minimum distance along the existing before the plane starts turning
+        self.minimum_distance_to_start = 0  # Minimum distance along the existing before the plane starts turning
         self.times_to_circle = None  # Number of times to circle the target
         self.curve_resolution = None  # The number of waypoints per metre
 
@@ -116,10 +116,10 @@ class FlyToCircleTarget:
         if distance < self.target_circle_radius:
             distance_required = self.target_circle_radius - distance
             # Create a point that distance away
-            return create_point(self.plane_location, distance_required, self.plane_bearing)
+            return create_point(self.plane_location, distance_required + self.minimum_distance_to_start, self.plane_bearing)
         else:
             self.start_bearing = self.plane_bearing
-            return self.plane_location
+            return create_point(self.plane_location, self.minimum_distance_to_start, self.plane_bearing)
 
     def turn_points_generate_points_to_target_radius(self):
         # Determine turn direction
@@ -319,7 +319,7 @@ def main_function():
     # Fill in parameters
     fly_to_target = FlyToCircleTarget()
     fly_to_target.set_existing_waypoints(path_points)
-    fly_to_target.set_parameters(plane_location=Coord(lat=-38.369, lon=144.882),
+    fly_to_target.set_parameters(plane_location=Coord(lat=-38.371, lon=144.889),
                                  plane_bearing=0,
                                  target_location=Coord(lat=-38.37, lon=144.88),
                                  turn_radius=280,
