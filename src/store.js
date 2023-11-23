@@ -24,6 +24,7 @@ export const store = reactive({
 });
 export const fpv_cam = ref();
 export const fpv_cam_framerate = ref(0);
+export const vision_cam = ref();
 export const menuClosed = ref(false);
 export const toggleSettingsMenu = () => (menuClosed.value = !menuClosed.value);
 export const MENU_WIDTH = 400;

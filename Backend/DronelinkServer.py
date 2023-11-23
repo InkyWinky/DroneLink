@@ -34,16 +34,16 @@ if __name__ == "__main__":
         addr = "127.0.0.1"
     global IP
     IP = addr
+    global vision_websocket_url
+    vision_websocket_url = "wss://relay.uas.unexceptional.dev/relay/images/outbound"
 
     # Initialise Web Socket Server for real time data transfer.
-    clients = []
-    clientData = []
-    web_socket_server = WebSocketThread(IP, mp_socket)
+    web_socket_server = WebSocketThread(IP, mp_socket, vision_websocket_url)
     web_socket_server.start()
     print("[INFO] WebSocket Initialised on:", IP + ":" + str(8081))
 
     # HTTP Server
-    http_server = HTTPServerThread(IP, mp_socket)
+    http_server = HTTPServerThread(IP, mp_socket, vision_websocket_url)
     http_server.start()
     print("[INFO] HTTP Server Initialised on:", IP + ":" + str(8000))
 

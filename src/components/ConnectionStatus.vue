@@ -161,7 +161,7 @@
 import { useForm } from "vue-hooks-form";
 import api from "../api";
 import { ref, watch } from "vue";
-import { store, fpv_cam, fpv_cam_framerate } from "../store";
+import { store, fpv_cam, fpv_cam_framerate, vision_cam } from "../store";
 // import toggleSettingsMenu from "./store";
 
 export default {
@@ -214,6 +214,10 @@ export default {
             ).toFixed(0);
             lastFPVCamTime.value = newTime.value;
             fpv_cam.value = data.image;
+            break;
+          case "VISION_CAM":
+            console.log("RECEIVED IMAGE");
+            vision_cam.value = data.image;
             break;
           default:
             console.log(
@@ -295,10 +299,12 @@ export default {
   color: white;
   font-size: 1.1em;
 }
+
 #command-btn:hover {
   font-weight: bold;
   cursor: pointer;
 }
+
 #connection-status-on {
   background-color: greenyellow;
   height: 8px;
@@ -307,6 +313,7 @@ export default {
   float: right;
   box-shadow: 0 0 5px 2px greenyellow;
 }
+
 #connection-status-off {
   background-color: red;
   height: 8px;

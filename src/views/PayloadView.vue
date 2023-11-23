@@ -17,7 +17,9 @@
         class="flex flex-col w-full h-full"
       >
         VISION
-        <canvas ref="vision_large" class="bg-green-800 w-full h-full"> </canvas>
+        <div class="w-full h-full bg-green-800">
+          <img ref="vision_large" class="bg-green-800 h-full w-full" />
+        </div>
         <div
           id="bounding-box"
           :style="{
@@ -85,7 +87,15 @@
         class="flex flex-col w-full h-full bg-gray-200"
       >
         VISION
-        <canvas ref="vision_small" class="bg-green-800 w-full h-full"></canvas>
+        <div class="w-full h-full bg-green-800">
+          <img ref="vision_small" class="bg-green-800 h-full w-full" />
+        </div>
+        <!-- <canvas
+          ref="vision_small"
+          class="bg-green-800"
+          :height="vision_resolution.height"
+          :width="vision_resolution.width"
+        ></canvas> -->
       </div>
     </div>
     <div
@@ -214,7 +224,7 @@ import { ref, onMounted, watch, reactive } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { initFlowbite } from "flowbite";
-import { store, fpv_cam, fpv_cam_framerate } from "@/store";
+import { store, fpv_cam, fpv_cam_framerate, vision_cam } from "@/store";
 import api from "@/api";
 
 const status = ref(null);
@@ -237,6 +247,44 @@ const fpv_resolution = reactive({ width: 1920, height: 1080 });
 const x_perc = ref(50);
 const y_perc = ref(50);
 const width = ref(50);
+// const vision_resolution = reactive({ width: 1920, height: 1080 });
+
+watch(vision_cam, (val) => {
+  if (vision_large.value && displayVisionLarge.value) {
+    vision_large.value.src = val;
+    // let ctx = vision_large.value.getContext("2d");
+    // let image = new Image();
+    // image.src = val;
+    // image.src = URL.createObjectURL(val);
+    // image.addEventListener("load", () => {
+    //   vision_resolution.width = image.width;
+    //   vision_resolution.height = image.height;
+    //   console.log(vision_resolution.value);
+    //   ctx.drawImage(
+    //     image,
+    //     0,
+    //     0,
+    //     vision_large.value.width,
+    //     vision_large.value.height
+    //   );
+    // });
+  } else {
+    vision_small.value.src = val;
+    // let ctx = vision_small.value.getContext("2d");
+    // let image = new Image();
+    // // image.src = URL.createObjectURL(val);
+    // image.src = val;
+    // image.addEventListener("load", () => {
+    //   ctx.drawImage(
+    //     image,
+    //     0,
+    //     0,
+    //     vision_small.value.width,
+    //     vision_small.value.height
+    //   );
+    // });
+  }
+});
 
 watch(fpv_cam, (val) => {
   if (fpv_large.value && !displayVisionLarge.value) {
@@ -394,11 +442,13 @@ function nerf() {
 #payload-body {
   height: calc(100vh - 70px) !important;
 }
+
 #bounding-box {
   position: absolute;
   border: 5px solid red;
   z-index: 999;
 }
+
 #bbox-test-input {
   width: 100px;
 }
