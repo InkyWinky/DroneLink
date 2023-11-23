@@ -30,7 +30,6 @@ class MissionPlannerSocket():
         self.connected = False
         self.messages = [] # the list containing all messages from mission planner
 
-
     def initialise_dronelink(self, ip):
         if self.connected:
             print("[ERROR] A connection has already been made, please restart the server to reconnect.")
