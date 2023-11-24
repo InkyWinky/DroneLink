@@ -8,6 +8,17 @@
   </Transition>
   <div id="bg">
     <h3>PATH PLANNER</h3>
+    <button
+      class="rightAlign"
+      id="addByMapBtn"
+      @click="showMap = !showMap"
+      type="button"
+    >
+      <i
+        class="fa-solid fa-map-location-dot icon-btn-effect"
+        style="color: lightslategray"
+      ></i>
+    </button>
     <div id="listWrapper" ref="listContainer">
       <ul>
         <!-- Iterate through array of waypoints and show them on list -->
@@ -55,17 +66,6 @@
           name="altitude"
           v-model="alt"
         />
-
-        <button
-          class="transparentBtn rightAlign"
-          id="addByMapBtn"
-          @click="showMap = !showMap"
-          type="button"
-        >
-          <span class="material-symbols-outlined white-hover">
-            add_location_alt
-          </span>
-        </button>
       </form>
     </div>
     <label for="importBtn">
@@ -426,6 +426,7 @@ ul {
   list-style: none;
   padding: 0;
   margin: 1px;
+  font-size: 0.8em;
 }
 li {
   background-color: #eeeeee;
@@ -603,5 +604,21 @@ input::-webkit-inner-spin-button {
   color: #2c3e50 !important;
   transform: scale(1.1); /* increase size by 20% */
   transition: transform 0.1s ease-out; /* add a smooth transition */
+}
+.coordInput {
+  height: 50%;
+  width: 15%;
+  padding: 2px;
+  border-radius: 2px;
+  font-size: 0.8em;
+}
+#addByMapBtn {
+  position: absolute;
+  top: 7px;
+  right: 15px;
+  font-size: 1.5em;
+  color: lightslategray;
+  padding: 0;
+  height: 40px;
 }
 </style>
