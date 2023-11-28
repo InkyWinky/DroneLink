@@ -1,5 +1,5 @@
-import PointToPointPathGenerator as ptpPG
-import SearchPathGenerator as saPG
+import SplineGenerator.PointToPointPathGenerator as ptpPG
+import SplineGenerator.SearchPathGenerator as saPG
 import math
 
 class PathGenerationType:

@@ -219,7 +219,7 @@ class Commands:
     SEND_COMMAND_INT = "SEND_COMMAND_INT" 
 
 if __name__ == "__main__":
-    host = raw_input("Enter IP to connect to: ")
+    host = input("Enter IP to connect to: ")
 
     
     PORT = 7766  # port number of the connection.
@@ -247,7 +247,7 @@ if __name__ == "__main__":
         print("[ q ]. Quit")
         print("--------------------------------------------------------------------------------------")
 
-        option = raw_input("Select Command To Execute (Enter 'q' to Quit): ")
+        option = input("Select Command To Execute (Enter 'q' to Quit): ")
         if option == '1':
             mp_socket.override_flightplanner_waypoints(test_waypoints)
         elif option == '2':

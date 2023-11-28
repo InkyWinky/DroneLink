@@ -1,7 +1,8 @@
 import threading
 import json
 import time
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+import http.server
+# from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from CommunicationScript.MissionPlannerSocket import Commands
 import SplineGenerator.SearchPathGenerator as spliner
 import SplineGenerator.PathGenerator as directSpliner
@@ -22,7 +23,7 @@ class HTTPServerThread(threading.Thread):
 
     def run(self):
         server_address = (self.host, 8000)
-        self.server = HTTPServer(server_address, ServerHandler)
+        self.server = http.server.HTTPServer(server_address, ServerHandler)
         self.server.serve_forever()
         print("[TERMINATION] Closed HTTPServerThread")
 
@@ -30,7 +31,7 @@ class HTTPServerThread(threading.Thread):
         self.server.shutdown()
 
 
-class ServerHandler(BaseHTTPRequestHandler):
+class ServerHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_HEAD(self):
         self.send_response(200)
@@ -56,7 +57,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
     def do_POST(self):
         # Get the message from API client
-        content_length = int(self.headers.getheader("content-length", 0))
+        content_length = int(self.headers.get("content-length", 0))
         post_message = self.rfile.read(content_length)
         statusCode = 200
         message = None

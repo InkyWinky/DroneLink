@@ -6,7 +6,6 @@ import base64
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 from sys import platform
 import websocket
-import rel
 
 class WebSocketThread(threading.Thread):
     def __init__(self, host, mp_socket, vision_websocket_url):
@@ -46,10 +45,10 @@ class WebSocketThread(threading.Thread):
             self.server.close()
         try:
             self.live_data_thread.close()
-            self.camera_feed_thread.close()
+            self.fpv_feed_thread.close()
             self.vision_feed_thread.close()
             self.live_data_thread.join()
-            self.camera_feed_thread.join()
+            self.fpv_feed_thread.join()
             self.vision_feed_thread.join()
         except:
             pass
@@ -127,11 +126,8 @@ class FPVFeedThread(threading.Thread):
             if not self.camera:
                 try:
                     if platform == "win32":
-                     
                             self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-
                     else:
-                      
                             self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
                     # Set camera resolution
                     self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640) # 1920 / 1280
@@ -179,19 +175,33 @@ class VisionFeedThread(threading.Thread):
                 print("[VISION WebSocket] Failed to connect, retrying...")
             time.sleep(1)
 
+    def sendFootage(self):
+        try:
+            buffer = None
+            buffer = self.ws.recv()
+            if buffer:
+                # convert image to base64 before sending
+                data = {"command": "VISION_CAM", "image": "data:image/jpg;base64," + base64.b64encode(buffer)}
+                for index, client in enumerate(clients):
+                    client.sendMessage(json.dumps(data))
+        except:
+            pass
+
     def run(self):
         
         while not self.quit:
             if not self.connected:
                 self.connect()
             try:
-                buffer =  self.ws.recv()
-                # convert image to base64 before sending
-                data = {"command": "VISION_CAM", "image": "data:image/jpg;base64," + base64.b64encode(buffer)}
-                for index, client in enumerate(clients):
-                    client.sendMessage(json.dumps(data))
+                footageThread = threading.Thread(target = self.sendFootage)
+                footageThread.start()
+                footageThread.join(timeout=2)
             except:
                 pass
+            # try:
+            #     asyncio.run(self.sendFootage())
+            # except:
+            #     pass
         self.ws.close()
         print("[TERMINATION] Closed VisionFeedThread")
 
