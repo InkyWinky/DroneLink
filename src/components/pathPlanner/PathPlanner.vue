@@ -315,7 +315,7 @@ async function testWaypoints() {
     };
     outputArr.push(wp_obj);
   }
-  const commandResult = await api.executeCommand("DIRECT_WAYPOINTS", {
+  const commandResult = await api.executeCommand("OVERRIDE", {
     waypoints: outputArr,
     takeoff_alt: takeoff_alt,
   });

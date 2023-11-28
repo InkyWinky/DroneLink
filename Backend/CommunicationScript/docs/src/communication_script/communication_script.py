@@ -179,12 +179,18 @@ class MissionManager:
     def update(self):
         """Updates Mission Planner on the modified waypoints
         """
+        self.waypoints.insert(0, self.create_wp(self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt))
+        print("HELP", self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt)
+        print(self.waypoints[0])
         MAV.setWPTotal(len(self.waypoints))
+        
         for i in range(len(self.waypoints)):
             MAV.setWP(self.waypoints[i], i, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
 
         MAV.setWPACK()  # Send waypoint ACK
         self.__set_home(self.waypoints[0])  # Set the home waypoint as the first waypoint
+        # self.__set_home(self.create_wp(self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt))  # Set the home waypoint as the vehicle's current location
+        
     
 
     def create_wp(self, lat, lng, alt, id=None):

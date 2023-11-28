@@ -234,12 +234,18 @@ class MissionManager:
     def update(self):
         """Updates Mission Planner on the modified waypoints
         """
+        self.waypoints.insert(0, self.create_wp(self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt))
+        print("HELP", self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt)
+        print(self.waypoints[0])
         MAV.setWPTotal(len(self.waypoints))
+        
         for i in range(len(self.waypoints)):
             MAV.setWP(self.waypoints[i], i, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
 
         MAV.setWPACK()  # Send waypoint ACK
         self.__set_home(self.waypoints[0])  # Set the home waypoint as the first waypoint
+        # self.__set_home(self.create_wp(self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt))  # Set the home waypoint as the vehicle's current location
+        
     
 
     def create_wp(self, lat, lng, alt, id=None):
@@ -332,7 +338,7 @@ class MissionManager:
     def toggle_arm_aircraft(self):
         # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
         # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
-        MAV.setMode("MANUAL")
+        MAV.setMode("QLOITER")
         if self.cs_drone and self.cs_drone.armed:
             MAV.doARM(False, True)
             print("[INFO] Toggled Drone to DISARMED")
@@ -341,6 +347,7 @@ class MissionManager:
         else: 
             # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 0, 21196, 0, 0, 0, 0, 0, 0)
             MAV.doARM(True, True)
+            Script.Sleep(4000)
             print("[INFO] Toggled Drone to ARMED")
         MAV.setMode("AUTO")
 
@@ -505,6 +512,8 @@ class MissionManager:
                             "verticalspeed": float(self.cs_drone.verticalspeed),
                             "battery_voltage": float(self.cs_drone.battery_voltage),
                             "battery_remaining": float(self.cs_drone.battery_remaining),
+                            "propulsion_battery":float(self.cs_drone.battery_cell1),
+                            "avionics_battery":float(self.cs_drone.battery_voltage2),
                             "armed": self.cs_drone.armed,
                             "drone_connected": self.drone_connected,
                             "messages": messages_to_send,

@@ -37,7 +37,7 @@ const tabs = [
   { name: "Raw Data", component: <RawDataDisplay /> },
   { name: "Notes", component: <NotePad_new /> },
 ];
-let tab = ref("Notes");
+let tab = ref("Messages");
 
 const setTab = (tabName) => {
   tab.value = tabName;
