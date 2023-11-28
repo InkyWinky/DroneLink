@@ -26,7 +26,7 @@
             <!-- <span class="battery-stat">{{ closestChargeFraction + "%" }}</span> -->
 
             <span class="battery-stat">{{
-              store?.live_data?.battery_remaining || "0" + "%"
+              (store?.live_data?.propulsion_battery || "0") + "V"
             }}</span>
           </div>
         </div>
@@ -174,10 +174,10 @@ div {
   transform: translateY(-45%);
 }
 .battery-stat {
-  font-size: 2em;
+  font-size: 1.5em;
   position: absolute;
-  top: 13%;
-  transform: translateX(-40%);
+  top: 25%;
+  transform: translateX(-50%);
 }
 .computed-statistics {
   width: 20%;
