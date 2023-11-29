@@ -5,54 +5,35 @@ from PathGenerator import *
 from SearchPathGenerator import Coord, Polygon
 pi = math.pi
 
-class FlyToCircleTarget:
+class FlyToTargetPayload:
 
     def __init__(self):
         # Input
-        self.existing_path = None  # List of Coord classes that outline the path the plane is currently on
-        self.current_path_index = None  # Index of the existing path that shows the previous waypoint the plane has travelled through
         self.plane_location = None  # Coord of plane
         self.plane_bearing = None  # Bearing of the plane when the pilot wants to go to the target
         self.target_location = None  # Coord of target
         self.turn_radius = None  # Turn radius of the plane
-        self.target_circle_radius = None  # Radius to circle the target at
         self.minimum_distance_to_start = 0  # Minimum distance along the existing before the plane starts turning
-        self.times_to_circle = None  # Number of times to circle the target
         self.curve_resolution = None  # The number of waypoints per metre
-        self.alt = None  # Altitude the entire path will be at
+        self.alt = None  # altitude the entire path will be at
 
         # Intermediate
         self.start_point = None  # The first point of the turn towards the target
         self.start_bearing = None  # Bearing of plane at the start of the turn
-        self.target_rotation_direction = None  # Direction the plane will rotate around the target
-        self.target_circle_start_point = None  # First point the plane will touch on the target circle
         self.path_points = None  # The Coord class list of path points
 
         # Output
         self.formatted_points = None  # A returnable format for the generated spline
 
-    def set_parameters(self, alt=None, plane_location=None, plane_bearing=None, target_location=None, turn_radius=None, target_circle_radius=None, minimum_distance_to_start=None, times_to_circle=None, curve_resolution=None):
+    def set_parameters(self, plane_location=None, plane_bearing=None, target_location=None, turn_radius=None, alt=None, minimum_distance_to_start=None, curve_resolution=None):
         self.plane_location = plane_location
         self.plane_bearing = plane_bearing
         self.target_location = target_location
         scaling_factor = 111320 / math.cos(self.plane_location.lat)
         self.turn_radius = turn_radius / scaling_factor
-        self.target_circle_radius = target_circle_radius / scaling_factor
         self.minimum_distance_to_start = minimum_distance_to_start / scaling_factor
-        self.times_to_circle = times_to_circle
         self.curve_resolution = curve_resolution * scaling_factor
         self.alt = alt
-
-    def set_data(self):
-        pass
-
-    def set_existing_waypoints(self, coord_dictionary):
-        coords = []
-        for coord in coord_dictionary:
-            new_coord = Coord(lat=coord["lat"], lon=coord["long"])
-            coords.append(new_coord)
-
-        self.existing_path = coords
 
     def get_waypoints(self):
         """
@@ -88,17 +69,8 @@ class FlyToCircleTarget:
         # Create points for turn and towards circle start
         turn_points = self.generate_turn_points()
 
-        # Create points for circling the target
-        circle_points = self.generate_circle_points()
-
         # Return the joined points
-        turn_points.extend(circle_points)
         return turn_points
-
-    def generate_circle_points(self):
-        # Get the points from a general interpolation
-        circle_points = general_curve_interpolation_v2(start_point=self.target_circle_start_point, centre_point=self.target_location, turn_direction=self.target_rotation_direction, number_of_turns=self.times_to_circle, radius=self.target_circle_radius, curve_resolution=self.curve_resolution)
-        return circle_points
 
     def generate_turn_points(self):
         # Determine start point for the turn
@@ -109,14 +81,18 @@ class FlyToCircleTarget:
 
         # Create turn points complete list
         turn_points.insert(0, self.start_point)
+
+        # Append target location as final point
+        turn_points.append(self.target_location)
+
         return turn_points
 
     def turn_points_determine_start_point(self):
         # Check if plane is within the target radius
         distance = calculate_distance_between_points(self.plane_location, self.target_location)
         self.start_bearing = self.plane_bearing
-        if distance < self.target_circle_radius:
-            distance_required = self.target_circle_radius - distance
+        if distance < self.turn_radius * 2:
+            distance_required = math.sqrt((self.turn_radius * 2) ** 2 - distance ** 2)
             # Create a point that distance away
             return create_point(self.plane_location, distance_required + self.minimum_distance_to_start, self.plane_bearing)
         else:
@@ -144,17 +120,13 @@ class FlyToCircleTarget:
         else:
             centre_point = create_point(self.start_point, self.turn_radius, self.start_bearing + pi / 2)
         # Find tangency angle between both the target circle and initial turning circle
-        exit_angle, entrance_angle = get_tangency_angle(start_centre=centre_point, end_centre=self.target_location, start_radius=self.turn_radius, end_radius=self.target_circle_radius, turn_direction=turn_direction)
+        exit_angle, entrance_angle = get_tangency_angle(start_centre=centre_point, end_centre=self.target_location, start_radius=self.turn_radius, end_radius=0, turn_direction=turn_direction)
 
         # Create exit point for initial turn and entrance point for target circle
         exit_point = create_point(centre_point, self.turn_radius, exit_angle)
-        entrance_point = create_point(self.target_location, self.target_circle_radius, entrance_angle)
 
         # Get the interpolated turn points
         interpolated_turn_points = general_curve_interpolation(start_point=self.start_point, end_point=exit_point, centre_point=centre_point, radius=self.turn_radius, turn_direction=turn_direction, curve_resolution=self.curve_resolution)
-
-        # Assign the target circle entrance point
-        self.target_circle_start_point = entrance_point
 
         # Return all the points including the entrance point of the target circle
         return interpolated_turn_points
@@ -188,7 +160,7 @@ def get_tangency_angle(start_centre=None, end_centre=None, start_radius=None, en
 
     # Check if the plane is within the target radius
     min_distance = start_radius + end_radius
-    if distance < min_distance:
+    if distance <= min_distance:
         assert ValueError("Plane is within the target's view radius")
 
     beta = math.acos((radius_current - radius_next) / distance)
@@ -293,8 +265,7 @@ def plot_waypoints(points_dict=None, points_path=None, point1=None):
 
         plt.plot(x_vals, y_vals)
 
-    if point1 is not None:
-        plt.scatter(point1.lon, point1.lat, color='purple', s=19)
+    plt.scatter(point1.lon, point1.lat, color='purple', s=19)
 
     plt.axis('equal')
     plt.show()
@@ -325,15 +296,12 @@ def main_function():
     path_points = path_generator.generate_path()
 
     # Fill in parameters
-    fly_to_target = FlyToCircleTarget()
-    fly_to_target.set_existing_waypoints(path_points)  # Optional
+    fly_to_target = FlyToTargetPayload()
     fly_to_target.set_parameters(plane_location=Coord(lat=-38.371, lon=144.889),
                                  plane_bearing=updated_bearing,
                                  target_location=Coord(lat=-38.37, lon=144.88),
                                  turn_radius=280,
-                                 target_circle_radius=900,
                                  minimum_distance_to_start=20,
-                                 times_to_circle=0.7,
                                  curve_resolution=0.015)
 
     path = fly_to_target.generate_path()
