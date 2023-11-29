@@ -26,14 +26,22 @@ class FlyToTargetPayload:
         self.formatted_points = None  # A returnable format for the generated spline
 
     def set_parameters(self, plane_location=None, plane_bearing=None, target_location=None, turn_radius=None, alt=None, minimum_distance_to_start=None, curve_resolution=None):
-        self.plane_location = plane_location
-        self.plane_bearing = plane_bearing
-        self.target_location = target_location
-        scaling_factor = 111320 / math.cos(self.plane_location.lat)
-        self.turn_radius = turn_radius / scaling_factor
-        self.minimum_distance_to_start = minimum_distance_to_start / scaling_factor
-        self.curve_resolution = curve_resolution * scaling_factor
-        self.alt = alt
+        if plane_location is not None:
+            self.plane_location = plane_location
+        if plane_bearing is not None:
+            self.plane_bearing = plane_bearing
+        if target_location is not None:
+            self.target_location = target_location
+        if alt is not None:
+            self.alt = alt
+        if self.plane_location is not None:
+            scaling_factor = 111320 / math.cos(self.plane_location.lat)
+            if turn_radius is not None:
+                self.turn_radius = turn_radius / scaling_factor
+            if minimum_distance_to_start is not None:
+                self.minimum_distance_to_start = minimum_distance_to_start / scaling_factor
+            if curve_resolution is not None:
+                self.curve_resolution = curve_resolution * scaling_factor
 
     def get_waypoints(self):
         """
@@ -54,8 +62,10 @@ class FlyToTargetPayload:
         Returns a list of dictionary points that the plane can immediately start following.
         """
         # Initial checks
-
-        # Parameter manipulation to be in a decimal degree compatible format
+        all_parameters_accounted_for, missing_parameters = self.check_parameter_accounted()
+        if not all_parameters_accounted_for:
+            return_dict = {"Error": "Parameters missing", "Parameters": missing_parameters}
+            return return_dict
 
         # Create points for path
         self.path_points = self.generate_path_points()
@@ -64,6 +74,27 @@ class FlyToTargetPayload:
 
         # Return points in dictionary format
         return self.get_waypoints()
+
+    def check_parameter_accounted(self):
+        missing_parameters = []
+        # Check essential parameters
+        if self.plane_location is None:
+            missing_parameters.append("Plane coordinates")
+        if self.plane_bearing is None:
+            missing_parameters.append("Plane bearing")
+        if self.target_location is None:
+            missing_parameters.append("Target coordinates")
+        if self.turn_radius is None:
+            missing_parameters.append("Turn radius")
+        if self.curve_resolution is None:
+            missing_parameters.append("Curve resolution")
+        if self.alt is None:
+            missing_parameters.append("Altitude")
+
+        if len(missing_parameters) > 0:
+            return False, missing_parameters
+
+        return True, None
 
     def generate_path_points(self):
         # Create points for turn and towards circle start

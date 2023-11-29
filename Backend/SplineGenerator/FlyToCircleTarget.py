@@ -17,7 +17,7 @@ class FlyToCircleTarget:
         self.turn_radius = None  # Turn radius of the plane
         self.target_circle_radius = None  # Radius to circle the target at
         self.minimum_distance_to_start = 0  # Minimum distance along the existing before the plane starts turning
-        self.times_to_circle = None  # Number of times to circle the target
+        self.times_to_circle = 10  # Number of times to circle the target
         self.curve_resolution = None  # The number of waypoints per metre
         self.alt = None  # Altitude the entire path will be at
 
@@ -32,16 +32,26 @@ class FlyToCircleTarget:
         self.formatted_points = None  # A returnable format for the generated spline
 
     def set_parameters(self, alt=None, plane_location=None, plane_bearing=None, target_location=None, turn_radius=None, target_circle_radius=None, minimum_distance_to_start=None, times_to_circle=None, curve_resolution=None):
-        self.plane_location = plane_location
-        self.plane_bearing = plane_bearing
-        self.target_location = target_location
-        scaling_factor = 111320 / math.cos(self.plane_location.lat)
-        self.turn_radius = turn_radius / scaling_factor
-        self.target_circle_radius = target_circle_radius / scaling_factor
-        self.minimum_distance_to_start = minimum_distance_to_start / scaling_factor
-        self.times_to_circle = times_to_circle
-        self.curve_resolution = curve_resolution * scaling_factor
-        self.alt = alt
+        if plane_location is not None:
+            self.plane_location = plane_location
+        if plane_bearing is not None:
+            self.plane_bearing = plane_bearing
+        if target_location is not None:
+            self.target_location = target_location
+        if target_circle_radius is not None:
+            self.target_circle_radius = target_circle_radius
+        if times_to_circle is not None:
+            self.times_to_circle = times_to_circle
+        if alt is not None:
+            self.alt = alt
+        if self.plane_location is not None:
+            scaling_factor = 111320 / math.cos(self.plane_location.lat)
+            if turn_radius is not None:
+                self.turn_radius = turn_radius / scaling_factor
+            if minimum_distance_to_start is not None:
+                self.minimum_distance_to_start = minimum_distance_to_start / scaling_factor
+            if curve_resolution is not None:
+                self.curve_resolution = curve_resolution * scaling_factor
 
     def set_data(self):
         pass
@@ -73,8 +83,10 @@ class FlyToCircleTarget:
         Returns a list of dictionary points that the plane can immediately start following.
         """
         # Initial checks
-
-        # Parameter manipulation to be in a decimal degree compatible format
+        all_parameters_accounted_for, missing_parameters = self.check_parameter_accounted()
+        if not all_parameters_accounted_for:
+            return_dict = {"Error": "Parameters missing", "Parameters": missing_parameters}
+            return return_dict
 
         # Create points for path
         self.path_points = self.generate_path_points()
@@ -83,6 +95,29 @@ class FlyToCircleTarget:
 
         # Return points in dictionary format
         return self.get_waypoints()
+
+    def check_parameter_accounted(self):
+        missing_parameters = []
+        # Check essential parameters
+        if self.plane_location is None:
+            missing_parameters.append("Plane coordinates")
+        if self.plane_bearing is None:
+            missing_parameters.append("Plane bearing")
+        if self.target_location is None:
+            missing_parameters.append("Target coordinates")
+        if self.turn_radius is None:
+            missing_parameters.append("Turn radius")
+        if self.curve_resolution is None:
+            missing_parameters.append("Curve resolution")
+        if self.alt is None:
+            missing_parameters.append("Altitude")
+        if self.target_circle_radius is None:
+            missing_parameters.append("Target circle radius")
+
+        if len(missing_parameters) > 0:
+            return False, missing_parameters
+
+        return True, None
 
     def generate_path_points(self):
         # Create points for turn and towards circle start
