@@ -310,6 +310,11 @@ def main_function():
     path_generator.layer_distance = 400  # Fixed distance between layers of the search path. Optional
     path_generator.orientation = math.pi  # Fixed axis of orientation for the search path. Optional
 
+    """Example starts here"""
+    # Convert bearing from north being zero degrees to positive x-axis being zero degrees
+    bearing = 0
+    updated_bearing = - bearing + pi / 2
+
     # Optional parameters
     path_generator.do_plot = True  # If you want to plot the output
 
@@ -318,9 +323,9 @@ def main_function():
 
     # Fill in parameters
     fly_to_target = FlyToCircleTarget()
-    fly_to_target.set_existing_waypoints(path_points)
+    fly_to_target.set_existing_waypoints(path_points)  # Optional
     fly_to_target.set_parameters(plane_location=Coord(lat=-38.371, lon=144.889),
-                                 plane_bearing=0,
+                                 plane_bearing=updated_bearing,
                                  target_location=Coord(lat=-38.37, lon=144.88),
                                  turn_radius=280,
                                  target_circle_radius=900,
