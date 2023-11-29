@@ -415,6 +415,12 @@ function confirmTarget() {
  * and then orbiting until the pilot chooses a payload drop location
  */
 function beginDeployment() {
+  if (!deployMarker.value) {
+    console.log("[ERROR] No deployment location set!");
+    confirm("[ERROR] No deployment location set!");
+    return;
+  }
+
   if (confirm(`Confirm deploy payload at ${deployCoords.value.toArray()}?`)) {
     console.log("Beginning deployment procedure");
     api.executeCommand("DEPLOY_PAYLOAD", {
