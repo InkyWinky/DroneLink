@@ -20,7 +20,12 @@ export const store = reactive({
     }
     this.live_data = data;
   },
-  settings: { default_alt: 20, takeoff_alt: 20, waypoint_type: 16 },
+  settings: {
+    default_alt: 20,
+    takeoff_alt: 20,
+    waypoint_type: 16,
+    vtol_transition_mode: 3,
+  },
 });
 export const fpv_cam = ref();
 export const fpv_cam_framerate = ref(0);

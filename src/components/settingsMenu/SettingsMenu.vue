@@ -63,6 +63,25 @@
             <option value="18">LOITER_TURNS</option>
           </select>
         </div>
+
+        <div class="uk-width-1-1 uk-padding-remove-left">
+          <p
+            class="text-start font-bold text-sm"
+            :class="{
+              'text-blue-500': edited_vtol_mode.valueOf(),
+            }"
+          >
+            VTOL transition to
+          </p>
+          <select
+            class="uk-select"
+            v-model="vtol_transition_mode"
+            @change="onVTOLModeChange"
+          >
+            <option value="3">VTOL</option>
+            <option value="4">CRUISE</option>
+          </select>
+        </div>
         <span class="flex flex-row justify-center w-full m-0 p-0">
           <button
             class="uk-button bg-gray-500 hover:bg-gray-600 mx-2 mt-2 border-gray-600 w-1/2"
@@ -113,10 +132,12 @@ import { store } from "@/store";
 let default_alt = store?.settings?.default_alt;
 let takeoff_alt = store?.settings?.takeoff_alt;
 let waypoint_type = store?.settings?.waypoint_type.toString();
+let vtol_transition_mode = store?.settings?.vtol_transition_mode.toString();
 let isSuccess = ref(false);
 let edited_default_alt = ref(false);
 let edited_takeoff_alt = ref(false);
 let edited_waypoint_type = ref(false);
+let edited_vtol_mode = ref(false);
 
 // console.log(store?.settings);
 // console.log(store.settings.default_alt, default_alt);
@@ -135,9 +156,11 @@ const onSubmit = () => {
   store.settings.default_alt = Number(default_alt);
   store.settings.takeoff_alt = Number(takeoff_alt);
   store.settings.waypoint_type = Number(waypoint_type);
+  store.settings.vtol_transition_mode = Number(vtol_transition_mode);
   edited_default_alt.value = false;
   edited_takeoff_alt.value = false;
   edited_waypoint_type.value = false;
+  edited_vtol_mode.value = false;
   isSuccess.value = true;
   console.log(isSuccess.value);
   console.log(store.settings);
@@ -159,6 +182,10 @@ const onTakeoffAltChange = () => {
 };
 const onWaypointTypeChange = () => {
   edited_waypoint_type.value = store?.settings?.waypoint_type != waypoint_type;
+};
+const onVTOLModeChange = () => {
+  edited_vtol_mode.value =
+    store?.settings?.vtol_transition_mode != vtol_transition_mode;
 };
 </script>
 
