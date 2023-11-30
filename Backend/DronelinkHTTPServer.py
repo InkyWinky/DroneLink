@@ -216,16 +216,18 @@ class ServerHandler(BaseHTTPRequestHandler):
             # mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
         elif command == Commands.DIRECT_WAYPOINTS:
-            mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
+            mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'],  parsed_content['vtol_transition_mode'])
         elif command == Commands.SYNC_SCRIPT:
             mp_sock.sync_script()
             print("Executed SYNC SCRIPT")
         elif command == Commands.OVERRIDE:
-            mp_sock.override_waypoints(parsed_content['waypoints'])
+            mp_sock.override_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'], parsed_content['vtol_transition_mode'])
             print("Executed OVERRIDE WAYPOINTS")
         elif command == Commands.TOGGLE_ARM:
             mp_sock.toggle_arm_aircraft()
             print("Executed ARM_AIRCRAFT")
+        elif command == Commands.TOGGLE_WEATHER_VAINING:
+            mp_sock.toggle_weather_vaining()
         elif command == "CONNECTIP":
             result = mp_sock.initialise_dronelink(parsed_content['ip'])
             message = "Successfully connected to Mission Planner."

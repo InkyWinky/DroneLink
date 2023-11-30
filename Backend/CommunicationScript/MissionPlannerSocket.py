@@ -152,21 +152,31 @@ class MissionPlannerSocket():
 
         
 
-    def override_waypoints(self, waypoints):
+    def override_waypoints(self, waypoints, takeoff_alt, vtol_transition_mode):
         """Sends a command to overwrite all the waypoints in mission planner.
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
-        data = json.dumps({"command":self.COMMANDS.OVERRIDE, "waypoints": waypoints})
+        data = json.dumps({
+                           "command":self.COMMANDS.OVERRIDE, 
+                           "waypoints": waypoints,
+                           "takeoff_alt":takeoff_alt, 
+                           "vtol_transition_mode": vtol_transition_mode
+                           })
         self.s.sendall(data + '\n\n')
     
     
-    def override_flightplanner_waypoints(self, waypoints, takeoff_alt):
+    def override_flightplanner_waypoints(self, waypoints, takeoff_alt, vtol_transition_mode):
         """Sends a command to overwrite all the waypoints in the flight planner GUI.
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
-        data = json.dumps({"command":self.COMMANDS.OVERRIDE_FLIGHTPLANNER, "waypoints": waypoints, "takeoff_alt":takeoff_alt})
+        data = json.dumps({
+                           "command":self.COMMANDS.OVERRIDE_FLIGHTPLANNER, 
+                           "waypoints": waypoints, 
+                           "takeoff_alt":takeoff_alt, 
+                           "vtol_transition_mode": vtol_transition_mode
+                           })
         self.s.sendall(data  + '\n\n')
 
 
@@ -187,6 +197,12 @@ class MissionPlannerSocket():
         """Sends a command to get all the waypoints in the flight planner.
         """
         data = json.dumps({"command":self.COMMANDS.GET_FLIGHTPLANNER_WAYPOINTS})
+        self.s.sendall(data  + '\n\n')
+
+    def toggle_weather_vaining(self):
+        """Sends a command to toggle weather vaining on the drone
+        """
+        data = json.dumps({"command": self.COMMANDS.TOGGLE_WEATHER_VAINING})
         self.s.sendall(data  + '\n\n')
     
 
@@ -247,6 +263,7 @@ class Commands:
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT" 
+    TOGGLE_WEATHER_VAINING = "TOGGLE_WEATHER_VAINING"
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")
@@ -279,11 +296,11 @@ if __name__ == "__main__":
 
         option = raw_input("Select Command To Execute (Enter 'q' to Quit): ")
         if option == '1':
-            mp_socket.override_flightplanner_waypoints(test_waypoints)
+            mp_socket.override_flightplanner_waypoints(test_waypoints, 20, 3)
         elif option == '2':
             mp_socket.sync_script()
         elif option == '3':
-            mp_socket.override_waypoints(test_waypoints)
+            mp_socket.override_waypoints(test_waypoints, 20, 3)
         elif option == '4':
             mp_socket.toggle_arm_aircraft()
         elif option == '5':
