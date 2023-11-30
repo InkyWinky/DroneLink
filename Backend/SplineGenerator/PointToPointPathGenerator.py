@@ -9,7 +9,7 @@ class SplineGenerator:
     spline between waypoints.
     """
 
-    def __init__(self, waypoints=None, radius_range=None, boundary_points=None, boundary_resolution=None, tolerance=None, curve_resolution=None):
+    def __init__(self, waypoints=None, radius_range=None, boundary_points=None, boundary_resolution=None, tolerance=None, curve_resolution=None, alt=None):
         """
         Initialiser method
             This method can be used to initialise the class with or without the parameters
@@ -21,6 +21,7 @@ class SplineGenerator:
         self.boundary_resolution = boundary_resolution
         self.tolerance = tolerance
         self.curve_resolution = curve_resolution
+        self.alt = alt
 
     def add_waypoint(self, new_waypoint=None, index=None):
         self.waypoints.insert(index, new_waypoint)
@@ -100,6 +101,33 @@ class SplineGenerator:
         if save_fig:
             plt.savefig('Spline' + str(count), dpi=1000)
         plt.show()
+
+    def get_waypoints(self):
+        path_points = []
+
+        for waypoint_index in range(len(self.waypoints)):
+            waypoint = self.waypoints[waypoint_index]
+            if waypoint_index == 0 or waypoint_index == len(self.waypoints) - 1:
+                path_points.append(Coord(lon=waypoint.coords.lon, lat=waypoint.coords.lat))
+                continue
+
+            if waypoint.entrance is not None:
+                path_points.append(Coord(lon=waypoint.entrance.lon, lat=waypoint.entrance.lat))
+
+            if waypoint.centre_point is not None:
+                for curve_point in waypoint.interpolated_curve:
+                    path_points.append(Coord(lon=curve_point.lon, lat=curve_point.lat))
+            else:
+                path_points.append(Coord(lon=waypoint.coords.lon, lat=waypoint.coords.lat))
+            if waypoint.exit is not None:
+                path_points.append(Coord(lon=waypoint.exit.lon, lat=waypoint.exit.lat))
+
+        dictionary_list = []
+        for point in path_points:
+            new_dict_entry = {"long": point.lon, "lat": point.lat, "alt": self.alt}
+            dictionary_list.append(new_dict_entry)
+
+        return dictionary_list
 
 
 class Coord:

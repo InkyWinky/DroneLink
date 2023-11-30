@@ -141,6 +141,7 @@ class SearchPathGenerator:
     boundary = None  # Polygon class instance that defines the boundary that the path must remain in. Path can be on the boundary
     take_off_point = None  # Point where the Albatross takes off
     landing_point = None  # Point where the Albatross should land
+    alt = None  # Altitude the path will be generated at
 
     # Input Parameters
     turn_radius = None  # The minimum turning radius of the plane at cruise speed in metres
@@ -188,7 +189,7 @@ class SearchPathGenerator:
         dict_list = []
 
         for point in self.path_points:
-            new_dict_entry = {"lon": point.lon, "lat": point.lat, "alt": 100}
+            new_dict_entry = {"long": point.lon, "lat": point.lat, "alt": self.alt}
             dict_list.append(new_dict_entry)
 
         return dict_list
@@ -201,7 +202,9 @@ class SearchPathGenerator:
         if boundary is not None:
             self.boundary = boundary
 
-    def set_parameters(self, minimum_turn_radius=None, boundary_resolution=None, layer_distance=None, boundary_tolerance=None, curve_resolution=None, orientation=None, start_point=None, focal_length=None, sensor_size=None, paint_overlap=None):
+    def set_parameters(self, alt=None, minimum_turn_radius=None, boundary_resolution=None, layer_distance=None, boundary_tolerance=None, curve_resolution=None, orientation=None, start_point=None, focal_length=None, sensor_size=None, paint_overlap=None):
+        if alt is not None:
+            self.alt = alt
         if minimum_turn_radius is not None:
             self.turn_radius = minimum_turn_radius
         if boundary_resolution is not None:
