@@ -169,28 +169,28 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.path_gen.path_generation_type = path_generator.PathGenerationType.SEARCH_AREA
             path_points = self.path_gen.generate_path()
             if path_points is not None:
-                mp_sock.override_flightplanner_waypoints(path_points, parsed_content['takeoff_alt'])
+                mp_sock.override_flightplanner_waypoints(path_points, parsed_content['takeoff_alt'], parsed_content['vtol_transition_mode'])
             else:
                 print("Path points are None, no solution found...")
         if command == Commands.PATH_GENERATION_POINT_TO_POINT:
             self.path_gen.path_generation_type = path_generator.PathGenerationType.POINT_TO_POINT
             path_points = self.path_gen.generate_path()
             if path_points is not None:
-                mp_sock.override_flightplanner_waypoints(path_points, parsed_content['takeoff_alt'])
+                mp_sock.override_flightplanner_waypoints(path_points, parsed_content['takeoff_alt'], parsed_content['vtol_transition_mode'])
             else:
                 print("Path points are None, no solution found...")
         if command == Commands.PATH_GENERATION_FLY_TO_CIRCLE_TARGET:
             self.path_gen.path_generation_type = path_generator.PathGenerationType.FLY_TO_CIRCLE_TARGET
             path_points = self.path_gen.generate_path()
             if path_points is not None:
-                mp_sock.override_flightplanner_waypoints(path_points, parsed_content['takeoff_alt'])
+                mp_sock.override_flightplanner_waypoints(path_points, parsed_content['takeoff_alt'], None)
             else:
                 print("Path points are None, no solution found...")
         if command == Commands.PATH_GENERATION_FLY_TO_TARGET_PAYLOAD:
             self.path_gen.path_generation_type = path_generator.PathGenerationType.FLY_TO_TARGET_PAYLOAD
             path_points = self.path_gen.generate_path()
             if path_points is not None:
-                mp_sock.override_flightplanner_waypoints(path_points, parsed_content['takeoff_alt'])
+                mp_sock.override_flightplanner_waypoints(path_points, parsed_content['takeoff_alt'], None, do_RTL=True)
             else:
                 print("Path points are None, no solution found...")
 
@@ -211,12 +211,12 @@ class ServerHandler(BaseHTTPRequestHandler):
             # Generate and save spline
             waypoint_spliner.generate_search_area_path()
             splined_waypoints = waypoint_spliner.get_waypoints()  # A list of dictionaries with keys "long", "lat", and "alt" in order of flight
-            mp_sock.override_flightplanner_waypoints(splined_waypoints, parsed_content['takeoff_alt'])
+            mp_sock.override_flightplanner_waypoints(splined_waypoints, parsed_content['takeoff_alt'], parsed_content['vtol_transition_mode'], do_RTL=True)
 
             # mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
         elif command == Commands.DIRECT_WAYPOINTS:
-            mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'],  parsed_content['vtol_transition_mode'])
+            mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'],  parsed_content['vtol_transition_mode'], do_RTL=True)
         elif command == Commands.SYNC_SCRIPT:
             mp_sock.sync_script()
             print("Executed SYNC SCRIPT")
