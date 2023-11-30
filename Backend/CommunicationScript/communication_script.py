@@ -450,7 +450,7 @@ class MissionManager:
                         Commands.TOGGLE_ARM: Commands.toggle_arm_aircraft,
                         Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
                         Commands.SEND_COMMAND_INT: Commands.send_command_int,
-                        Commands.TOGGLE_WEATHER_VAINING: Commands.toggle_weather_vaining,
+                        Commands.TOGGLE_WEATHER_VANING: Commands.toggle_weather_vaning,
                         }  
         
         # run the command
@@ -517,7 +517,7 @@ class MissionManager:
                             "avionics_battery":float(self.cs_drone.battery_voltage2),
                             "armed": self.cs_drone.armed,
                             "drone_connected": self.drone_connected,
-                            "weather_vaining": Script.GetParam("WVAIN_ENABLE")
+                            "weather_vaning": bool(Script.GetParam("Q_WVANE_ENABLE")),
                             "messages": messages_to_send,
                             },
                         })
@@ -596,16 +596,16 @@ class MissionManager:
             print("[ERROR] Failed to send COMMAND INT")
     
     
-    def toggle_weather_vaining(self):
-        """Toggles on and off weather vaining on the plane (Weather Vaining makes the drone face with the wind).
+    def toggle_weather_vaning(self):
+        """Toggles on and off weather vaning on the plane (Weather Vaning makes the drone face with the wind).
         """
         try:
-            status = Script.GetParam("WVAIN_ENABLE")
-            Script.SetParam("WVAIN_ENABLE", not status)
-            print("[INFO] Set Weather Vaining to: " + str(not status))
+            status = bool(Script.GetParam("Q_WVANE_ENABLE"))
+            Script.SetParam("Q_WVANE_ENABLE", not status)
+            print("[INFO] Set Weather Vaning to: " + str(not status))
         except Exception as e:
             print("[ERROR] " + str(e))
-            print("[ERROR] Failed to toggle WEATHER VAINING, Current State: " + str(status))
+            print("[ERROR] Failed to toggle WEATHER VANING, Current State: " + str(status))
 
 
     def handle_message_packet(self, raw_packet):
@@ -672,7 +672,7 @@ class Commands:
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT"
-    TOGGLE_WEATHER_VAINING = "TOGGLE_WEATHER_VAINING"
+    TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
 
 
     def override(self, mission_manager, decoded_data):
@@ -828,14 +828,14 @@ class Commands:
             print("[COMMAND] ERROR: Handling MAV_COMMAND_INT COMMAND")
 
 
-    def toggle_weather_vaining(self, mission_manager, decoded_data):
-        """Toggles on and off weather vaining on the plane (Weather Vaining makes the drone face with the wind).
+    def toggle_weather_vaning(self, mission_manager, decoded_data):
+        """Toggles on and off weather vaning on the plane (Weather Vaning makes the drone face with the wind).
         """
         try:
-            mission_manager.toggle_weather_vaining()
+            mission_manager.toggle_weather_vaning()
         except Exception as e:
             print("[ERROR] " + str(e))
-            print("[ERROR] ERROR: Handling TOGGLE_WEATHER_VAINING COMMAND")
+            print("[ERROR] ERROR: Handling TOGGLE_WEATHER_VANING COMMAND")
 
 # ------------------------------------ End Classes ------------------------------------
 # def waypoint_mavlink_test():

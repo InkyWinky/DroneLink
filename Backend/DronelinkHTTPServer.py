@@ -190,7 +190,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.path_gen.path_generation_type = path_generator.PathGenerationType.FLY_TO_TARGET_PAYLOAD
             path_points = self.path_gen.generate_path()
             if path_points is not None:
-                mp_sock.override_flightplanner_waypoints(path_points do_RTL=True)
+                mp_sock.override_flightplanner_waypoints(path_points, do_RTL=True)
             else:
                 print("Path points are None, no solution found...")
 
@@ -226,8 +226,8 @@ class ServerHandler(BaseHTTPRequestHandler):
         elif command == Commands.TOGGLE_ARM:
             mp_sock.toggle_arm_aircraft()
             print("Executed ARM_AIRCRAFT")
-        elif command == Commands.TOGGLE_WEATHER_VAINING:
-            mp_sock.toggle_weather_vaining()
+        elif command == Commands.TOGGLE_WEATHER_VANING:
+            mp_sock.toggle_weather_vaning()
         elif command == "CONNECTIP":
             result = mp_sock.initialise_dronelink(parsed_content['ip'])
             message = "Successfully connected to Mission Planner."

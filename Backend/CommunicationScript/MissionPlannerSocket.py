@@ -161,8 +161,8 @@ class MissionPlannerSocket():
                            "command":self.COMMANDS.OVERRIDE, 
                            "waypoints": waypoints,
                            "takeoff_alt":takeoff_alt, 
-                           "vtol_transition_mode": vtol_transition_mode
-                           "do_RTL": do_RTL
+                           "vtol_transition_mode": vtol_transition_mode,
+                           "do_RTL": do_RTL,
                            })
         self.s.sendall(data + '\n\n')
     
@@ -201,10 +201,10 @@ class MissionPlannerSocket():
         data = json.dumps({"command":self.COMMANDS.GET_FLIGHTPLANNER_WAYPOINTS})
         self.s.sendall(data  + '\n\n')
 
-    def toggle_weather_vaining(self):
-        """Sends a command to toggle weather vaining on the drone
+    def toggle_weather_vaning(self):
+        """Sends a command to toggle weather vaning on the drone
         """
-        data = json.dumps({"command": self.COMMANDS.TOGGLE_WEATHER_VAINING})
+        data = json.dumps({"command": self.COMMANDS.TOGGLE_WEATHER_VANING})
         self.s.sendall(data  + '\n\n')
     
 
@@ -265,7 +265,7 @@ class Commands:
     LIVE_DRONE_DATA = "LIVE_DRONE_DATA"
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT" 
-    TOGGLE_WEATHER_VAINING = "TOGGLE_WEATHER_VAINING"
+    TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")
