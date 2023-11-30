@@ -671,28 +671,19 @@ class Commands:
         """
         try:
             waypoints = decoded_data["waypoints"]
-            mp_waypoints = mission_manager.convert_to_locationwp(waypoints)
-            mission_manager.waypoints = mp_waypoints
-            mission_manager.waypoint_count = len(mp_waypoints)
+            recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
+            recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.TAKEOFF)))
+            vtol_transition_wp = mission_manager.create_wp(0, 0, 20, id=int(MAVLink.MAV_CMD.DO_VTOL_TRANSITION))
+            Locationwp.p1.SetValue(vtol_transition_wp, decoded_data["vtol_transition_mode"]) # 3 for multicoptor, 4 fixed wing
+            recv_waypoints.insert(2, vtol_transition_wp)
+            recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
+            mission_manager.waypoints = recv_waypoints
+            mission_manager.waypoint_count = len(recv_waypoints)
             mission_manager.update()
             print("[COMMAND] OVERRIDE Waypoint Command Executed.")
         except Exception as e:
             print('ERROR: ' + str(e))
             print("[COMMAND] ERROR: Handling OVERRIDE COMMAND: Waypoints sent from backend does not exist or a Live Drone is not connected.")
-        
-
-    def test_flightplanner(self, mission_manager, decoded_data):
-        try:
-            waypoints = decoded_data["waypoints"] # {'command':'', 'waypoints':'[{lng,lat,alt,id}]', 'takeoff_alt':int}
-            recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
-            Locationwp.id.SetValue(recv_waypoints[1], int(MAVLink.MAV_CMD.LOITER_TURNS))
-            recv_waypoints.insert(1,mission_manager.create_wp(0, 0, 20, id=int(MAVLink.MAV_CMD.TAKEOFF)))    
-            recv_waypoints.append(mission_manager.create_wp(0, 0, 20, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
-            FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
-            print("[COMMAND] TEST_FLIGHTPLANNER Waypoints Command Executed.")
-        except Exception as e:
-            print("[ERROR] " + str(e))
-            print("[COMMAND] ERROR: Handling TEST_FLIGHTPLANNER COMMAND.")
 
 
     def override_flightplanner(self, mission_manager, decoded_data):
@@ -708,8 +699,12 @@ class Commands:
         try:
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
-            print("takeoff_alt: ", decoded_data["takeoff_alt"])
-            recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.TAKEOFF)))  
+            # print("[override_flightplanner] takeoff_alt: ", decoded_data["takeoff_alt"], decoded_data["vtol_transition_mode"])
+
+            recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.TAKEOFF)))
+            vtol_transition_wp = mission_manager.create_wp(0, 0, 20, id=int(MAVLink.MAV_CMD.DO_VTOL_TRANSITION))
+            Locationwp.p1.SetValue(vtol_transition_wp, decoded_data["vtol_transition_mode"]) # 3 for multicoptor, 4 fixed wing
+            recv_waypoints.insert(2, vtol_transition_wp)
             recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
             FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
             print("[COMMAND] OVERRIDE_FLIGHTPLANNER Waypoints Command Executed.")
