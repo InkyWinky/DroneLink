@@ -152,7 +152,7 @@ class MissionPlannerSocket():
 
         
 
-    def override_waypoints(self, waypoints, takeoff_alt, vtol_transition_mode, do_RTL=False):
+    def override_waypoints(self, waypoints, takeoff_alt=None, vtol_transition_mode=None, do_RTL=False):
         """Sends a command to overwrite all the waypoints in mission planner.
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
@@ -167,7 +167,7 @@ class MissionPlannerSocket():
         self.s.sendall(data + '\n\n')
     
     
-    def override_flightplanner_waypoints(self, waypoints, takeoff_alt, vtol_transition_mode, do_RTL=False):
+    def override_flightplanner_waypoints(self, waypoints, takeoff_alt=None, vtol_transition_mode=None, do_RTL=False):
         """Sends a command to overwrite all the waypoints in the flight planner GUI.
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
