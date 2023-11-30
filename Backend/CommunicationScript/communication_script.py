@@ -518,6 +518,7 @@ class MissionManager:
                             "armed": self.cs_drone.armed,
                             "drone_connected": self.drone_connected,
                             "weather_vaning": bool(Script.GetParam("Q_WVANE_ENABLE")),
+                            "sonarrange": self.cs_drone.sonarrange,
                             "messages": messages_to_send,
                             },
                         })
