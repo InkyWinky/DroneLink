@@ -201,7 +201,6 @@ export default {
         event;
 
         const data = JSON.parse(event.data);
-        console.log("data:" + data["messages"]);
         switch (data.command) {
           case "LIVE_DATA":
             store.updateLiveData(data);

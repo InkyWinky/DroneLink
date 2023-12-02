@@ -2,54 +2,50 @@
 <template>
   <div
     class="uk-card uk-card-default uk-card-body"
-    style="border-radius: 20px; padding: 20px"
+    style="border-radius: 20px; padding: 8px 20px 20px 20px"
   >
     <h3>BATTERY STATISTICS</h3>
     <div class="cell-calculator-container">
-      <div class="calculator-cell-count statistic">
-        <span class="stat-header">Cell Count</span>
-        <input
-          v-model="cellCount"
-          class="uk-input"
-          type="text"
-          placeholder="0"
-        />
+      <div class="statistic">
+        <p class="total-voltage-stat-display">
+          {{ (store?.live_data?.propulsion_battery || "0") + "V" }}
+        </p>
       </div>
 
       <div class="live-stats-display">
-        <div class="battery-outline">
+        <div class="propulsion battery-outline">
           <!-- Need a div to center the stuff properly rather than having overlapping text -->
-          <div class="battery-stat-group">
-            <!-- <span class="battery-stat">{{
-              props.cellCurrentVoltage.toFixed(1) + "V"
-            }}</span> -->
-            <!-- <span class="battery-stat">{{ closestChargeFraction + "%" }}</span> -->
-
+          <!-- <div class="battery-stat-group">
             <span class="battery-stat">{{
-              (store?.live_data?.propulsion_battery || "0") + "V"
+              props.cellCurrentVoltage.toFixed(1) + "V"
             }}</span>
-          </div>
+            <span class="battery-stat">{{ closestChargeFraction + "%" }}</span>
+          </div> -->
+          <div id="propulsion-battery-terminal"></div>
+          <p class="propulsion battery-label">Propulsion</p>
         </div>
-        <div id="battery-terminal"></div>
-        <span id="time-remaining"
+
+        <div class="avionics battery-outline">
+          <div id="avionics-battery-terminal"></div>
+          <p class="propulsion battery-label">Avionics</p>
+          <!-- Need a div to center the stuff properly rather than having overlapping text -->
+        </div>
+        <input
+          v-model="cellCount"
+          class="propulsion uk-input param-input"
+          type="text"
+          placeholder="0"
+        />
+        <!-- <span id="time-remaining"
           >{{ hoursRemaining }}hrs {{ minutesRemaining }}min remaining</span
-        >
+        > -->
       </div>
 
       <div class="computed-statistics">
         <div class="statistic">
-          <span class="stat-header">Nominal voltage</span>
-          <p class="stat-display">{{ nominalVoltage.toFixed(1) + "V" }}</p>
-        </div>
-
-        <div class="statistic">
-          <span class="stat-header">Charged</span>
-          <p class="stat-display">{{ chargedVoltage.toFixed(1) + "V" }}</p>
-        </div>
-
-        <div class="statistic">
-          <span class="stat-header">50%</span>
-          <p class="stat-display">{{ halfChargeVoltage.toFixed(1) + "V" }}</p>
+          <p class="total-voltage-stat-display">
+            {{ (store?.live_data?.avionics_battery || "0") + "V" }}
+          </p>
         </div>
       </div>
     </div>
@@ -59,7 +55,7 @@
 <script setup>
 import { store } from "@/store";
 // import { defineProps, computed, ref } from "vue";
-import { computed, ref } from "vue";
+import { ref } from "vue";
 // Will need to check these voltages but I think it should be OK to set some defaults for now
 // const props = defineProps({
 //   cellCurrentVoltage: {
@@ -68,37 +64,37 @@ import { computed, ref } from "vue";
 //     default: 3.84,
 //   },
 // });
-let timeRemaining = ref(0); //Calculate time remaining in minutes based on current battery level
-let hoursRemaining = ref(0);
-let minutesRemaining = ref(0);
-hoursRemaining.value = Math.floor(timeRemaining.value / 60);
-minutesRemaining.value = timeRemaining.value % 60;
+// let timeRemaining = ref(0); //Calculate time remaining in minutes based on current battery level
+// let hoursRemaining = ref(0);
+// let minutesRemaining = ref(0);
+// hoursRemaining.value = Math.floor(timeRemaining.value / 60);
+// minutesRemaining.value = timeRemaining.value % 60;
 
 // Taken from https://blog.ampow.com/lipo-voltage-chart/
 // Voltage is for a single cell in series; this is configurable and we can just multiply it by the cell count
-const cellCapacity = {
-  0.0: 3.27,
-  0.05: 3.61,
-  0.1: 3.69,
-  0.15: 3.71,
-  0.2: 3.73,
-  0.25: 3.75,
-  0.3: 3.77,
-  0.35: 3.79,
-  0.4: 3.8,
-  0.45: 3.82,
-  0.5: 3.84,
-  0.55: 3.85,
-  0.6: 3.87,
-  0.65: 3.91,
-  0.7: 3.95,
-  0.75: 3.98,
-  0.8: 4.02,
-  0.85: 4.08,
-  0.9: 4.11,
-  0.95: 4.15,
-  1.0: 4.2,
-};
+// const cellCapacity = {
+//   0.0: 3.27,
+//   0.05: 3.61,
+//   0.1: 3.69,
+//   0.15: 3.71,
+//   0.2: 3.73,
+//   0.25: 3.75,
+//   0.3: 3.77,
+//   0.35: 3.79,
+//   0.4: 3.8,
+//   0.45: 3.82,
+//   0.5: 3.84,
+//   0.55: 3.85,
+//   0.6: 3.87,
+//   0.65: 3.91,
+//   0.7: 3.95,
+//   0.75: 3.98,
+//   0.8: 4.02,
+//   0.85: 4.08,
+//   0.9: 4.11,
+//   0.95: 4.15,
+//   1.0: 4.2,
+// };
 // This function returns the closest charge percentage based on the input cell count
 // Object.entries() returns an array of key-value pairs where the first entry is the key and the second the value
 // I think we'll only use this if we want to have a general battery display which includes the current charge percentage rather than just a calculator
@@ -111,9 +107,9 @@ const cellCapacity = {
 //         : prev;
 //     })[0] * 100
 // );
-const nominalVoltage = computed(() => cellCount.value * 3.7);
-const chargedVoltage = computed(() => cellCount.value * 4.2);
-const halfChargeVoltage = computed(() => cellCount.value * cellCapacity[0.5]);
+// const nominalVoltage = computed(() => cellCount.value * 3.7);
+// const chargedVoltage = computed(() => cellCount.value * 4.2);
+// const halfChargeVoltage = computed(() => cellCount.value * cellCapacity[0.5]);
 // Below functions handle interactivity and form setup
 const cellCount = ref(0);
 </script>
@@ -121,6 +117,10 @@ const cellCount = ref(0);
 <style scoped>
 div {
   height: 100%;
+}
+h3 {
+  font-family: "Aldrich", sans-serif;
+  margin-top: 0;
 }
 /* Object stacks should have equal space between each other, but rely on the padding inherent to the container's parent */
 .cell-calculator-container {
@@ -147,9 +147,9 @@ div {
   position: relative;
 }
 .battery-outline {
-  width: 85%;
-  height: 45%;
-  border: 10px solid rgb(225, 62, 62);
+  width: 40%;
+  height: 50%;
+  border: 5px solid #8ac11f;
   border-radius: 8px;
   position: relative;
   display: flex;
@@ -158,14 +158,31 @@ div {
   justify-content: center;
   margin-top: 15%;
 }
-#battery-terminal {
+.propulsion {
   position: absolute;
-  width: 6%;
-  height: 22%;
-  border-radius: 5px;
-  top: 28%;
+  left: 0;
+}
+.avionics {
+  position: absolute;
   right: 0;
-  background-color: rgb(225, 62, 62);
+}
+
+#propulsion-battery-terminal {
+  width: 45%;
+  height: 6%;
+  border-radius: 2px;
+  background-color: #8ac11f;
+  position: absolute;
+  top: -10px;
+}
+
+#avionics-battery-terminal {
+  width: 45%;
+  height: 6%;
+  border-radius: 2px;
+  background-color: #8ac11f;
+  position: absolute;
+  top: -10px;
 }
 .battery-stat-group {
   display: block;
@@ -194,17 +211,36 @@ div {
 .stat-header {
   margin: 0;
 }
-.stat-display {
+.total-voltage-stat-display {
   margin: 0;
   padding: 0;
-  background-color: #ddd;
   border-radius: 5px;
-  width: 100%;
+  font-size: 2.5em;
+  color: black;
+}
+.total-voltage-stat-display:hover {
+  color: #8ac11f;
 }
 #time-remaining {
   position: absolute;
   font-size: 0.7em;
   left: 8%;
   bottom: 15%;
+}
+.param-input {
+  width: 23%;
+  height: 10%;
+  background-color: #ddd;
+  border-style: none;
+  border-radius: 5px;
+  font-size: 0.8em;
+  position: absolute;
+  bottom: 10%;
+}
+.battery-label {
+  font-size: 0.7em;
+  color: black;
+  position: absolute;
+  bottom: -20px;
 }
 </style>
