@@ -1,7 +1,7 @@
 <template>
   <div
     class="uk-card uk-card-default uk-card-body"
-    style="border-radius: 20px; padding: 20px"
+    style="border-radius: 20px; padding: 5px 20px 15px 20px"
   >
     <div class="w-full overflow-x-auto h-fit">
       <ul class="uk-tab w-max" uk-tab>
