@@ -79,7 +79,7 @@ div {
   justify-content: left;
   left: 35.5%;
   width: 29%;
-  height: 59%;
+  height: 55%;
   top: 11%;
   z-index: 0;
 }
@@ -89,7 +89,7 @@ div {
   width: 29%;
   left: 35.5%;
   bottom: 4%;
-  height: 25%;
+  height: 28%;
 }
 
 #current-monitor {
