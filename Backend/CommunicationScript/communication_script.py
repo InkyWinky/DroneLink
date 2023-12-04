@@ -75,6 +75,7 @@ import threading
 import gc
 import time
 import datetime
+import traceback
 
 # Importing MissionPlanner dependencies
 clr.AddReference("MissionPlanner")
@@ -394,7 +395,7 @@ class MissionManager:
             send_live_data_thread.join()
         except Exception as e:
             # print out error.
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[ERROR] Error in Establish Connection")
         self.close()
 
@@ -430,7 +431,7 @@ class MissionManager:
                     # print('[INFO] command_queue', self.command_queue)
             except Exception as e:
                 # print out error.
-                print("[ERROR] " + str(e))
+                print(traceback.format_exc())
         self.quit = True
         print("[TERMINATION] receive_thread has successfully terminated.")
 
@@ -457,7 +458,7 @@ class MissionManager:
         try:
             command_dict[command](Commands(), self, decoded_data)
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[COMMAND] ERROR: Unknown Command Was Given.")
 
 
@@ -469,7 +470,7 @@ class MissionManager:
             self.connection.close()
             self.s.close()
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
         
         print("[TERMINATION] Connection to " + str(self.addr) + " was lost.")
     
@@ -526,7 +527,7 @@ class MissionManager:
                     self.connection.sendall(data + '\n\n')
                     Script.Sleep(self.live_data_rate)
                 except Exception as e:
-                    print("[ERROR] " + str(e))
+                    print(traceback.format_exc())
         print("[TERMINATION] send_live_data_thread has successfully terminated")
 
    
@@ -593,7 +594,7 @@ class MissionManager:
             # return MAV.doCommandInt(target_system, target_component, command_code, current, autocontinue, param1, param2, param3, param4, x, y, z)
             print("[INFO] Sending COMMAND INT Successful")
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[ERROR] Failed to send COMMAND INT")
     
     
@@ -605,7 +606,7 @@ class MissionManager:
             Script.SetParam("Q_WVANE_ENABLE", not status)
             print("[INFO] Set Weather Vaning to: " + str(not status))
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[ERROR] Failed to toggle WEATHER VANING, Current State: " + str(status))
 
 
@@ -702,7 +703,7 @@ class Commands:
             mission_manager.update()
             print("[COMMAND] OVERRIDE Waypoint Command Executed.")
         except Exception as e:
-            print('ERROR: ' + str(e))
+            print(traceback.format_exc())
             print("[COMMAND] ERROR: Handling OVERRIDE COMMAND: Waypoints sent from backend does not exist or a Live Drone is not connected.")
 
 
@@ -717,6 +718,7 @@ class Commands:
             Action: An override_flightplanner action with the waypoints to override with.
         """
         try:
+            print(decoded_data)
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
             # print("[override_flightplanner] takeoff_alt: ", decoded_data["takeoff_alt"], decoded_data["vtol_transition_mode"])
@@ -731,7 +733,7 @@ class Commands:
             FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
             print("[COMMAND] OVERRIDE_FLIGHTPLANNER Waypoints Command Executed.")
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[COMMAND] ERROR: Handling OVERRIDE_FLIGHTPLANNER COMMAND.")
 
 
@@ -749,7 +751,7 @@ class Commands:
             mission_manager.sync()
             print("[COMMAND] SYNC SCRIPT Command Executed.")
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[COMMAND] ERROR: Handling SYNC_SCRIPT COMMAND.")
 
 
@@ -758,7 +760,7 @@ class Commands:
             misson_manager.toggle_arm_aircraft()
             print("[COMMAND] ARM Command Executed.")
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[COMMAND] ERROR: Handling ARM COMMAND.")
   
 
@@ -785,7 +787,7 @@ class Commands:
             mission_manager.connection.sendall(bytes(json.dumps(res) + '\n\n'))
             print("[COMMAND] GET_FLIGHTPLANNER_WAYPOINTS Command Executed.")
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[COMMAND] ERROR: Handling GET_FLIGHTPLANNER_WAYPOINTS COMMAND.")
 
     
@@ -804,7 +806,7 @@ class Commands:
             print("[COMMAND] MAV_CMD_DO_SET_RELAY Command Executed.")
 
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[COMMAND] ERROR: Handling MAV_CMD_DO_SET_RELAY COMMAND.")
 
     def send_command_int(self, mission_manager, decoded_data):
@@ -825,7 +827,7 @@ class Commands:
             mission_manager.send_command_int(target_system, target_component, command_code, kwargs)
 
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[COMMAND] ERROR: Handling MAV_COMMAND_INT COMMAND")
 
 
@@ -835,7 +837,7 @@ class Commands:
         try:
             mission_manager.toggle_weather_vaning()
         except Exception as e:
-            print("[ERROR] " + str(e))
+            print(traceback.format_exc())
             print("[ERROR] ERROR: Handling TOGGLE_WEATHER_VANING COMMAND")
 
 # ------------------------------------ End Classes ------------------------------------
