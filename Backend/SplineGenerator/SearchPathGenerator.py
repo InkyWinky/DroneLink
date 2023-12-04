@@ -152,7 +152,7 @@ class SearchPathGenerator:
     max_flight_time = None  # The maximum amount of flight time
     sensor_size = None  # (width, height) in mm
     focal_length = None  # Lens focal length in mm
-    paint_overlap = None  # Minimum paint overlap required in terms of percentage. Must be less than 100%
+    paint_overlap = 0.2  # Minimum paint overlap required in terms of percentage. Must be less than 100%
     paint_radius = None  # The radius in metres around the plane that the cameras can see / paint
     perimeter_distance = None  # The distance rough points will be placed from the search area perimeter
     layer_distance = None  # Distance between each 'layer' of the flight path
@@ -189,7 +189,7 @@ class SearchPathGenerator:
         dict_list = []
 
         for point in self.path_points:
-            new_dict_entry = {"long": point.lon, "lat": point.lat, "alt": self.alt}
+            new_dict_entry = {"long": point.lon, "lat": point.lat, "alt": self.alt, "id": 16}
             dict_list.append(new_dict_entry)
 
         return dict_list
@@ -226,7 +226,38 @@ class SearchPathGenerator:
         if layer_distance is not None:
             self.layer_distance = layer_distance
 
+    def check_parameter_accounted(self):
+        missing_parameters = []
+        # Check essential parameters
+        if self.search_area is None:
+            missing_parameters.append("Search area")
+        if self.alt is None:
+            missing_parameters.append("Altitude")
+        if self.turn_radius is None:
+            missing_parameters.append("Turn radius")
+        if self.curve_resolution is None:
+            missing_parameters.append("Curve resolution")
+        if self.sensor_size is None and self.focal_length is None and self.layer_distance is None:
+            if self.layer_distance is None:
+                if self.sensor_size is None:
+                    missing_parameters.append("Sensor size")
+                if self.focal_length is None:
+                    missing_parameters.append("Focal length")
+            else:
+                missing_parameters.append("Layer distance")
+
+        if len(missing_parameters) > 0:
+            return False, missing_parameters
+
+        return True, None
+
     def generate_search_area_path(self, do_plot=True):
+        # Initial checks
+        all_parameters_accounted_for, missing_parameters = self.check_parameter_accounted()
+        if not all_parameters_accounted_for:
+            self.path_points = {"Error": "Parameters missing", "Parameters": missing_parameters}
+            return self.path_points
+
         # Pre-algorithm calculations
         if self.sensor_size is not None and self.focal_length is not None and self.layer_distance is None:
             self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)

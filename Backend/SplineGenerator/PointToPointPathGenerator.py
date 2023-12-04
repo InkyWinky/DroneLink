@@ -124,7 +124,7 @@ class SplineGenerator:
 
         dictionary_list = []
         for point in path_points:
-            new_dict_entry = {"long": point.lon, "lat": point.lat, "alt": self.alt}
+            new_dict_entry = {"long": point.lon, "lat": point.lat, "alt": self.alt, "id": 16}
             dictionary_list.append(new_dict_entry)
 
         return dictionary_list
