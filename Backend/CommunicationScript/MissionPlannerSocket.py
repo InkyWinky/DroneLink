@@ -158,12 +158,12 @@ class MissionPlannerSocket():
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
         data = json.dumps({
-                           "command":self.COMMANDS.OVERRIDE, 
-                           "waypoints": waypoints,
-                           "takeoff_alt":takeoff_alt, 
-                           "vtol_transition_mode": vtol_transition_mode,
-                           "do_RTL": do_RTL,
-                           })
+                        "command":self.COMMANDS.OVERRIDE, 
+                        "waypoints": waypoints,
+                        "takeoff_alt":takeoff_alt, 
+                        "vtol_transition_mode": vtol_transition_mode,
+                        "do_RTL": do_RTL,
+                        })
         self.s.sendall(data + '\n\n')
     
     
@@ -173,12 +173,12 @@ class MissionPlannerSocket():
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
         """
         data = json.dumps({
-                           "command":self.COMMANDS.OVERRIDE_FLIGHTPLANNER, 
-                           "waypoints": waypoints, 
-                           "takeoff_alt":takeoff_alt, 
-                           "vtol_transition_mode": vtol_transition_mode,
-                           "do_RTL": do_RTL,
-                           })
+                        "command":self.COMMANDS.OVERRIDE_FLIGHTPLANNER, 
+                        "waypoints": waypoints, 
+                        "takeoff_alt":takeoff_alt, 
+                        "vtol_transition_mode": vtol_transition_mode,
+                        "do_RTL": do_RTL,
+                        })
         self.s.sendall(data  + '\n\n')
 
 

@@ -293,6 +293,7 @@ async function formatWaypoints() {
   const commandResult = await api.executeCommand("OVERRIDE_FLIGHTPLANNER", {
     waypoints: outputArr,
     takeoff_alt: takeoff_alt,
+    cruise_alt: store?.settings?.default_alt,
     vtol_transition_mode: store?.settings?.vtol_transition_mode,
   });
 
