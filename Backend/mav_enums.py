@@ -57,4 +57,15 @@ class LifelineState:
     EMERGENCY = 900
     NERF = 800
 
+    LifeLineStateDict = {
+        # defining state constants
+        "100": "LOADING",
+        "200": "IDLE",
+        "300": "LOWERING",
+        "400": "RELEASING",
+        "500": "RAISING",
+        "900": "EMERGENCY",
+        "800": "NERF",
+    }
+
 
