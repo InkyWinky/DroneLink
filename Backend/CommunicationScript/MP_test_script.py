@@ -30,35 +30,37 @@ from MAVLink import mavlink_command_int_t
 print(MissionPlanner.MainV2.comPort) # MainV2.comPort is an instance of the MAVLinkInterface that Mission Planner is actively using
 # For the source code: https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs
 
-def handle_message_packet(raw_packet):
+def handle_message_packet(o, message):
     """Handles any MAVLink message packets received, and prints if they are command_int or debug_vect messages
     architecture taken from:
         - https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example2.py
         - https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example10.py
 
     Args:
-        MAVLink.MAVLinkMessage raw_packet: The MAVLink message packet received
+        MAVLink.MAVLinkMessage message: The MAVLink message packet received
     """
 
     # if component id corresponds to payload
+    print("WOW")
     try:
-        print("HELP")
-        log.InfoFormat("WHY")
-        # if raw_packet.msgid == 250: # debug_vect
-        #     if raw_packet.name == "GEOTAG_GPS":
-        #         target_lat = raw_packet.x
-        #         target_lon = raw_packet.y
-        #         target_height = raw_packet.z 
-        #     elif raw_packet.name == "GEOTAG_BOX":
+        if message.msg_id == MAVLink.MAVLINK_MSG_ID.COMMAND_INT.value__:
+            print("HELP")
+            print(message)
+        # if message.msgid == 250: # debug_vect
+        #     if message.name == "GEOTAG_GPS":
+        #         target_lat = message.x
+        #         target_lon = message.y
+        #         target_height = message.z 
+        #     elif message.name == "GEOTAG_BOX":
         #         # 3 floats represent bounding box coords
-        #         box_x = int(raw_packet.x)
-        #         box_y = int(raw_packet.y)
-        #         box_h = int(raw_packet.z)
-        # elif raw_packet.msgid == 75 and raw_packet.compid == 172: # command_int specifying MM
+        #         box_x = int(message.x)
+        #         box_y = int(message.y)
+        #         box_h = int(message.z)
+        # elif message.msgid == 75 and message.compid == 172: # command_int specifying MM
         #         print("[TIME TO CELEBRATE]")
-        #         print(bytes(raw_packet.data))
+        #         print(bytes(message.data))
         # else:
-        #     print("Unknown Message: " + raw_packet)
+        #     print("Unknown Message: " + message)
 
     except Exception as e:
         print("[ERROR] " + e)
@@ -70,22 +72,27 @@ def subscribe_success(message):
     Args:
         MAVLink.MAVLinkMessage message: The MAVLink message packet received
     """
-
     print("[MESSAGE] Successfully subscribed to command int")
     print(message.data)
+    return True
+
+def OtherMethod(message):
+    print "got HB"
     return True
 
 def subscribe_to_mavlink_msg():
     """Function to subscribe to command_int MAVLink messages (enum value: 75) """
     # subscribe to command_ints
-    
-    sub_command_int = MainV2.comPort.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT, Func[MAVLink.MAVLinkMessage, bool] (handle_message_packet), 1, 1)
+    # sub = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.HEARTBEAT.value__, Func[MAVLink.MAVLinkMessage, bool] (OtherMethod))
+    sub_command_int = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT, Func[MAVLink.MAVLinkMessage, bool] (handle_message_packet))
+    sub2 = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.STATUSTEXT, Func[MAVLink.MAVLinkMessage,
+                                 bool] (handle_message_packet))
     # subscribe to debug_vects
     # sub_debug_vect = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__, Func[MAVLink.MAVLinkMessage, bool] (subscribe_success))
 
     #  to unsubscribe: MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT.value__, sub);
     #  to unsubscribe: MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__, sub);
-    MAV.OnPacketReceived += handle_message_packet
+    # MAV.OnPacketReceived += handle_message_packet
 
 # subscribe_to_mavlink_msg() # subscribe to debug_vects and command_ints
 # Example 2: send command_long 
@@ -97,15 +104,17 @@ while True:
     # print("Response: " + response)
     # if response is not None:
     #     print("HI")
-    commandInt = mavlink_command_int_t()
-    mavlink_command_int_t.target_system.SetValue(commandInt, MAV.sysidcurrent)
-    mavlink_command_int_t.target_component.SetValue(commandInt,MAV.compidcurrent)
-    mavlink_command_int_t.param1.SetValue(commandInt, 1)
-    mavlink_command_int_t.param2.SetValue(commandInt, 21196)
-    mavlink_command_int_t.command.SetValue(commandInt, 976)# MAVLink.MAV_CMD.COMPONENT_ARM_DISARM.value__)
-    # command , target sysid, target compid    used to keep track of the remote state
-    MAV.sendPacket(commandInt, MAV.sysidcurrent, MAV.compidcurrent)
-    print("SENT!")
+
+    # commandInt = mavlink_command_int_t()
+    # mavlink_command_int_t.target_system.SetValue(commandInt, 1)
+    # mavlink_command_int_t.target_component.SetValue(commandInt, 169)
+    # mavlink_command_int_t.param1.SetValue(commandInt, 1)
+    # mavlink_command_int_t.param2.SetValue(commandInt, 21196)
+    # mavlink_command_int_t.command.SetValue(commandInt, 976)# MAVLink.MAV_CMD.COMPONENT_ARM_DISARM.value__)
+    # # command , target sysid, target compid    used to keep track of the remote state
+    # MAV.sendPacket(commandInt, 1, 169)
+    # print("SENT!")
+
     Script.Sleep(1000)
 print("DONE")
 # Example 10: Subscribe to Packet Type
