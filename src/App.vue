@@ -2,7 +2,71 @@
   <nav>
     <div class="flex w-full items-center">
       <div class="w-1/3"></div>
-
+      <div
+        id="vision-detection-eye-true"
+        v-if="vision_detection_bool"
+        @click="vision_detection_bool = false"
+      >
+        <svg
+          id="vision-detection-on-svg"
+          fill="#ffffff"
+          height="30px"
+          width="30px"
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          viewBox="0 0 488.85 488.85"
+          xml:space="preserve"
+          stroke="#ffffff"
+        >
+          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g
+            id="SVGRepo_tracerCarrier"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></g>
+          <g id="SVGRepo_iconCarrier">
+            <g>
+              <path
+                d="M244.425,98.725c-93.4,0-178.1,51.1-240.6,134.1c-5.1,6.8-5.1,16.3,0,23.1c62.5,83.1,147.2,134.2,240.6,134.2 s178.1-51.1,240.6-134.1c5.1-6.8,5.1-16.3,0-23.1C422.525,149.825,337.825,98.725,244.425,98.725z M251.125,347.025 c-62,3.9-113.2-47.2-109.3-109.3c3.2-51.2,44.7-92.7,95.9-95.9c62-3.9,113.2,47.2,109.3,109.3 C343.725,302.225,302.225,343.725,251.125,347.025z M248.025,299.625c-33.4,2.1-61-25.4-58.8-58.8c1.7-27.6,24.1-49.9,51.7-51.7 c33.4-2.1,61,25.4,58.8,58.8C297.925,275.625,275.525,297.925,248.025,299.625z"
+              ></path>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div
+        id="vision-detection-eye-false"
+        v-else
+        @click="vision_detection_bool = true"
+      >
+        <svg
+          id="vision-detection-off-svg"
+          fill="#ffffff"
+          stroke="#ffffff"
+          height="30px"
+          width="30px"
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          viewBox="0 0 24 24"
+        >
+          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g
+            id="SVGRepo_tracerCarrier"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></g>
+          <g id="SVGRepo_iconCarrier">
+            <path
+              stroke="#ffffff"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 10a13.358 13.358 0 0 0 3 2.685M21 10a13.358 13.358 0 0 1-3 2.685m-8 1.624L9.5 16.5m.5-2.19a10.59 10.59 0 0 0 4 0m-4 0a11.275 11.275 0 0 1-4-1.625m8 1.624.5 2.191m-.5-2.19a11.275 11.275 0 0 0 4-1.625m0 0 1.5 1.815M6 12.685 4.5 14.5"
+            ></path>
+          </g>
+        </svg>
+      </div>
       <router-link
         to="/"
         class="flex flex-row w-1/3 items-center justify-center"
@@ -36,6 +100,7 @@
 </template>
 
 <script>
+import { ref } from "vue";
 import { store } from "./store";
 import { api } from "./api";
 import SettingsMenu from "./components/settingsMenu/SettingsMenu.vue";
@@ -44,7 +109,8 @@ import ConnectionStatus from "./components/ConnectionStatus.vue";
 
 export default {
   setup() {
-    return { store, api };
+    const vision_detection_bool = ref(false);
+    return { store, api, vision_detection_bool };
   },
   components: { SettingsMenu, ConnectionStatus },
   // methods: {
@@ -139,4 +205,22 @@ nav a.router-link-exact-active {
   margin-top: 16px;
   box-shadow: 0 0 5px 2px red;
 }
+
+#vision-detection-eye-true {
+  position: absolute;
+  left: 80px;
+}
+
+#vision-detection-eye-false {
+  position: absolute;
+  left: 80px;
+}
+/* 
+#vision-detection-on-svg:hover {
+  fill: #9198e5;
+}
+
+#vision-detection-off-svg:hover {
+  fill: #9198e5;
+} */
 </style>

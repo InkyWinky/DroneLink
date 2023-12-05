@@ -108,6 +108,15 @@
         class="m-10 p-2 rounded bg-gray-300 border border-black opacity-80 h-auto"
       >
         <div id="stats-column" class="h-auto">
+          <div
+            id="payload-status"
+            class="m-2 p-2 rounded h-auto bg-green-500 border-black"
+          >
+            <p>
+              <b>PAYLOAD STATUS:</b>
+              {{ store?.live_data?.lifeline_status || "IDLE" }}
+            </p>
+          </div>
           <div id="payload-info" class="h-auto">
             <!-- info about payload -->
             <h2 class="font-bold text-lg underline">Payload Stats</h2>
@@ -129,7 +138,6 @@
               Velocity:
               {{ store?.live_data?.albatross?.velocity }}
             </p>
-            <p class="text-medium">STATUS: {{ status }}</p>
           </div>
         </div>
         <div id="buttons" class="w-full flex h-auto">
@@ -227,7 +235,6 @@ import { initFlowbite } from "flowbite";
 import { store, fpv_cam, fpv_cam_framerate, vision_cam } from "@/store";
 import api from "@/api";
 
-const status = ref(null);
 const showOverlay = ref(true);
 const showMap = ref(false);
 const deployMarker = ref(null);
