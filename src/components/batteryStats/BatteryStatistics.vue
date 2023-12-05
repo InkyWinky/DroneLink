@@ -1,61 +1,8 @@
 <!-- LiPo Voltage Calculator -->
-<template>
-  <div
-    class="uk-card uk-card-default uk-card-body"
-    style="border-radius: 20px; padding: 8px 20px 20px 20px"
-  >
-    <h3>BATTERY STATISTICS</h3>
-    <div class="cell-calculator-container">
-      <div class="statistic">
-        <p class="total-voltage-stat-display">
-          {{ (store?.live_data?.propulsion_battery || "0") + "V" }}
-        </p>
-      </div>
-
-      <div class="live-stats-display">
-        <div class="propulsion battery-outline">
-          <!-- Need a div to center the stuff properly rather than having overlapping text -->
-          <!-- <div class="battery-stat-group">
-            <span class="battery-stat">{{
-              props.cellCurrentVoltage.toFixed(1) + "V"
-            }}</span>
-            <span class="battery-stat">{{ closestChargeFraction + "%" }}</span>
-          </div> -->
-          <div id="propulsion-battery-terminal"></div>
-          <p class="propulsion battery-label">Propulsion</p>
-        </div>
-
-        <div class="avionics battery-outline">
-          <div id="avionics-battery-terminal"></div>
-          <p class="propulsion battery-label">Avionics</p>
-          <!-- Need a div to center the stuff properly rather than having overlapping text -->
-        </div>
-        <input
-          v-model="cellCount"
-          class="propulsion uk-input param-input"
-          type="text"
-          placeholder="0"
-        />
-        <!-- <span id="time-remaining"
-          >{{ hoursRemaining }}hrs {{ minutesRemaining }}min remaining</span
-        > -->
-      </div>
-
-      <div class="computed-statistics">
-        <div class="statistic">
-          <p class="total-voltage-stat-display">
-            {{ (store?.live_data?.avionics_battery || "0") + "V" }}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { store } from "@/store";
 // import { defineProps, computed, ref } from "vue";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 // Will need to check these voltages but I think it should be OK to set some defaults for now
 // const props = defineProps({
 //   cellCurrentVoltage: {
@@ -111,8 +58,119 @@ import { ref } from "vue";
 // const chargedVoltage = computed(() => cellCount.value * 4.2);
 // const halfChargeVoltage = computed(() => cellCount.value * cellCapacity[0.5]);
 // Below functions handle interactivity and form setup
-const cellCount = ref(0);
+const maxPropulsion = 33.6;
+const minPropulsion = 30.4;
+
+const maxAvionics = 16.8;
+const minAvionics = 15.2;
+const propulsionPercentage = computed(() => {
+  return {
+    height: `${
+      (store?.live_data?.propulsion_battery / (maxPropulsion - minPropulsion)) *
+      100
+    }%`,
+  };
+});
+
+const avionicsPercentage = computed(() => {
+  return {
+    height: `${
+      (store?.live_data?.avionics_battery / (maxAvionics - minAvionics)) * 100
+    }%`,
+  };
+});
+
+// const avionicsBatteryColour = computed(() => {
+//   if (avionicsPercentage.value.height < 20) {
+//     return { color: "red" };
+//   } else if (avionicsPercentage.value.height < 40) {
+//     return "orange";
+//   } else {
+//     return "green";
+//   }
+// });
+
+const avionicsCellCount = ref(4);
+const propCellCount = ref(8);
 </script>
+
+<template>
+  <div
+    class="uk-card uk-card-default uk-card-body"
+    style="border-radius: 20px; padding: 8px 20px 20px 20px"
+  >
+    <h3>BATTERY STATISTICS</h3>
+    <div class="cell-calculator-container">
+      <div class="statistic">
+        <p class="propulsion-total-voltage-stat-display">
+          {{ (store?.live_data?.propulsion_battery || "0") + "V" }}
+        </p>
+        <p class="cell-voltage-stat-display">
+          {{
+            (store?.live_data?.propulsion_battery / propCellCount || "0") + "V"
+          }}
+        </p>
+        <p class="per-cell-text">per cell</p>
+      </div>
+
+      <div class="live-stats-display">
+        <div class="propulsion battery-outline">
+          <!-- Need a div to center the stuff properly rather than having overlapping text -->
+          <!-- <div class="battery-stat-group">
+            <span class="battery-stat">{{
+              props.cellCurrentVoltage.toFixed(1) + "V"
+            }}</span>
+            <span class="battery-stat">{{ closestChargeFraction + "%" }}</span>
+          </div> -->
+          <div id="propulsion-battery-terminal"></div>
+          <p class="propulsion battery-label">Propulsion</p>
+          <div class="battery-level" :style="propulsionPercentage"></div>
+        </div>
+        <div class="avionics battery-outline">
+          <div id="avionics-battery-terminal"></div>
+          <p class="avionics battery-label">Avionics</p>
+          <!-- Need a div to center the stuff properly rather than having overlapping text -->
+          <div class="battery-level-avionics" :style="avionicsPercentage">
+            <!-- <div
+              class="wavy-line wavy-line-green"
+              data-text="xxxxxxxxxxxxxx"
+            ></div> -->
+          </div>
+        </div>
+        <input
+          v-model="propCellCount"
+          class="propulsion uk-input param-input"
+          type="text"
+          placeholder="8"
+        />
+        <!-- <span id="time-remaining"
+          >{{ hoursRemaining }}hrs {{ minutesRemaining }}min remaining</span
+        > -->
+        <input
+          v-model="avionicsCellCount"
+          class="avionics uk-input param-input"
+          type="text"
+          placeholder="4"
+        />
+      </div>
+
+      <div class="computed-statistics">
+        <div class="statistic">
+          <p class="avionics-total-voltage-stat-display">
+            {{ (store?.live_data?.avionics_battery || "0") + "V" }}
+          </p>
+          <p class="avionics-cell-voltage-stat-display">
+            {{
+              (store?.live_data?.avionics_battery / avionicsCellCount || "0") +
+              "V"
+            }}
+          </p>
+          <p class="avionics-per-cell-text">per cell</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 div {
@@ -141,7 +199,7 @@ h3 {
 }
 .live-stats-display {
   flex-grow: 1;
-  margin: 8% 8%;
+  margin: 4% 4%;
   padding: 0;
   text-align: center;
   position: relative;
@@ -211,14 +269,38 @@ h3 {
 .stat-header {
   margin: 0;
 }
-.total-voltage-stat-display {
+.avionics-total-voltage-stat-display {
   margin: 0;
   padding: 0;
-  border-radius: 5px;
-  font-size: 2.5em;
+  font-size: 3em;
+  color: black;
+  padding-top: 2px;
+}
+
+.propulsion-total-voltage-stat-display {
+  margin: 0;
+  padding: 10px 10px 0 10px;
+  font-size: 2em;
   color: black;
 }
-.total-voltage-stat-display:hover {
+
+.cell-voltage-stat-display {
+  margin: 0;
+  font-size: 1.2em;
+  color: lightslategray;
+}
+
+.avionics-cell-voltage-stat-display {
+  position: relative;
+  margin: 0;
+  font-size: 1.6em;
+  color: lightslategray;
+}
+
+.avionics-total-voltage-stat-display:hover {
+  color: #8ac11f;
+}
+.propulsion-total-voltage-stat-display:hover {
   color: #8ac11f;
 }
 #time-remaining {
@@ -242,5 +324,70 @@ h3 {
   color: black;
   position: absolute;
   bottom: -20px;
+}
+.battery-level {
+  width: 90%;
+  height: 15%;
+  background-color: #bfd78e;
+  position: absolute;
+  bottom: 0;
+  border-style: none;
+  margin: 0;
+  padding: 0;
+}
+.per-cell-text {
+  margin: 0;
+  font-size: 0.7em;
+  color: lightslategray;
+  position: relative;
+  top: -8px;
+}
+
+.avionics-per-cell-text {
+  margin: 0;
+  font-size: 1em;
+  color: lightslategray;
+  position: relative;
+  top: -8px;
+}
+.wavy-line {
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+  margin: 0 auto 0 auto;
+  text-decoration-color: #bfd78e;
+  z-index: 999;
+  position: absolute;
+  top: -25px;
+}
+.wavy-line:before {
+  content: attr(data-text);
+  position: relative;
+  top: -35px;
+  color: rgba(0, 0, 0, 0);
+  width: calc(100% + 27px);
+  font-size: 3em;
+  text-decoration-style: wavy;
+  text-decoration-color: #bfd78e;
+  text-decoration-line: underline;
+  animation: animate 2.5s ease-in-out infinite;
+  -webkit-animation: animate 2.5s ease-in-out infinite;
+}
+
+@keyframes animate {
+  0% {
+    left: -0px;
+  }
+  100% {
+    left: -70px;
+  }
+}
+@-webkit-keyframes animate {
+  0% {
+    left: -0px;
+  }
+  100% {
+    left: -70px;
+  }
 }
 </style>
