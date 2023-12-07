@@ -5,7 +5,7 @@
       <div
         id="vision-detection-eye-true"
         v-if="vision_detection_bool"
-        @click="vision_detection_bool = false"
+        @click="toggleVisionDetection(vision_detection_bool)"
       >
         <svg
           id="vision-detection-on-svg"
@@ -37,7 +37,7 @@
       <div
         id="vision-detection-eye-false"
         v-else
-        @click="vision_detection_bool = true"
+        @click="toggleVisionDetection(vision_detection_bool)"
       >
         <svg
           id="vision-detection-off-svg"
@@ -110,15 +110,25 @@ import ConnectionStatus from "./components/ConnectionStatus.vue";
 export default {
   setup() {
     const vision_detection_bool = ref(false);
+
     return { store, api, vision_detection_bool };
   },
   components: { SettingsMenu, ConnectionStatus },
-  // methods: {
-  //   onSyncDrone() {
-  //     console.log("[ACTION] SYNC SCRIPT button pressed");
-  //     api.executeCommand("SYNC_SCRIPT", {});
-  //   },
-  // },
+  methods: {
+    toggleVisionDetection(vision_detection_bool) {
+      if (
+        vision_detection_bool &&
+        confirm("Confirm disable Vision detection?")
+      ) {
+        console.log("[MESSAGE] Disabling Vision detection");
+        api.executeCommand("TOGGLE_VISION_DETECTION", {});
+      } else if (confirm("Confirm enable Vision detection?")) {
+        console.log("[MESSAGE] Enabling Vision detection");
+        api.executeCommand("TOGGLE_VISION_DETECTION", {});
+      }
+      vision_detection_bool = !vision_detection_bool;
+    },
+  },
 };
 </script>
 
