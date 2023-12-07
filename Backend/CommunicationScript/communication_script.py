@@ -123,6 +123,17 @@ class MissionManager:
         self.command_queue_mutex = threading.Lock() # Mutex for command_queue
         self.quit = False # Allows for threads to terminate correctly
 
+        # Lifeline Data params
+        self.lifeline_mutex = threading.Lock() # Mutex to only allow 1 thread to read and write to the following params
+        self.lifeline_status = 200 # initialise as IDLE state
+        self.lifeline_distance = 0 # distance (m) of payload to albastross
+        self.lifeline_velocity = 0 # velocity (m/s) from payload to albatross of the payload (+ moving down / - moving up)
+
+        # Vision Data params
+        self.vision_mutex = threading.Lock() # Mutex to only allow 1 thread to read and write to the following params
+        self.vision_geotag_gps = {'x': 0, 'y': 0, 'z': 0}
+        self.vision_geotag_box = {'x': 0, 'y': 0, 'z': 0}
+
         self.subscribe_to_mavlink_msg()
         # Start connection to backend
         if connect:
@@ -501,6 +512,8 @@ class MissionManager:
                     for message in self.cs_drone.messages[self.messagesCount:]:
                         messages_to_send.append({'time': str(message[0]), 'message': message[1]})
                         self.messagesCount += 1
+                    self.lifeline_mutex.acquire()
+                    self.vision_mutex.acquire()
                     data = json.dumps({
                         "command":Commands.LIVE_DRONE_DATA,
                         "data":{
@@ -521,8 +534,15 @@ class MissionManager:
                             "weather_vaning": bool(Script.GetParam("Q_WVANE_ENABLE")),
                             "sonarrange": float(self.cs_drone.sonarrange),
                             "messages": messages_to_send,
+                            "lifeline_status": self.lifeline_status,
+                            "lifeline_distance": self.lifeline_distance,
+                            "lifeline_velocity": self.lifeline_velocity,
+                            "vision_geotag_gps": self.vision_geotag_gps,
+                            "vision_geotag_box": self.vision_geotag_box
                             },
                         })
+                    self.vision_mutex.release()
+                    self.lifeline_mutex.release()
                     # print('[MESSAGES TO SEND]', messages_to_send)
                     self.connection.sendall(data + '\n\n')
                     Script.Sleep(self.live_data_rate)
@@ -609,57 +629,61 @@ class MissionManager:
             print(traceback.format_exc())
             print("[ERROR] Failed to toggle WEATHER VANING, Current State: " + str(status))
 
-
-    def handle_message_packet(self, raw_packet):
-        """Handles any MAVLink message packets received, and prints if they are command_int or debug_vect messages
-        architecture taken from:
-         - https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example2.py
-         - https://github.com/ArduPilot/MissionPlanner/blob/c69793a6abaf97fc17b90cc099cbfd391c16dced/Scripts/example10.py
-
-        Args:
-            MAVLink.MAVLinkMessage raw_packet: The MAVLink message packet received
-        """
-
-        # if component id corresponds to payload
-        try:
-            if raw_packet.msgid == 250: # debug_vect
-                if raw_packet.name == "GEOTAG_GPS":
-                    target_lat = raw_packet.x
-                    target_lon = raw_packet.y
-                    target_height = raw_packet.z 
-                elif raw_packet.name == "GEOTAG_BOX":
-                    # 3 floats represent bounding box coords
-                    box_x = int(raw_packet.x)
-                    box_y = int(raw_packet.y)
-                    box_h = int(raw_packet.z)
-            elif raw_packet.msgid == 75 and raw_packet.compid == 172: # command_int specifying MM
-                    print("[TIME TO CELEBRATE]")
-                    print(bytes(raw_packet.data))
-
-        except Exception as e:
-            print("[ERROR] " + e)
         
-    def subscribe_success(self, message):
-        """ Callback function called if SubscribeToPacketType succeeds, and prints the message data
+    def NamedValueFloatHandler(self, message):
+        """Function handler for when a NAMED_VALUE_FLOAT message is received over mavlink
+        https://mavlink.io/en/messages/common.html#NAMED_VALUE_FLOAT
 
         Args:
-            MAVLink.MAVLinkMessage message: The MAVLink message packet received
-        """
+            message (_type_): The message packet from c#.
 
-        print("[MESSAGE] Successfully subscribed to message")
-        print(message.data)
+        Returns:
+            boolean: True if the message was handled successfully
+        """
+        print("NAMED_VALUE_FLOAT from MAV.SubscribeToPacketType with sysid: " + str(message.sysid) + ", compid: " + str(message.compid))
+        if int(message.msgid) == MAVLink.MAVLINK_MSG_ID.NAMED_VALUE_FLOAT.value__:
+            # If message from LIFELINE
+            if int(message.sysid) == 1 and int(message.compid) == 169:
+                # print(dir(message.data))
+                name = str(bytearray(message.data.name)).rstrip('\x00') # convert byte array to string and remove null characters
+                value = message.data.value
+                self.lifeline_mutex.acquire()
+                if name == "LFL_STATUS":
+                    print(name, value)
+                    self.lifeline_status = int(value)
+                elif name == "LFL_DIST":
+                    self.lifeline_distance = float(value)
+                elif name == "LFL_VEL":
+                    self.lifeline_velocity = float(value)
+                self.lifeline_mutex.release()
+                
         return True
-    
+
+    def DebugVectHandler(self,message):
+        if int(message.msgid) == MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__:
+            # If message from VISION
+            if int(message.sysid) == 1 and int(message.compid) == 170:
+                name = str(bytearray(message.data.name)).rstrip('\x00')
+                x = float(message.data.x)
+                y = float(message.data.y)
+                z = float(message.data.z)
+                self.vision_mutex.acquire()
+                if name == "GEOTAG_GPS":
+                    self.vision_geotag_gps = {'x': x, 'y': y, 'z': z}
+                elif name == "GEOTAG_BOX":
+                    self.vision_geotag_box = {'x': x, 'y': y, 'z': z}
+                self.vision_mutex.release()
+                
+
     def subscribe_to_mavlink_msg(self):
-        """Function to subscribe to command_int MAVLink messages (enum value: 75) """
-        # subscribe to command_ints for lifeline
-        sub_command_int = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT, Func[MAVLink.MAVLinkMessage, bool] (self.subscribe_success), 1, 171)
-        # subscribe to debug_vects for vision
-        # sub_debug_vect = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__, Func[MAVLink.MAVLinkMessage, bool] (self.subscribe_success))
+        """Function to subscribe to messages """
+        # subscribe to NAMED_VALUE_FLOAT for lifeline
+        sub_named_value_float = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.NAMED_VALUE_FLOAT, Func[MAVLink.MAVLinkMessage, bool] (self.NamedValueFloatHandler), 1, 169) # sysid=1, compid=169 (lifeline)
+        # subscribe to DEBUG_VECT for vision
+        sub_debug_vect = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT, Func[MAVLink.MAVLinkMessage, bool] (self.DebugVectHandler), 1, 170) # sysid=1, compid=170 (vision)
 
         #  to unsubscribe: MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT.value__, sub);
         #  to unsubscribe: MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__, sub);
-        MAV.OnPacketReceived += self.handle_message_packet
         
 
 class Commands:
