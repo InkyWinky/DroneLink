@@ -128,7 +128,6 @@ class MissionPlannerSocket():
                             messages = data['messages']
                             self.messages = self.messages + messages
                             data['messages'] = []
-                            # attempt to 
                             try:
                                 ll_status_key = str(int(self.live_data["lifeline_status"]))
                                 self.live_data["lifeline_status"] = LifelineState.LifeLineStateDict[ll_status_key]
@@ -253,6 +252,9 @@ class MissionPlannerSocket():
             "kwargs": kwargs
             })
         self.s.sendall(data + '\n\n')
+    
+    def toggle_vision_detection():
+        print("Toggling Vision detection")
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
@@ -273,6 +275,7 @@ class Commands:
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT" 
     TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
+    TOGGLE_VISION_DETECTION = "TOGGLE_VISION_DETECTION"
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")
