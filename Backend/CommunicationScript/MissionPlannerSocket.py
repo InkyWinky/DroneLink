@@ -2,6 +2,7 @@ import socket
 import threading
 import json
 import time
+from mav_enums import *
 
 class MissionPlannerSocket():
     """MissionPlannerSocket maintains the connection between the Backend Server and the Mission Planner device.
@@ -127,6 +128,12 @@ class MissionPlannerSocket():
                             messages = data['messages']
                             self.messages = self.messages + messages
                             data['messages'] = []
+                            # attempt to 
+                            try:
+                                ll_status_key = str(int(self.live_data["lifeline_status"]))
+                                self.live_data["lifeline_status"] = LifelineState.LifeLineStateDict[ll_status_key]
+                            except KeyError:
+                                pass
                             self.live_data = data
                             self.live_data_mutex.release()
                         except Exception as e:
@@ -312,8 +319,3 @@ if __name__ == "__main__":
         else:
             print("Invalid Option.")
     mp_socket.close()
-
-
-
-
-    
