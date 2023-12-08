@@ -153,7 +153,7 @@ class SearchPathGenerator:
     sensor_size = None  # (width, height) in mm
     focal_length = None  # Lens focal length in mm
     paint_overlap = 0.2  # Minimum paint overlap required in terms of percentage. Must be less than 100%
-    paint_radius = None  # The radius in metres around the plane that the cameras can see / paint
+    paint_diameter = None  # The radius in metres around the plane that the cameras can see / paint
     perimeter_distance = None  # The distance rough points will be placed from the search area perimeter
     layer_distance = None  # Distance between each 'layer' of the flight path
     turn_type = None  # Turn type for the turns in search area mode
@@ -237,21 +237,23 @@ class SearchPathGenerator:
             missing_parameters.append("Turn radius")
         if self.curve_resolution is None:
             missing_parameters.append("Curve resolution")
+
         if self.sensor_size is None and self.focal_length is None and self.layer_distance is None:
-            if self.layer_distance is None:
-                if self.sensor_size is None:
-                    missing_parameters.append("Sensor size")
-                if self.focal_length is None:
-                    missing_parameters.append("Focal length")
-            else:
-                missing_parameters.append("Layer distance")
+            missing_parameters.append("Sensor size")
+            missing_parameters.append("Focal length")
+            missing_parameters.append("Layer distance")
+        elif self.layer_distance is None and (self.sensor_size is None or self.focal_length is None):
+            if self.sensor_size is None:
+                missing_parameters.append("Sensor size")
+            if self.focal_length is None:
+                missing_parameters.append("Focal length")
 
         if len(missing_parameters) > 0:
             return False, missing_parameters
 
         return True, None
 
-    def generate_search_area_path(self, do_plot=True):
+    def generate_search_area_path(self, do_plot=False):
         # Initial checks
         all_parameters_accounted_for, missing_parameters = self.check_parameter_accounted()
         if not all_parameters_accounted_for:
@@ -260,13 +262,15 @@ class SearchPathGenerator:
 
         # Pre-algorithm calculations
         if self.sensor_size is not None and self.focal_length is not None and self.layer_distance is None:
-            self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)
-            self.layer_distance = calculate_layer_distance(viewing_radius=self.paint_radius, paint_overlap=self.paint_overlap)
+            self.paint_diameter = calculate_viewing_distance(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=self.alt, lat=self.search_area.centroid.lat)
+            self.layer_distance = calculate_layer_distance(viewing_radius=self.paint_diameter, paint_overlap=self.paint_overlap)
+        else:
+            self.paint_diameter = self.layer_distance
         if self.orientation is None:
             self.orientation = calculate_best_orientation(polygon=self.search_area)
 
         if self.orientation > 0:
-            self.orientation -= self.orientation
+            self.orientation -= pi
 
         # Complete pre-calculation data and parameter validation checks
         validation, error_message = self.do_pre_validation_checks()
@@ -322,7 +326,6 @@ class SearchPathGenerator:
                 take_off_points = None
         else:
             take_off_points = None
-
         # Calculate callable point
         self.path_points = self.calculate_path_points()
 
@@ -650,9 +653,9 @@ class SearchPathGenerator:
     def generate_points(self):
         # Generate the first point depending on where the plane starts
         centroid = self.search_area.centroid
-        forwards_waypoints = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation, layer_distance=self.layer_distance, direction="forward")
+        forwards_waypoints = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation, layer_distance=self.layer_distance, direction="forward", paint_diameter=self.paint_diameter)
         forwards_waypoints.pop(0)  # Remove the path start point
-        backwards_waypoints = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation + pi, layer_distance=self.layer_distance, direction="backward")
+        backwards_waypoints = calculate_points_along_polygon_distanced(start_point=centroid, polygon=self.search_area, orientation=self.orientation + pi, layer_distance=self.layer_distance, direction="backward", paint_diameter=self.paint_diameter)
         backwards_waypoints.pop(0)  # Remove the path start point
         backwards_waypoints.reverse()
 
@@ -946,7 +949,6 @@ def calculate_angle_from_points(from_point=None, to_point=None):
     return math.atan2(y, x)
 
 def calculate_best_orientation(polygon=None):
-    # TODO: Make sure you return the correct orientation (+ or - pi or plus at all)
     best_distance = 0
     best_orientation = 0
     for vertex1 in polygon.vertices:
@@ -1039,10 +1041,18 @@ def do_segments_intersect(segment1=None, segment2=None):
 def calculate_layer_distance(viewing_radius=None, paint_overlap=None):
     return viewing_radius * (1 - paint_overlap)
 
-def calculate_viewing_radius(sensor_size=None, focal_length=None, altitude=None):
+def calculate_viewing_distance(sensor_size=None, focal_length=None, altitude=None, lat=None):
+    # Vertical FoV
     fov = 2 * math.atan(sensor_size[1] / (2 * focal_length))
-    viewing_radius = math.tan(fov / 2) * altitude
-    return viewing_radius
+
+    # Vertical radius on ground
+    v_radius = altitude * math.atan(fov / 2)
+
+    # Vertical diameter on ground (viewing distance in metres)
+    viewing_distance = 2 * v_radius
+    scaling_factor = 111320 / math.cos(lat)
+    viewing_distance /= scaling_factor
+    return viewing_distance
 
 def calculate_turn_directions(previous_waypoint=None, current_waypoint=None, next_waypoint=None):
     direction = intersection_orientation(previous_waypoint, current_waypoint, next_waypoint)
@@ -1355,7 +1365,7 @@ def calculate_closest_point_on_polygon(polygon=None, start_point=None):
             closest_distance = new_closest_distance
     return closest_point
 
-def calculate_points_along_polygon_distanced(start_point=None, polygon=None, orientation=None, layer_distance=None, direction=None):
+def calculate_points_along_polygon_distanced(start_point=None, polygon=None, orientation=None, layer_distance=None, direction=None, paint_diameter=None):
     rough_waypoints = [start_point]
     count = 0
     max_points = 100
@@ -1367,19 +1377,19 @@ def calculate_points_along_polygon_distanced(start_point=None, polygon=None, ori
     while count < max_points:
         # If the current direction in direction of orientation or backwards, raycast then backtrack by layer distance
         if directions[0] == "forward":
-            new_point = handle_forward_backward_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation, layer_distance=layer_distance)
+            new_point = handle_forward_backward_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation, paint_diameter=paint_diameter)
         elif directions[0] == "backward":
-            new_point = handle_forward_backward_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=clamp_angle(orientation + pi), layer_distance=layer_distance)
+            new_point = handle_forward_backward_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=clamp_angle(orientation + pi), paint_diameter=paint_diameter)
         elif directions[0] == "left":
             if directions[1] == "forward":
-                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation + pi / 2, layer_distance=layer_distance, raycast_direction=orientation)
+                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation + pi / 2, layer_distance=layer_distance, raycast_direction=orientation, paint_diameter=paint_diameter)
             elif directions[1] == "backward":
-                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation - pi / 2, layer_distance=layer_distance, raycast_direction=orientation + pi)
+                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation - pi / 2, layer_distance=layer_distance, raycast_direction=orientation + pi, paint_diameter=paint_diameter)
         else:  # directions[0] == "right":
             if directions[1] == "forward":
-                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation - pi / 2, layer_distance=layer_distance, raycast_direction=orientation)
+                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation - pi / 2, layer_distance=layer_distance, raycast_direction=orientation, paint_diameter=paint_diameter)
             else:  # directions[1] == "backward":
-                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation + pi / 2, layer_distance=layer_distance, raycast_direction=orientation + pi)
+                new_point = handle_sideways_direction(origin=rough_waypoints[-1], polygon=polygon, orientation=orientation + pi / 2, layer_distance=layer_distance, raycast_direction=orientation + pi, paint_diameter=paint_diameter)
 
         # If reached the end of the path
         if new_point is None:
@@ -1414,12 +1424,12 @@ def get_projection(this_vector=None, on_this_vector=None):
     projection = this_vector.dot(on_this_vector) / on_this_vector.magnitude() ** 2
     return projection
 
-def handle_forward_backward_direction(origin=None, polygon=None, orientation=None, layer_distance=None):
+def handle_forward_backward_direction(origin=None, polygon=None, orientation=None, paint_diameter=None):
     raycast_point = raycast_to_polygon(origin=origin, polygon=polygon, direction=orientation)
     if raycast_point is None:
         return None
     # TODO: Distancing the point like this doesn't really work for slanted surfaces
-    distant_point = create_point(raycast_point, layer_distance, orientation + pi)
+    distant_point = create_point(raycast_point, paint_diameter / 2, orientation + pi)
 
     # Make sure the distant point is not behind the origin point
     forward_direction = create_point(Coord(lon=0, lat=0), 1, orientation)
@@ -1431,14 +1441,14 @@ def handle_forward_backward_direction(origin=None, polygon=None, orientation=Non
 
     return distant_point
 
-def handle_sideways_direction(origin=None, polygon=None, orientation=None, layer_distance=None, raycast_direction=None):
+def handle_sideways_direction(origin=None, polygon=None, orientation=None, layer_distance=None, raycast_direction=None, paint_diameter=None):
     distant_point = create_point(origin, layer_distance, orientation)
     raycast_point = raycast_to_polygon(origin=distant_point, direction=raycast_direction, polygon=polygon)
     if raycast_point is None:
         raycast_point = find_closest_intersection_point(ray_origin=distant_point, ray_direction=raycast_direction + pi, polygon=polygon)
         if raycast_point is None:
             return None
-    distanced_raycast = create_point(raycast_point, layer_distance, raycast_direction + pi)
+    distanced_raycast = create_point(raycast_point, paint_diameter / 2, raycast_direction + pi)
 
     # If the point is within the polygon, return it. It's a good point
     if polygon.contains(distanced_raycast):
@@ -1570,35 +1580,40 @@ def earth_radius(latitude):
 
     return radius
 
-def do_entire_simulation(do_plot=True, do_random=True):
+def do_entire_simulation(do_plot=False, do_random=True):
     if do_random:
         search_area_polygon = create_random_search_area(7)
         layer_distance = create_random_layer_distance([0.5, 5])
         start_point = create_random_start_point()
         minimum_turn_radius = random.uniform(0.1, 5)
         curve_resolution = 5
+        angle = None
+        paint_overlap = None
+        focal_length = None
+        sensor_size = None
+
     else:
-        start_point = Coord(lat=-38.40, lon=144.88)
-        search_area_waypoints = [Coord(lat=-38.383944, lon=144.880181), Coord(lat=-38.397322, lon=144.908826), Coord(lat=-38.366840, lon=144.907242), Coord(lat=-38.364585, lon=144.880813)]
+        start_point = Coord(lat=-38.099544, lon=143.365936)
+        search_area_waypoints = [Coord(lat=-38.093709, lon=143.374552), Coord(lat=-38.109118, lon=143.391547), Coord(lat=-38.113380, lon=143.386050), Coord(lat=-38.096789, lon=143.368402)]
         search_area_polygon = Polygon(search_area_waypoints)
         layer_distance = 400  # Metres
-        minimum_turn_radius = 150  # Metres
+        minimum_turn_radius = 80  # Metres
         curve_resolution = 0.01  # Waypoints per metre on turns
         scaling_factor = 111320 / math.cos(search_area_polygon.centroid.lat)
         layer_distance /= scaling_factor
         minimum_turn_radius /= scaling_factor
         curve_resolution *= scaling_factor
-
-    sensor_size = (12.8, 9.6)
-    focal_length = 16
-    paint_overlap = 0.1
-    angle = None
+        sensor_size = (12.8, 9.6)
+        focal_length = 16
+        paint_overlap = 0
+        angle = -43 * pi / 180
+        layer_distance = None
 
     path_generator = SearchPathGenerator()
     path_generator.set_data(search_area=search_area_polygon)
-    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
+    path_generator.set_parameters(alt=600, orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
 
-    path_generator.generate_search_area_path(do_plot=do_plot)
+    points = path_generator.generate_search_area_path(do_plot=do_plot)
     return path_generator.error
 
 def run_number_of_sims(count=None, plot=None, do_random=False):
@@ -1614,7 +1629,7 @@ def run_number_of_sims(count=None, plot=None, do_random=False):
 
 def main_function():
     print("You are running a test of the search area path generation. If any runtime errors occur please tell Nic in mission management thank you.")
-    run_number_of_sims(1, plot=True, do_random=True)
+    run_number_of_sims(1, plot=True, do_random=False)
 
 
 if __name__ == "__main__":
