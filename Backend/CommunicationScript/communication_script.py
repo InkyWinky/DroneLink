@@ -629,6 +629,11 @@ class MissionManager:
             print(traceback.format_exc())
             print("[ERROR] Failed to toggle WEATHER VANING, Current State: " + str(status))
 
+    def toggle_vision_detection(self):
+        """Toggles on and off Vision detection on the plane (Vision detection locates targets for Search and Rescue)
+        """
+        # placeholder until specific method is determined
+        print("[MESSAGE] in future this function will toggle Vision detection")
         
     def NamedValueFloatHandler(self, message):
         """Function handler for when a NAMED_VALUE_FLOAT message is received over mavlink
@@ -676,14 +681,15 @@ class MissionManager:
                 
 
     def subscribe_to_mavlink_msg(self):
-        """Function to subscribe to messages """
-        # subscribe to NAMED_VALUE_FLOAT for lifeline
+        """Function to subscribe to MAVLink messages """
+        # subscribe to NAMED_VALUE_FLOAT for Lifeline - Lifeline send status updates in this form
         sub_named_value_float = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.NAMED_VALUE_FLOAT, Func[MAVLink.MAVLinkMessage, bool] (self.NamedValueFloatHandler), 1, 169) # sysid=1, compid=169 (lifeline)
-        # subscribe to DEBUG_VECT for vision
+        # subscribe to DEBUG_VECT for Vision - Vision sends target geolocation and bounding box size/position info in this form
         sub_debug_vect = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT, Func[MAVLink.MAVLinkMessage, bool] (self.DebugVectHandler), 1, 170) # sysid=1, compid=170 (vision)
 
-        #  to unsubscribe: MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT.value__, sub);
-        #  to unsubscribe: MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__, sub);
+        #  unsubscriptions are usually handled when socket is closed, but can be manually done with the following code:
+        #  MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.COMMAND_INT.value__, sub);
+        #  MAV.UnSubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__, sub);
         
 
 class Commands:
@@ -699,6 +705,7 @@ class Commands:
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT"
     TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
+    TOGGLE_VISION_DETECTION = "TOGGLE_VISION_DETECTION"
 
 
     def override(self, mission_manager, decoded_data):
@@ -863,6 +870,15 @@ class Commands:
         except Exception as e:
             print(traceback.format_exc())
             print("[ERROR] ERROR: Handling TOGGLE_WEATHER_VANING COMMAND")
+    
+    def toggle_vision_detection(self, mission_manager, decoded_data):
+        """Toggles on and off Vision target detection on the plane (Vision detection detects targets for Search and Rescue)
+        """
+        try:
+            mission_manager.toggle_vision_detection()
+        except Exception as e:
+            print(traceback.format_exc())
+            print("[ERROR] Error handling TOGGLE_VISION_DETECTION COMMAND")
 
 # ------------------------------------ End Classes ------------------------------------
 # def waypoint_mavlink_test():

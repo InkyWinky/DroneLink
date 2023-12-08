@@ -109,7 +109,7 @@ import ConnectionStatus from "./components/ConnectionStatus.vue";
 
 export default {
   setup() {
-    const vision_detection_bool = ref(false);
+    const vision_detection_bool = ref(true);
 
     return { store, api, vision_detection_bool };
   },
