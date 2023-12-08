@@ -220,7 +220,7 @@ class MissionPlannerSocket():
             pin_num: the relay pin number on the cube
             pin_state: the state the the user wishes to set the pin to (0 for high, or 1 for low)
         """
-        data = json.dumps({"command":self.COMMANDS.SET_CUBE_RELAY_PIN, "pin_num": pin_num, "pin_state": pin_state})
+        data = json.dumps({"command": self.COMMANDS.SET_CUBE_RELAY_PIN, "pin_num": pin_num, "pin_state": pin_state})
         self.s.sendall(data + '\n\n')
 
     def send_command_int(self, target_system, target_component, command_code, **kwargs):
@@ -253,8 +253,13 @@ class MissionPlannerSocket():
             })
         self.s.sendall(data + '\n\n')
     
-    def toggle_vision_detection():
+    def toggle_vision_detection(self):
+        """Sends a command to toggle vision detection
+        """
         print("Toggling Vision detection")
+        data = json.dumps({"command": self.COMMANDS.TOGGLE_VISION_DETECTION})
+        self.s.sendall(data + '\n\n')
+        
 
 class Commands:
     """An ENUM containing all the commands that the backend server can send for execution on mission planner.
