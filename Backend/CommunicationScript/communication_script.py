@@ -247,8 +247,8 @@ class MissionManager:
         """Updates Mission Planner on the modified waypoints
         """
         self.waypoints.insert(0, self.create_wp(self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt))
-        print("HELP", self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt)
-        print(self.waypoints[0])
+        # print("HELP", self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt)
+        # print(self.waypoints[0])
         MAV.setWPTotal(len(self.waypoints))
         
         for i in range(len(self.waypoints)):
@@ -421,7 +421,7 @@ class MissionManager:
                 chunk_data = ""
                 # Receive until end of text sent
                 while not self.quit:
-                    chunk_data = self.connection.recv(self.chunk_size)  # receive data in 1024 bit chunks
+                    chunk_data = self.connection.recv(self.chunk_size).decode()  # receive data in 1024 bit chunks
                     m = len(chunk_data)
                     # print('end: ' + chunk_data[m-2:m])
                     data += chunk_data
@@ -544,7 +544,7 @@ class MissionManager:
                     self.vision_mutex.release()
                     self.lifeline_mutex.release()
                     # print('[MESSAGES TO SEND]', messages_to_send)
-                    self.connection.sendall(data + '\n\n')
+                    self.connection.sendall((data + '\n\n').encode())
                     Script.Sleep(self.live_data_rate)
                 except Exception as e:
                     print(traceback.format_exc())
@@ -815,7 +815,7 @@ class Commands:
                     "alt": float(FlightPlanner.Commands.Rows[i].Cells[7].Value), # Alt
                 })
             # print('Command List', res)
-            mission_manager.connection.sendall(bytes(json.dumps(res) + '\n\n'))
+            mission_manager.connection.sendall((json.dumps(res) + '\n\n').encode())
             print("[COMMAND] GET_FLIGHTPLANNER_WAYPOINTS Command Executed.")
         except Exception as e:
             print(traceback.format_exc())
