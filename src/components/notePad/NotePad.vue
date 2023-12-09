@@ -175,7 +175,7 @@ function clearNote() {
 // };
 </script>
 
-<style>
+<style scoped>
 #panel {
   border-radius: 20px;
   width: 100%;

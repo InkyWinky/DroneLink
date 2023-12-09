@@ -623,7 +623,7 @@ class MissionManager:
         """
         try:
             status = bool(Script.GetParam("Q_WVANE_ENABLE"))
-            Script.SetParam("Q_WVANE_ENABLE", not status)
+            Script.ChangeParam("Q_WVANE_ENABLE", not status)
             print("[INFO] Set Weather Vaning to: " + str(not status))
         except Exception as e:
             print(traceback.format_exc())
