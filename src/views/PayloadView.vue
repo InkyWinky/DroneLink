@@ -457,6 +457,9 @@ function confirmTarget() {
   if (confirm("Confirm target?")) {
     api.executeCommand("RETURN_TO_TARGET", {});
     targetCoords.value = store?.targetCoords;
+    setTimeout(() => {
+      Map.value.resize();
+    }, 1);
     showMap.value = true;
   }
 }
