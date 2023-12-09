@@ -190,10 +190,11 @@ const onVTOLModeChange = () => {
 </script>
 
 <style scoped>
+#settings-icon {
+  color: white;
+  font-size: 1.5em;
+}
 #settings-btn {
-  position: absolute;
-  left: 20px;
-  top: 2%;
   z-index: 2;
 }
 #settings-btn:hover {

@@ -27,7 +27,7 @@
       LOADING...
     </p>
     <div
-      class="flex-none"
+      class="flex-none mx-2"
       :id="
         isWebSocketConnected &&
         store?.live_data?.ip &&
@@ -46,7 +46,7 @@
         <p class="font-bold text-center text-lg">Connections</p>
         <span class="flex w-full items-center">
           <div
-            class="flex-none"
+            class="flex-none m-2"
             :id="
               isWebSocketConnected
                 ? 'connection-status-on'
@@ -57,7 +57,7 @@
         </span>
         <span class="flex w-full items-center">
           <div
-            class="flex-none"
+            class="flex-none m-2"
             :id="
               store?.live_data?.ip &&
               store?.live_data?.ip != 'CONNECT TO MISSION PLANNER' &&
@@ -81,7 +81,7 @@
         </span>
         <span class="flex w-full items-center">
           <div
-            class="flex-none"
+            class="flex-none m-2"
             :id="
               store.live_data?.drone_connected
                 ? 'connection-status-on'
