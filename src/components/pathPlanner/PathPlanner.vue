@@ -305,6 +305,8 @@ async function formatWaypoints() {
 
   console.log("commandResult", commandResult);
   console.log("outputArr", outputArr);
+  console.log("takeoffalt", takeoff_alt);
+  console.log("vtol_t:", store?.settings?.vtol_transition_mode);
   return outputArr;
 }
 async function testWaypoints() {
