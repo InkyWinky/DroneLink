@@ -6,7 +6,27 @@
     href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css"
     rel="stylesheet"
   />
+
   <div class="w-full flex" id="payload-body">
+    <div id="target-detected-modal" uk-modal>
+      <div class="uk-modal-dialog uk-modal-body" ref="showTargetDetectedModal">
+        <h2 class="uk-modal-title">Potential Target Detected</h2>
+        <p>
+          A potential target has been detected. Would you like to confirm this
+          target?
+        </p>
+        <img ref="vision_potential_target" alt="target image" />
+        <p class="uk-text-right">
+          <button
+            class="uk-button uk-button-default uk-modal-close"
+            type="button"
+          >
+            No
+          </button>
+          <button class="uk-button uk-button-primary" type="button">Yes</button>
+        </p>
+      </div>
+    </div>
     <div
       id="video-feed-large"
       :class="{ 'w-1/2': showMap.valueOf(), 'w-full': !showMap.valueOf() }"
@@ -234,6 +254,7 @@ import mapboxgl from "mapbox-gl";
 import { initFlowbite } from "flowbite";
 import { store, fpv_cam, fpv_cam_framerate, vision_cam } from "@/store";
 import api from "@/api";
+import uikit from "uikit";
 
 const showOverlay = ref(true);
 const showMap = ref(false);
@@ -249,20 +270,33 @@ const fpv_large = ref(null);
 const fpv_small = ref(null);
 const vision_large = ref(null);
 const vision_small = ref(null);
+const vision_potential_target = ref(null);
 const fpv_resolution = reactive({ width: 1920, height: 1080 });
 //Bounding box data (all are percentages)
 const x_perc = ref(50);
 const y_perc = ref(50);
 const width = ref(50);
 const showTargetDetectedModal = ref(false);
+
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
 const targetDetected = computed(() => {
-  return store?.live_data?.vision_geotag_gps || false;
+  //This function turns on prompts and bounding box when target is detected and not if vision_on is false
+
+  return store?.vision_on
+    ? store?.live_data?.vision_geotag_gps || false
+    : false;
 });
 
 watch(targetDetected, (newTargetData) => {
   if (newTargetData != false) {
+    vision_potential_target.value.src = vision_cam;
     showTargetDetectedModal.value = true;
+    console.log(newTargetData);
+    targetCoords.value = [newTargetData.x, newTargetData.y]; //[LAT, LONG] I THINK
+    x_perc.value = (store?.live_data?.vision_geotag_box?.x || 0) * 100;
+    y_perc.value = (store?.live_data?.vision_geotag_box?.y || 0) * 100;
+    width.value = (store?.live_data?.vision_geotag_box?.z || 0) * 100;
+    uikit.modal("#target-detected-modal").toggle();
   }
 });
 
