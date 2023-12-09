@@ -197,13 +197,13 @@ class ServerHandler(BaseHTTPRequestHandler):
         if command == Commands.OVERRIDE_FLIGHTPLANNER:
             # Make instance of SearchPathGenerator
             waypoint_spliner = spliner.SearchPathGenerator()
-
+            start_pt = spliner.Coord(parsed_content['waypoints'][0]['lat'], parsed_content['waypoints'][0]['long'])
             # Give arguments
             waypoint_spliner.set_search_area(parsed_content['waypoints'])
             waypoint_spliner.set_parameters(minimum_turn_radius=0.0004,     # The minimum turn radius of the plane
                                             layer_distance=0.001,           # Distance between layers on map. Use this or both focal length and sensor size, not all three
                                             curve_resolution=4,             # How many waypoints per metre for curves
-                                            start_point=None,               # Where the plane takes off from. Leave as None if not known
+                                            start_point=start_pt,               # Where the plane takes off from. Leave as None if not known
                                             focal_length=None,              # Focal length of the camera on board the plane in mm
                                             sensor_size=None,               # Sensor size of the camera on board the plane as (width, height) in mm
                                             paint_overlap=0.2,               # The percentage of overlap desired for the camera to see on consecutive layers
@@ -214,7 +214,6 @@ class ServerHandler(BaseHTTPRequestHandler):
             waypoint_spliner.generate_search_area_path(do_plot=False)
             splined_waypoints = waypoint_spliner.get_waypoints()  # A list of dictionaries with keys "long", "lat", and "alt" in order of flight
             mp_sock.override_flightplanner_waypoints(splined_waypoints, takeoff_alt=parsed_content['takeoff_alt'], vtol_transition_mode=parsed_content['vtol_transition_mode'], do_RTL=True)
-
             # mp_socket.override_flightplanner_waypoints(parsed_content['waypoints'], parsed_content['takeoff_alt'])
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
         elif command == Commands.DIRECT_WAYPOINTS:
