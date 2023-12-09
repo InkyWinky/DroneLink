@@ -4,8 +4,8 @@
       <div class="w-1/3"></div>
       <div
         id="vision-detection-eye-true"
-        v-if="vision_detection_bool"
-        @click="toggleVisionDetection(vision_detection_bool)"
+        v-if="vision_on"
+        @click="store.vision_on = !store.vision_on"
       >
         <svg
           id="vision-detection-on-svg"
@@ -37,7 +37,7 @@
       <div
         id="vision-detection-eye-false"
         v-else
-        @click="toggleVisionDetection(vision_detection_bool)"
+        @click="store.vision_on = !store.vision_on"
       >
         <svg
           id="vision-detection-off-svg"
@@ -100,7 +100,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { computed } from "vue";
 import { store } from "./store";
 import { api } from "./api";
 import SettingsMenu from "./components/settingsMenu/SettingsMenu.vue";
@@ -109,26 +109,9 @@ import ConnectionStatus from "./components/ConnectionStatus.vue";
 
 export default {
   setup() {
-    const vision_detection_bool = ref(true);
-
-    return { store, api, vision_detection_bool };
+    return { store, api, vision_on: computed(() => store.vision_on) };
   },
   components: { SettingsMenu, ConnectionStatus },
-  methods: {
-    toggleVisionDetection(vision_detection_bool) {
-      if (
-        vision_detection_bool &&
-        confirm("Confirm disable Vision detection?")
-      ) {
-        console.log("[MESSAGE] Disabling Vision detection");
-        api.executeCommand("TOGGLE_VISION_DETECTION", {});
-      } else if (confirm("Confirm enable Vision detection?")) {
-        console.log("[MESSAGE] Enabling Vision detection");
-        api.executeCommand("TOGGLE_VISION_DETECTION", {});
-      }
-      vision_detection_bool = !vision_detection_bool;
-    },
-  },
 };
 </script>
 

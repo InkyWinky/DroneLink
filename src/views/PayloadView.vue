@@ -228,7 +228,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, reactive } from "vue";
+import { ref, onMounted, watch, reactive, computed } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { initFlowbite } from "flowbite";
@@ -254,7 +254,17 @@ const fpv_resolution = reactive({ width: 1920, height: 1080 });
 const x_perc = ref(50);
 const y_perc = ref(50);
 const width = ref(50);
+const showTargetDetectedModal = ref(false);
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
+const targetDetected = computed(() => {
+  return store?.live_data?.vision_geotag_gps || false;
+});
+
+watch(targetDetected, (newTargetData) => {
+  if (newTargetData != false) {
+    showTargetDetectedModal.value = true;
+  }
+});
 
 watch(vision_cam, (val) => {
   if (vision_large.value && displayVisionLarge.value) {

@@ -34,6 +34,7 @@ export const menuClosed = ref(false);
 export const toggleSettingsMenu = () => (menuClosed.value = !menuClosed.value);
 export const MENU_WIDTH = 400;
 export const CLOSED_MENU_WIDTH = 0;
+export const vision_on = ref(false);
 export const menuWidth = computed(
   () => `${menuClosed.value ? CLOSED_MENU_WIDTH : MENU_WIDTH}px`
 );
