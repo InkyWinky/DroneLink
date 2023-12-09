@@ -1,4 +1,12 @@
 <template>
+  <AlertNotif
+    alertMessage="Vision detection turned on"
+    v-if="showDetectionOnAlert"
+  />
+  <AlertNotif
+    alertMessage="Vision detection turned off"
+    v-if="showDetectionOffAlert"
+  />
   <nav>
     <div class="flex w-full items-center">
       <div class="w-1/3"></div>
@@ -99,20 +107,28 @@
   <router-view></router-view>
 </template>
 
-<script>
-import { computed } from "vue";
-import { store } from "./store";
-import { api } from "./api";
+<script setup>
 import SettingsMenu from "./components/settingsMenu/SettingsMenu.vue";
 import ConnectionStatus from "./components/ConnectionStatus.vue";
-// import toggleSettingsMenu from "./store";
-
-export default {
-  setup() {
-    return { store, api, vision_on: computed(() => store.vision_on) };
-  },
-  components: { SettingsMenu, ConnectionStatus },
-};
+import AlertNotif from "./components/AlertNotif.vue"; // import toggleSettingsMenu from "./store";
+import { ref, watch, computed } from "vue";
+import { store } from "@/store";
+const showDetectionOnAlert = ref(false);
+const showDetectionOffAlert = ref(false);
+const vision_on = computed(() => store.vision_on);
+watch(vision_on, (newVal) => {
+  if (newVal == true) {
+    showDetectionOnAlert.value = true;
+    setTimeout(() => {
+      showDetectionOnAlert.value = false;
+    }, 3000);
+  } else {
+    showDetectionOffAlert.value = true;
+    setTimeout(() => {
+      showDetectionOffAlert.value = false;
+    }, 3000);
+  }
+});
 </script>
 
 <style>
