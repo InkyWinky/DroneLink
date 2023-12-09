@@ -11,7 +11,7 @@
     <button
       class="rightAlign"
       id="addByMapBtn"
-      @click="showMap = !showMap"
+      @click="toggleMap"
       type="button"
     >
       <i
@@ -158,6 +158,12 @@ const coordinates = computed(() =>
 );
 const listContainer = ref(null);
 
+function toggleMap() {
+  showMap.value = !showMap.value;
+  setTimeout(() => {
+    map.value.resize();
+  }, 1);
+}
 function scrollBottom() {
   listContainer.value.scrollTop = listContainer.value.scrollHeight;
 }
