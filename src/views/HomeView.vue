@@ -6,7 +6,7 @@
   <div id="speedIndicator">
     <SpeedIndicator
       :airspeed="Number(store?.live_data?.airspeed?.toFixed(2)) || 0"
-      :max="150"
+      :max="30"
       :min="0"
     />
   </div>

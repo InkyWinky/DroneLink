@@ -66,8 +66,8 @@ const minAvionics = 15.2;
 const propulsionPercentage = computed(() => {
   return {
     height: `${
-      (store?.live_data?.propulsion_battery / (maxPropulsion - minPropulsion)) *
-      100
+      ((store?.live_data?.propulsion_battery - minPropulsion) /
+        (maxPropulsion - minPropulsion) || 0) * 100
     }%`,
   };
 });
@@ -75,7 +75,8 @@ const propulsionPercentage = computed(() => {
 const avionicsPercentage = computed(() => {
   return {
     height: `${
-      (store?.live_data?.avionics_battery / (maxAvionics - minAvionics)) * 100
+      ((store?.live_data?.avionics_battery - minAvionics) /
+        (maxAvionics - minAvionics) || 0) * 100
     }%`,
   };
 });
@@ -279,8 +280,8 @@ h3 {
 
 .propulsion-total-voltage-stat-display {
   margin: 0;
-  padding: 10px 10px 0 10px;
-  font-size: 2em;
+  padding: 5px 5px 0 5px;
+  font-size: 1.5em;
   color: black;
 }
 
