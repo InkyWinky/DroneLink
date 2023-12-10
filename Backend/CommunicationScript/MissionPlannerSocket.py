@@ -129,10 +129,12 @@ class MissionPlannerSocket():
                             self.messages = self.messages + messages
                             data['messages'] = []
                             try:
-                                ll_status_key = str(int(self.live_data["lifeline_status"]))
-                                self.live_data["lifeline_status"] = LifelineState.LifeLineStateDict[ll_status_key]
-                            except KeyError:
-                                pass
+                                ll_status_key = str(int(data["lifeline_status"]))
+                                data["lifeline_status"] = LifelineState.LifeLineStateDict[ll_status_key]
+                                #print(data["lifeline_status"])
+
+                            except Exception as e:
+                                print("[MESSAGAE] Encountered the following error when attempting to read lifeline status: " + str(e))
                             self.live_data = data
                             self.live_data_mutex.release()
                         except Exception as e:

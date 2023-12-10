@@ -134,7 +134,7 @@
           >
             <p>
               <b>PAYLOAD STATUS:</b>
-              {{ store?.live_data?.lifeline_status || "IDLE" }}
+              {{ store?.live_data?.lifeline_status || "NOT CONNECTED" }}
             </p>
           </div>
           <div id="payload-info" class="h-auto">
