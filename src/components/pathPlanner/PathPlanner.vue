@@ -22,7 +22,11 @@
     <div id="listWrapper" ref="listContainer">
       <ul>
         <!-- Iterate through array of waypoints and show them on list -->
-        <li v-for="waypt in waypoints" :key="waypt.id">
+        <li
+          v-for="waypt in waypoints"
+          :key="waypt.id"
+          @click="zoomToWaypoint(waypt)"
+        >
           <span id="wayptID">{{ waypt.id }}</span>
           <span> Long:</span>
           {{ waypt.long }}
@@ -245,6 +249,14 @@ function addMarkerToMap(long, lat) {
     .addTo(map.value);
   console.log(marker);
   return marker;
+}
+function zoomToWaypoint(waypt) {
+  let longLat = [
+    waypoints.value?.find((t) => t === waypt).long,
+    waypoints.value?.find((t) => t === waypt).lat,
+  ];
+
+  map.value.flyTo({ center: longLat, zoom: 25 });
 }
 // async function testApi() {
 // let coordinateData = [
