@@ -120,29 +120,25 @@ class FPVFeedThread(threading.Thread):
         
 
     def run(self):
-        soft_fps_period = 1 / self.fps
         while not self.quit:
-            time.sleep(soft_fps_period)
             # If is no camera, try to connect.
             if not self.camera:
                 try:
                     if platform == "win32":
-                     
                             self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-
                     else:
-                      
-                            self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                            self.camera = cv2.VideoCapture(0)
                     # Set camera resolution
                     self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640) # 1920 / 1280
                     self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) # 1080 / 720
+                    self.camera.set(cv2.CAP_PROP_FPS, 10)
                 except:
                     self.camera = None
                 time.sleep(2)
             else:
                 try:
                     ret, frame = self.camera.read()
-                    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
+                    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]
                     # encode_param = [int(cv2.IMWRITE_PNG_COMPRESSION), 1]
                     buffer = cv2.imencode('.jpg', frame, encode_param)[1]
                     # convert image to base64 before sending
