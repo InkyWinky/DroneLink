@@ -648,7 +648,7 @@ class MissionManager:
         print("NAMED_VALUE_FLOAT from MAV.SubscribeToPacketType with sysid: " + str(message.sysid) + ", compid: " + str(message.compid))
         if int(message.msgid) == MAVLink.MAVLINK_MSG_ID.NAMED_VALUE_FLOAT.value__:
             # If message from LIFELINE
-            if int(message.sysid) == 1 and int(message.compid) == 169:
+            if int(message.sysid) == 1 and int(message.compid) == 171:
                 # print(dir(message.data))
                 name = str(bytearray(message.data.name)).rstrip('\x00') # convert byte array to string and remove null characters
                 value = message.data.value
@@ -683,7 +683,7 @@ class MissionManager:
     def subscribe_to_mavlink_msg(self):
         """Function to subscribe to MAVLink messages """
         # subscribe to NAMED_VALUE_FLOAT for Lifeline - Lifeline send status updates in this form
-        sub_named_value_float = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.NAMED_VALUE_FLOAT, Func[MAVLink.MAVLinkMessage, bool] (self.NamedValueFloatHandler), 1, 169) # sysid=1, compid=169 (lifeline)
+        sub_named_value_float = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.NAMED_VALUE_FLOAT, Func[MAVLink.MAVLinkMessage, bool] (self.NamedValueFloatHandler), 1, 171) # sysid=1, compid=169 (lifeline)
         # subscribe to DEBUG_VECT for Vision - Vision sends target geolocation and bounding box size/position info in this form
         sub_debug_vect = MAV.SubscribeToPacketType(MAVLink.MAVLINK_MSG_ID.DEBUG_VECT, Func[MAVLink.MAVLinkMessage, bool] (self.DebugVectHandler), 1, 170) # sysid=1, compid=170 (vision)
 

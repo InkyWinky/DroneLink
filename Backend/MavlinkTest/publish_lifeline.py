@@ -11,7 +11,7 @@ connection_string = "tcp:127.0.0.1:5763" # Port 5763 is serial port 2 on the SIT
 
 # Set the source mavlink system as 1 (This will always be the case for us, unless we plan on having two albatrosses running on the same network)
 
-cube_connection = CubeConnection(connection_string, system=1, component=MUASComponentID.WADJET)     # This script will send and receive commands as MISSION MANAGEMENT.
+cube_connection = CubeConnection(connection_string, system=1, component=MUASComponentID.LIFELINE)     # This script will send and receive commands as MISSION MANAGEMENT.
 
 # This is the physical connection that we need for sending data and texts
 connection = cube_connection.connection

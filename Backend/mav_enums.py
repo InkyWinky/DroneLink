@@ -25,7 +25,7 @@ class WadjetCommands:
 
 
 class LifelineCommands:
-    DROP_PAYLOAD = 0
+    DRIP = 0
     SMERF = 1
     NERF = 2
 

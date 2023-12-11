@@ -239,9 +239,11 @@ class ServerHandler(BaseHTTPRequestHandler):
                 message = "Could not initialise the connection to Mission Planner."
             print("Executed CONNECTIP: " + parsed_content['ip'])
         elif command =="SMERF":
-            mp_sock.send_command_int(1, MUASComponentID.LIFELINE, LifelineCommands.SMERF)
+            mp_sock.send_command_int(1, MUASComponentID.LIFELINE, MUASCommands.LIFELINE, param1=LifelineCommands.SMERF)
         elif command == "NERF":
-            mp_sock.send_command_int(1, MUASComponentID.LIFELINE, LifelineCommands.NERF)
+            mp_sock.send_command_int(1, MUASComponentID.LIFELINE,  MUASCommands.LIFELINE, param1=LifelineCommands.NERF)
+        elif command == "DEPLOY_PAYLOAD":
+            mp_sock.send_command_int(1, MUASComponentID.LIFELINE,  MUASCommands.LIFELINE, param1=LifelineCommands.DRIP)
         # elif command == "DISREGARD_TARGET":
         #     mp_sock.
         else:
