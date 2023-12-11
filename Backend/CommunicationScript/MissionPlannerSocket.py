@@ -131,7 +131,7 @@ class MissionPlannerSocket():
                             try:
                                 ll_status_key = str(int(data["lifeline_status"]))
                                 data["lifeline_status"] = LifelineState.LifeLineStateDict[ll_status_key]
-                                print(data["lifeline_status"])
+                                # print(data["lifeline_status"])
 
                             except Exception as e:
                                 print("[MESSAGE] Encountered the following error when attempting to read lifeline status: " + str(e))
