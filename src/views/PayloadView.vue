@@ -1,6 +1,3 @@
-<!-- TODO
-[ ] After comfirmation of target, show potential spline path for confirmation
--->
 <template>
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css"
@@ -48,6 +45,7 @@
             top: y_perc - width / 2 + '%',
             right: x_perc - width / 2 + '%',
           }"
+          style="pointer-events: none"
           v-show="width > 0"
         ></div>
       </div>
@@ -120,17 +118,26 @@
     </div>
     <div
       id="overlay"
-      class="w-1/5 h-full absolute top-20 right-0"
+      class="w-1/5 h-full absolute top-20 right-0 pointer-events-none"
       v-if="showOverlay"
     >
       <div
         id="payload-stats"
-        class="m-10 p-2 rounded bg-gray-300 border border-black opacity-80 h-auto"
+        class="m-10 p-2 rounded bg-gray-300 border border-black opacity-80 h-auto pointer-events-auto"
       >
         <div id="stats-column" class="h-auto">
           <div
             id="payload-status"
-            class="m-2 p-2 rounded h-auto bg-green-500 border-black"
+            class="m-2 p-2 rounded h-auto border-black"
+            :class="{
+              'bg-green-500':
+                lifelineStatus.valueOf() == 'IDLE' ||
+                lifelineStatus.valueOf() == 'LOADING' ||
+                lifelineStatus.valueOf() == 'RAISING' ||
+                lifelineStatus.valueOf() == 'LOWERING',
+              'bg-green-300': lifelineStatus.valueOf() == 'RELEASING',
+              'bg-red-500': lifelineStatus.valueOf() == 'EMERGENCY',
+            }"
           >
             <p>
               <b>PAYLOAD STATUS:</b>
@@ -141,22 +148,22 @@
             <!-- info about payload -->
             <h2 class="font-bold text-lg underline">Payload Stats</h2>
             <p id="payload-height">
-              Payload Height:
-              {{ store?.live_data?.payload?.height }}
+              Height:
+              {{ payloadHeight }}
             </p>
             <p id="payload-vel">
-              Payload Velocity:
-              {{ store?.live_data?.payload?.velocity }}
+              Velocity:
+              {{ (store?.live_data?.lifeline_velocity || 0).toFixed(3) }}
             </p>
             <!-- info about aircraft -->
             <h2 class="font-bold text-lg underline mt-8">Aircraft Stats</h2>
             <p id="alb-height">
               Ground Height:
-              {{ store?.live_data?.albatross?.ground_height }}
+              {{ (store?.live_data?.albatross?.ground_height || 0).toFixed(3) }}
             </p>
             <p id="alb-vel">
               Velocity:
-              {{ store?.live_data?.albatross?.velocity }}
+              {{ (store?.live_data?.albatross?.velocity || 0).toFixed(3) }}
             </p>
           </div>
         </div>
@@ -281,11 +288,23 @@ const showTargetDetectedModal = ref(false);
 
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
 const targetDetected = computed(() => {
-  //This function turns on prompts and bounding box when target is detected and not if vision_on is false
+  // This function turns on prompts and bounding box when target is detected and not if vision_on is false
 
   return store?.vision_on
     ? store?.live_data?.vision_geotag_gps || false
     : false;
+});
+
+const payloadHeight = computed(() => {
+  return !store?.live_data?.sonarrange || !store?.live_data?.lifeline_distance
+    ? 0
+    : (
+        store?.live_data?.sonarrange - store?.live_data?.lifeline_distance
+      ).toFixed(3);
+});
+
+const lifelineStatus = computed(() => {
+  return store?.live_data?.lifeline_status;
 });
 
 watch(targetDetected, (newTargetData) => {
@@ -388,7 +407,6 @@ onMounted(() => {
     } else {
       deployMarker.value.setLngLat(e.lngLat);
     }
-    console.log(`deployMarker: ${deployMarker.value}`);
   });
 
   startFPVCapture("small");
