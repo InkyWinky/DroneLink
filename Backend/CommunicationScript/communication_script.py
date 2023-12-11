@@ -153,7 +153,7 @@ class MissionManager:
         txt = "----------------------------------------------\nWaypoints\n [num]. latitude, longitude, altitude\n"
         for i in range(self.waypoint_count):
             wp = self.waypoints[i]
-            txt += "[" + str(i) + "]. " + str(wp.lat) + ", " + str(wp.lng) + ", " + str(wp.alt) + "\n"
+            txt += f"[ {i} ]. {wp.lat}, {wp.lng}, {wp.alt}\n"
         return txt + "----------------------------------------------"
     
 
@@ -166,9 +166,7 @@ class MissionManager:
         Returns:
             Locationwp: The waypoint at the specified index, or None if it does not exist.
         """
-        if index < self.waypoint_count:
-            return self.waypoints[index]
-        return None
+        return self.waypoints[index] if index < self.waypoint_count else None
     
 
     def __setitem__(self, index, waypoint):
