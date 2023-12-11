@@ -131,12 +131,12 @@
             class="m-2 p-2 rounded h-auto border-black"
             :class="{
               'bg-green-500':
-                lifelineStatus.valueOf() == 'IDLE' ||
-                lifelineStatus.valueOf() == 'LOADING' ||
-                lifelineStatus.valueOf() == 'RAISING' ||
-                lifelineStatus.valueOf() == 'LOWERING',
-              'bg-green-300': lifelineStatus.valueOf() == 'RELEASING',
-              'bg-red-500': lifelineStatus.valueOf() == 'EMERGENCY',
+                lifelineStatus?.valueOf() == 'IDLE' ||
+                lifelineStatus?.valueOf() == 'LOADING' ||
+                lifelineStatus?.valueOf() == 'RAISING' ||
+                lifelineStatus?.valueOf() == 'LOWERING',
+              'bg-green-300': lifelineStatus?.valueOf() == 'RELEASING',
+              'bg-red-500': lifelineStatus?.valueOf() == 'EMERGENCY',
             }"
           >
             <p>
