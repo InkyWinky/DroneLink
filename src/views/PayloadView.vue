@@ -259,6 +259,7 @@ import uikit from "uikit";
 const showOverlay = ref(true);
 const showMap = ref(false);
 const deployMarker = ref(null);
+const targetMarker = ref(null);
 const targetCoords = ref([145.13453, -37.90984]); // placeholder for actual target coords
 const deployCoords = ref(null);
 const displayVisionLarge = ref(true); // boolean that determines which video feed is displayed large, and which small
@@ -297,6 +298,14 @@ watch(targetDetected, (newTargetData) => {
     y_perc.value = (store?.live_data?.vision_geotag_box?.y || 0) * 100;
     width.value = (store?.live_data?.vision_geotag_box?.z || 0) * 100;
     uikit.modal("#target-detected-modal").toggle();
+
+    if (!targetMarker.value) {
+      targetMarker.value = new mapboxgl.Marker()
+        .setLngLat(targetCoords.value)
+        .addTo(Map);
+    } else {
+      targetMarker.value.setLngLat(targetCoords.value);
+    }
   }
 });
 
