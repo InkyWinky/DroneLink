@@ -215,7 +215,7 @@
             Begin
           </button>
         </div>
-        <div class="w-full flex h-auto">
+        <div v-if="(debug_mode = true)" class="w-full flex h-auto">
           <button
             class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
             id="target-found-test-btn"
@@ -224,7 +224,7 @@
             TARGET FOUND
           </button>
         </div>
-        <div class="w-full flex h-auto">
+        <div v-if="(debug_mode = true)" class="w-full flex h-auto">
           <button
             class="bg-blue-300 rounded-md text-black p-2 m-1 hover:bg-blue-500 w-full"
             id="drip-btn"
@@ -315,6 +315,10 @@ const payloadHeight = computed(() => {
 
 const lifelineStatus = computed(() => {
   return store?.live_data?.lifeline_status;
+});
+
+const debug_mode = computed(() => {
+  return store?.debug_mode.value;
 });
 
 watch(targetDetected, (newTargetData) => {
