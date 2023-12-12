@@ -38,4 +38,4 @@ export const vision_on = ref(false);
 export const menuWidth = computed(
   () => `${menuClosed.value ? CLOSED_MENU_WIDTH : MENU_WIDTH}px`
 );
-export const state = "IDLE";
+export const debug_mode = ref(true);
