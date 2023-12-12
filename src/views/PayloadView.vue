@@ -215,7 +215,7 @@
             Begin
           </button>
         </div>
-        <div v-if="store?.debug_mode" class="w-full flex h-auto">
+        <div class="w-full flex h-auto">
           <button
             class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
             id="target-found-test-btn"
@@ -224,9 +224,9 @@
             TARGET FOUND
           </button>
         </div>
-        <div v-if="store?.debug_mode" class="w-full flex h-auto">
+        <div class="w-full flex h-auto">
           <button
-            class="bg-green-300 rounded-md text-black p-2 m-1 hover:bg-green-500 w-full"
+            class="bg-blue-300 rounded-md text-black p-2 m-1 hover:bg-blue-500 w-full"
             id="drip-btn"
             @click="drip()"
           >
