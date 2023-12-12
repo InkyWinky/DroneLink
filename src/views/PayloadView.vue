@@ -137,11 +137,12 @@
                 lifelineStatus?.valueOf() == 'LOWERING',
               'bg-green-300': lifelineStatus?.valueOf() == 'RELEASING',
               'bg-red-500': lifelineStatus?.valueOf() == 'EMERGENCY',
+              'bg-gray-400': !lifeLineStatus?.valueOf(),
             }"
           >
             <p>
               <b>PAYLOAD STATUS:</b>
-              {{ store?.live_data?.lifeline_status || "NOT CONNECTED" }}
+              {{ lifelineStatus || "NOT CONNECTED" }}
             </p>
           </div>
           <div id="payload-info" class="h-auto">
@@ -214,13 +215,22 @@
             Begin
           </button>
         </div>
-        <div class="w-full flex h-auto">
+        <div v-if="store?.debug_mode" class="w-full flex h-auto">
           <button
             class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
             id="target-found-test-btn"
             @click="confirmTarget()"
           >
             TARGET FOUND
+          </button>
+        </div>
+        <div v-if="store?.debug_mode" class="w-full flex h-auto">
+          <button
+            class="bg-green-300 rounded-md text-black p-2 m-1 hover:bg-green-500 w-full"
+            id="drip-btn"
+            @click="drip()"
+          >
+            DRIP
           </button>
         </div>
         <div id="bbox-testing">
@@ -521,6 +531,13 @@ function nerf() {
   if (confirm("Confirm failsafe 2?")) {
     console.log("[NERF] Executing NERF");
     api.executeCommand("NERF", {});
+  }
+}
+
+function drip() {
+  if (confirm("Deploy payload now?")) {
+    console.log("[DRIP] Executing DRIP");
+    api.executeCommand("DRIP", {});
   }
 }
 </script>
