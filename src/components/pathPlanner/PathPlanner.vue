@@ -72,6 +72,23 @@
         />
       </form>
     </div>
+    <button
+      class="flex flex-row w-full justify-center items-center bg-green-300 hover:bg-green-500 p-1 rounded-md text-xs divide-black divide-x-2"
+      data-tooltip-target="tooltip-location"
+      @click="addCurrentLocationWaypt"
+    >
+      <p class="px-1 font-bold">Lat: {{ store?.live_data?.lat }}</p>
+      <p class="px-1 font-bold">Long: {{ store?.live_data?.lng }}</p>
+      <p class="px-1 font-bold">Alt: {{ store?.live_data?.alt.toFixed(2) }}</p>
+    </button>
+    <div
+      id="tooltip-location"
+      role="tooltip"
+      class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
+    >
+      Add Current GPS Location as Waypoint
+      <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
     <label for="importBtn">
       <i
         class="fa-solid fa-file-csv icon-btn-effect"
@@ -209,6 +226,14 @@ function drawLine() {
 // Update the line when the list of waypoints changes
 function updateLine(coords) {
   map.value.getSource("route").setData(lineFeature(coords));
+}
+
+function addCurrentLocationWaypt() {
+  // This function adds the current GPS Location of the drone as a waypoint.
+  long.value = store?.live_data?.lng;
+  lat.value = store?.live_data?.lat;
+  alt.value = store?.settings.default_alt.toString() || "20";
+  addWaypt();
 }
 
 function addWaypt() {
