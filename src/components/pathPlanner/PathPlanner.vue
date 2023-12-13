@@ -19,10 +19,15 @@
         style="color: lightslategray"
       ></i>
     </button>
-    <div id="listWrapper" ref="listContainer">
-      <ul>
+    <div
+      id="listWrapper"
+      ref="listContainer"
+      class="flex flex-col outline outline-1 rounded-md my-1"
+    >
+      <ul class="h-full overflow-y-auto">
         <!-- Iterate through array of waypoints and show them on list -->
         <li
+          class="cursor-pointer"
           v-for="waypt in waypoints"
           :key="waypt.id"
           @click="zoomToWaypoint(waypt)"
@@ -40,36 +45,45 @@
         </li>
         <!-- Button for importing waypoints via csv file -->
       </ul>
+      <div
+        class="border-y-2 text-sm flex flex-col md:flex-row justify-between items-center px-4"
+      >
+        <p class="font-bold">Actions</p>
+        <button @click="clearWaypts">CLEAR</button>
+        <!-- <button @click="">ANOTHER ACTION</button> -->
+      </div>
       <!-- Form for adding a waypoint: -->
       <!-- Prevent default behaviour of submitting form and add waypoint instead -->
       <form @submit.prevent="addWaypt">
-        <button class="transparentBtn" id="addWayptBtn">
-          <span class="white-hover" id="plus-symbol">+</span>
-        </button>
-        <label for="longitude">Long: </label>
-        <input
-          class="coordInput"
-          type="number"
-          name="longitude"
-          step="any"
-          v-model="long"
-        />
-        <label for="latitude">Lat: </label>
-        <input
-          class="coordInput"
-          type="number"
-          step="any"
-          name="latitude"
-          v-model="lat"
-        />
-        <label for="Altitude">Alt: </label>
-        <input
-          class="coordInput"
-          type="number"
-          step="any"
-          name="altitude"
-          v-model="alt"
-        />
+        <div>
+          <button class="transparentBtn" id="addWayptBtn">
+            <span class="white-hover" id="plus-symbol">+</span>
+          </button>
+          <label for="longitude">Long: </label>
+          <input
+            class="coordInput"
+            type="number"
+            name="longitude"
+            step="any"
+            v-model="long"
+          />
+          <label for="latitude">Lat: </label>
+          <input
+            class="coordInput"
+            type="number"
+            step="any"
+            name="latitude"
+            v-model="lat"
+          />
+          <label for="Altitude">Alt: </label>
+          <input
+            class="coordInput"
+            type="number"
+            step="any"
+            name="altitude"
+            v-model="alt"
+          />
+        </div>
       </form>
     </div>
     <button
@@ -155,7 +169,7 @@
 <script setup>
 // eslint-disable-next-line no-unused-vars, prettier/prettier
 // import { Ref } from "vue";
-import { ref, nextTick, computed } from "vue";
+import { ref, nextTick, computed, watch } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { onMounted } from "vue";
@@ -170,7 +184,7 @@ let id = 0;
 const long = ref("");
 const lat = ref("");
 const alt = ref(store?.settings.default_alt.toString() || "20");
-const MARKER_HEIGHT = 41;
+// const MARKER_HEIGHT = 41;
 // /** @type {Ref<mapboxgl.Map>} */
 const map = ref();
 
@@ -181,6 +195,31 @@ const coordinates = computed(() =>
   waypoints.value.map(({ long, lat }) => [long, lat])
 );
 const listContainer = ref(null);
+const droneMarker = ref();
+const droneLocation = computed(() => [
+  store?.live_data?.lng,
+  store?.live_data?.lat,
+]);
+watch(droneLocation, (val) => {
+  if (val[0] && val[1]) {
+    updateDroneMarker(val[0], val[1]);
+  }
+});
+
+function updateDroneMarker(latitude, longitude) {
+  if (droneMarker.value) {
+    droneMarker.value.setLngLat([latitude, longitude]).addTo(map.value);
+  } else {
+    // Add drone marker to map
+    var el = document.createElement("div");
+    el.className = "marker droneMarker";
+    el.innerHTML = "<span><b></b></span>";
+    const marker = new mapboxgl.Marker(el) //({ offset: [0, -MARKER_HEIGHT / 2] })
+      .setLngLat([latitude, longitude])
+      .addTo(map.value);
+    droneMarker.value = marker;
+  }
+}
 
 function toggleMap() {
   showMap.value = !showMap.value;
@@ -239,12 +278,20 @@ function addCurrentLocationWaypt() {
   addWaypt();
 }
 
+function clearWaypts() {
+  // Clears all waypoints from list and map
+  for (let waypoint of waypoints.value) {
+    removeWaypt(waypoint);
+  }
+  id = 0;
+}
+
 function addWaypt() {
   //The function addWaypt adds a waypoint to the waypoint array
   //Parameters: None
   //Inputs:None
   //Outputs: Changed waypoints array
-  const marker = addMarkerToMap(long.value, lat.value);
+  const marker = addMarkerToMap(long.value, lat.value, id);
   //Add waypoint to array
   waypoints.value.push({
     id: id++,
@@ -271,8 +318,11 @@ function removeWaypt(waypt) {
   waypoints.value = waypoints.value.filter((t) => t !== waypt);
   updateLine(coordinates.value);
 }
-function addMarkerToMap(long, lat) {
-  const marker = new mapboxgl.Marker({ offset: [0, -MARKER_HEIGHT / 2] })
+function addMarkerToMap(long, lat, id) {
+  var el = document.createElement("div");
+  el.className = "marker";
+  el.innerHTML = "<span><b>" + id + "</b></span>";
+  const marker = new mapboxgl.Marker(el) //({ offset: [0, -MARKER_HEIGHT / 2] })
     .setLngLat([long, lat])
     .addTo(map.value);
   console.log(marker);
@@ -284,8 +334,9 @@ function zoomToWaypoint(waypt) {
     waypoints.value?.find((t) => t === waypt).lat,
   ];
 
-  map.value.flyTo({ center: longLat, zoom: 25 });
+  map.value.flyTo({ center: longLat, zoom: 17 });
 }
+
 // async function testApi() {
 // let coordinateData = [
 //   {
@@ -395,7 +446,7 @@ function addWaypointsFromTxt(csvText) {
   for (let i = 0; i < waypointsArr.length; i++) {
     //Iterate through the resulting array
     let coord = waypointsArr[i].split(","); //Create an array called coord and split each element so that long, lat and alt are elements of the coord array
-    const marker = addMarkerToMap(coord[0], coord[1]);
+    const marker = addMarkerToMap(coord[0], coord[1], i);
     waypoints.value.push({
       //Push each waypoint into the waypoints array
       id: id++,
@@ -451,6 +502,9 @@ onMounted(() => {
     let adjusted_yPixel = yPixel;
     // console.log("adjusted ypixel:" + adjusted_yPixel);
     let latitude = map.value.unproject([xPixel, adjusted_yPixel]).lat;
+    long.value = e.lngLat.lng;
+    lat.value = latitude;
+    addWaypt();
     long.value = e.lngLat.lng;
     lat.value = latitude;
     console.log(
@@ -562,7 +616,7 @@ label {
 }
 
 #listWrapper {
-  height: 85%;
+  height: 78%;
   overflow: auto;
 }
 /* #importBtn {
@@ -671,5 +725,52 @@ input::-webkit-inner-spin-button {
   color: lightslategray;
   padding: 0;
   height: 40px;
+}
+.marker {
+  width: 0;
+  height: 0;
+}
+.marker span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  background: rgb(61, 130, 200);
+  border: solid 2px;
+  border-radius: 0 70% 70%;
+  box-shadow: 0 0 2px #000;
+  cursor: pointer;
+  transform-origin: 5px 8px;
+  transform: rotateZ(-135deg);
+}
+.marker b {
+  transform: rotateZ(135deg);
+}
+.marker.droneMarker {
+  width: 0;
+  height: 0;
+  z-index: 99;
+}
+.marker.droneMarker b {
+  transform: rotateZ(135deg);
+}
+.marker.droneMarker span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 15px;
+  height: 15px;
+  color: #000000;
+  background: rgb(255, 25, 25);
+  border: solid 2px;
+  /* border-radius: 0 70% 70%; */
+  /* box-shadow: 0 0 2px #000; */
+  cursor: pointer;
+  transform-origin: 5px 8px;
+  /* transform: rotateZ(-135deg); */
 }
 </style>
