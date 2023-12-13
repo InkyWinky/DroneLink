@@ -79,7 +79,10 @@
     >
       <p class="px-1 font-bold">Lat: {{ store?.live_data?.lat }}</p>
       <p class="px-1 font-bold">Long: {{ store?.live_data?.lng }}</p>
-      <p class="px-1 font-bold">Alt: {{ store?.live_data?.alt.toFixed(2) }}</p>
+      <p class="px-1 font-bold">
+        Alt:
+        {{ store?.live_data?.alt ? store?.live_data?.alt.toFixed(2) : "N/A" }}
+      </p>
     </button>
     <div
       id="tooltip-location"
