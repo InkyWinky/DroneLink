@@ -91,8 +91,8 @@
       data-tooltip-target="tooltip-location"
       @click="addCurrentLocationWaypt"
     >
-      <p class="px-1 font-bold">Lat: {{ store?.live_data?.lat }}</p>
-      <p class="px-1 font-bold">Long: {{ store?.live_data?.lng }}</p>
+      <p class="px-1 font-bold">Lat: {{ store?.live_data?.lat || "N/A" }}</p>
+      <p class="px-1 font-bold">Long: {{ store?.live_data?.lng || "N/A" }}</p>
       <p class="px-1 font-bold">
         Alt:
         {{ store?.live_data?.alt ? store?.live_data?.alt.toFixed(2) : "N/A" }}
