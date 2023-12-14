@@ -520,6 +520,7 @@ class MissionManager:
                             "timestamp": datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p"),
                             "lat": float(self.cs_drone.lat),
                             "lng": float(self.cs_drone.lng),
+                            "alt": float(self.cs_drone.alt),
                             "distTraveled": float(self.cs_drone.distTraveled),
                             "DistToHome": float(self.cs_drone.DistToHome),
                             "airspeed": float(self.cs_drone.airspeed),
