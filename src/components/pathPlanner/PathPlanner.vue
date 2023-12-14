@@ -337,10 +337,10 @@ async function testWaypoints() {
     };
     outputArr.push(wp_obj);
   }
-  const commandResult = await api.executeCommand("OVERRIDE", {
+  const commandResult = await api.executeCommand("DIRECT_WAYPOINTS", {
     waypoints: outputArr,
     takeoff_alt: takeoff_alt,
-    vtol_transition_mode: store?.settings?.vtol_transition_mode,
+    vtol_transition_mode: null,
   });
   console.log("commandResult", commandResult);
 }

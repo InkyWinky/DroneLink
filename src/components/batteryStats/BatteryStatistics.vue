@@ -66,17 +66,29 @@ const minAvionics = 15.2;
 const propulsionPercentage = computed(() => {
   return {
     height: `${
-      ((store?.live_data?.propulsion_battery - minPropulsion) /
-        (maxPropulsion - minPropulsion) || 0) * 100
+      store?.live_data?.propulsion_battery
+        ? ((store?.live_data?.propulsion_battery - minPropulsion) /
+            (maxPropulsion - minPropulsion)) *
+          100
+        : 0
     }%`,
   };
 });
 
+console.log(
+  ((store?.live_data?.propulsion_battery - minPropulsion) /
+    (maxPropulsion - minPropulsion)) *
+    100
+);
+
 const avionicsPercentage = computed(() => {
   return {
     height: `${
-      ((store?.live_data?.avionics_battery - minAvionics) /
-        (maxAvionics - minAvionics) || 0) * 100
+      store?.live_data?.avionics_battery
+        ? ((store?.live_data?.avionics_battery - minAvionics) /
+            (maxAvionics - minAvionics)) *
+          100
+        : 0
     }%`,
   };
 });

@@ -726,9 +726,9 @@ class Commands:
                 Locationwp.p1.SetValue(vtol_transition_wp, decoded_data["vtol_transition_mode"]) # 3 for multicoptor, 4 fixed wing
                 recv_waypoints.insert(1, vtol_transition_wp)
             if decoded_data["takeoff_alt"] is not None:
-                recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.TAKEOFF)))
+                recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.TAKEOFF))) # vtol takeoff for albatross
             if decoded_data["do_RTL"]:
-                recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
+                recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.LAND))) # vtol_land for albatross
             mission_manager.waypoints = recv_waypoints
             mission_manager.waypoint_count = len(recv_waypoints)
             mission_manager.update()
@@ -760,7 +760,7 @@ class Commands:
             if decoded_data["takeoff_alt"] is not None:
                 recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.TAKEOFF)))
             if decoded_data["do_RTL"]:
-                recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
+                recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.LAND)))
             FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
             print("[COMMAND] OVERRIDE_FLIGHTPLANNER Waypoints Command Executed.")
         except Exception as e:

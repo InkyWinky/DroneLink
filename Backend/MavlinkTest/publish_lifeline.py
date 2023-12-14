@@ -22,7 +22,7 @@ while True:
     print(i)
 
     # Lifeline send
-    connection.mav.named_value_float_send(i, "LFL_STATUS".encode(), 500)
+    connection.mav.named_value_float_send(i, "LFL_STATUS".encode(), 800)
     connection.mav.named_value_float_send(i, "LFL_DIST".encode(), random.random())
     connection.mav.named_value_float_send(i, "LFL_VEL".encode(), random.random() * 10)
 
