@@ -141,7 +141,9 @@ const propCellCount = ref(8);
         <input
           v-model="propCellCount"
           class="propulsion uk-input param-input"
-          type="text"
+          type="number"
+          min="1"
+          max="99"
           placeholder="8"
         />
         <!-- <span id="time-remaining"
@@ -150,7 +152,9 @@ const propCellCount = ref(8);
         <input
           v-model="avionicsCellCount"
           class="avionics uk-input param-input"
-          type="text"
+          type="number"
+          min="1"
+          max="99"
           placeholder="4"
         />
       </div>
@@ -311,8 +315,8 @@ h3 {
   bottom: 15%;
 }
 .param-input {
-  width: 23%;
-  height: 10%;
+  width: 40px;
+  height: 24px;
   background-color: #ddd;
   border-style: none;
   border-radius: 5px;
