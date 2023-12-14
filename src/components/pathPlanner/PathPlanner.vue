@@ -22,7 +22,7 @@
     <div
       id="listWrapper"
       ref="listContainer"
-      class="flex flex-col outline outline-1 rounded-md my-1"
+      class="flex flex-col outline outline-1 rounded-md my-1 overflow-hidden"
     >
       <ul class="h-full overflow-y-auto">
         <!-- Iterate through array of waypoints and show them on list -->
@@ -87,7 +87,8 @@
       </form>
     </div>
     <button
-      class="flex flex-row w-full justify-center items-center bg-green-300 hover:bg-green-500 p-1 rounded-md text-xs divide-black divide-x-2"
+      id="home-location-btn"
+      class="flex flex-row w-full justify-center items-center p-1 rounded-md text-xs divide-black divide-x-2"
       data-tooltip-target="tooltip-location"
       @click="addCurrentLocationWaypt"
     >
@@ -738,13 +739,14 @@ input::-webkit-inner-spin-button {
   width: 30px;
   height: 30px;
   color: #fff;
-  background: rgb(61, 130, 200);
+  background: linear-gradient(0.4turn, #79d9ff, #9198e5);
   border: solid 2px;
   border-radius: 0 70% 70%;
   box-shadow: 0 0 2px #000;
   cursor: pointer;
   transform-origin: 5px 8px;
   transform: rotateZ(-135deg);
+  border: none;
 }
 .marker b {
   transform: rotateZ(135deg);
@@ -772,5 +774,76 @@ input::-webkit-inner-spin-button {
   cursor: pointer;
   transform-origin: 5px 8px;
   /* transform: rotateZ(-135deg); */
+}
+
+#home-location-btn {
+  background: linear-gradient(0.25turn, #dab0f0, #9198e5);
+}
+#home-location-btn:hover {
+  animation-name: shine;
+  animation-duration: 300ms;
+  animation-fill-mode: forwards;
+}
+@keyframes shine {
+  0% {
+    background: linear-gradient(0.25turn, #e9cafa, #dab0f0, #9198e5, #9198e5);
+  }
+
+  25% {
+    background: linear-gradient(
+      0.25turn,
+      #e9cafa,
+      #dab0f0,
+      #dab0f0,
+      #9198e5,
+      #9198e5
+    );
+  }
+
+  50% {
+    background: linear-gradient(
+      0.25turn,
+      #e9cafa,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #9198e5
+    );
+  }
+  50% {
+    background: linear-gradient(
+      0.25turn,
+      #e9cafa,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #9198e5
+    );
+  }
+  75% {
+    background: linear-gradient(
+      0.25turn,
+      #e9cafa,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #bfa7ec
+    );
+  }
+  100% {
+    background: linear-gradient(
+      0.25turn,
+      #e9cafa,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #dab0f0,
+      #bfa7ec
+    );
+  }
 }
 </style>
