@@ -1,7 +1,7 @@
 In order to use this batch file:
 1. Install and extract the Mission Management folder into computer. Copy the address of your installation location, as well as the address of the DronelinkServer.py file, which is located in the Backend folder. 
 
-2. Edit the MissionManagement.bat file and paste in the addresses you copied previously in the locations where it says to paste. If you do not have Chrome, also edit the batchfile to use the browser of your choice. 
+2. Edit the MissionManagement.bat file and paste in the addresses you copied previously in the locations where it says to paste. If you do not have Chrome, also edit the batchfile to use the browser of your choice. NOTE: If you have a folder name with spaces inside, you have to enclose your path in double quotation marks.
 
 2. Right click the missionManagement.bat file and click "create shortcut"/"send to desktop". Place this shortcut in your desktop for ease of access.
 
