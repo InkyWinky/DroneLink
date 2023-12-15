@@ -137,7 +137,7 @@
                 lifelineStatus?.valueOf() == 'LOWERING',
               'bg-green-300': lifelineStatus?.valueOf() == 'RELEASING',
               'bg-red-500': lifelineStatus?.valueOf() == 'EMERGENCY',
-              'bg-gray-400': !lifeLineStatus?.valueOf(),
+              'bg-gray-400': !lifelineStatus?.valueOf(),
             }"
           >
             <p>
@@ -150,21 +150,22 @@
             <h2 class="font-bold text-lg underline">Payload Stats</h2>
             <p id="payload-height">
               Height:
-              {{ payloadHeight }}
+              {{ payloadHeight }} m
             </p>
             <p id="payload-vel">
               Velocity:
-              {{ (store?.live_data?.lifeline_velocity || 0).toFixed(3) }}
+              {{ (store?.live_data?.lifeline_velocity || 0).toFixed(3) }} m/s
             </p>
             <!-- info about aircraft -->
             <h2 class="font-bold text-lg underline mt-8">Aircraft Stats</h2>
             <p id="alb-height">
               Ground Height:
               {{ (store?.live_data?.albatross?.ground_height || 0).toFixed(3) }}
+              m
             </p>
             <p id="alb-vel">
               Velocity:
-              {{ (store?.live_data?.albatross?.velocity || 0).toFixed(3) }}
+              {{ (store?.live_data?.albatross?.velocity || 0).toFixed(3) }} m/s
             </p>
           </div>
         </div>
@@ -183,7 +184,7 @@
               role="tooltip"
               class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
             >
-              Drop payload (Somewhat Minor Emergency Release Failsafe)
+              Somewhat Minor Emergency Release Failsafe
               <div class="tooltip-arrow" data-popper-arrow></div>
             </div>
 
@@ -201,12 +202,12 @@
               role="tooltip"
               class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
             >
-              Burn rope (Nichrome Emergency Release Failsafe)
+              Nichrome Emergency Release Failsafe
               <div class="tooltip-arrow" data-popper-arrow></div>
             </div>
           </div>
         </div>
-        <div class="w-full flex h-auto" v-if="(showBegin = true)">
+        <div class="w-full flex h-auto">
           <button
             class="bg-green-200 rounded-md text-black p-2 m-1 hover:bg-green-400 w-full"
             id="begin-button"
@@ -215,7 +216,7 @@
             Begin
           </button>
         </div>
-        <div v-if="(debug_mode = true)" class="w-full flex h-auto">
+        <div v-if="debug_mode.valueOf()" class="w-full flex h-auto">
           <button
             class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
             id="target-found-test-btn"
@@ -224,7 +225,7 @@
             TARGET FOUND
           </button>
         </div>
-        <div v-if="(debug_mode = true)" class="w-full flex h-auto">
+        <div v-if="debug_mode" class="w-full flex h-auto">
           <button
             class="bg-blue-300 rounded-md text-black p-2 m-1 hover:bg-blue-500 w-full"
             id="drip-btn"
@@ -269,7 +270,13 @@ import { ref, onMounted, watch, reactive, computed } from "vue";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { initFlowbite } from "flowbite";
-import { store, fpv_cam, fpv_cam_framerate, vision_cam } from "@/store";
+import {
+  store,
+  fpv_cam,
+  fpv_cam_framerate,
+  vision_cam,
+  debug_mode,
+} from "@/store";
 import api from "@/api";
 import uikit from "uikit";
 
@@ -314,11 +321,7 @@ const payloadHeight = computed(() => {
 });
 
 const lifelineStatus = computed(() => {
-  return store?.live_data?.lifeline_status;
-});
-
-const debug_mode = computed(() => {
-  return store?.debug_mode.value;
+  return store?.live_data?.lifeline_status || "N/A";
 });
 
 watch(targetDetected, (newTargetData) => {
@@ -333,7 +336,7 @@ watch(targetDetected, (newTargetData) => {
     uikit.modal("#target-detected-modal").toggle();
 
     if (!targetMarker.value) {
-      targetMarker.value = new mapboxgl.Marker()
+      targetMarker.value = new mapboxgl.Marker({ color: "red" })
         .setLngLat(targetCoords.value)
         .addTo(Map);
     } else {
@@ -403,14 +406,17 @@ watch(fpv_cam, (val) => {
 
 onMounted(() => {
   initFlowbite();
+
   mapboxgl.accessToken =
     "pk.eyJ1IjoiZWxpYjAwMDMiLCJhIjoiY2t4NWV0dmpwMmM5MjJxdDk4OGtrbnU4YyJ9.YtiVLqBLZv80L9rUq-s4aw";
+
   Map.value = new mapboxgl.Map({
     container: "map-container",
     style: "mapbox://styles/mapbox/satellite-v9", // style URL
     center: targetCoords.value, // lng, lat
     zoom: 15,
   });
+
   Map.value.on("click", (e) => {
     console.log(`[DEPLOYMENT COORDS] ${e.lngLat.toArray()}`);
     deployCoords.value = e.lngLat;
@@ -491,11 +497,15 @@ function switchFeed() {
   } else {
     startFPVCapture("large");
   }
-  console.log("[MESSAGE] displayVisionLarge: " + displayVisionLarge.value);
+  console.log(
+    "[MESSAGE] Large display now showing " + displayVisionLarge.value
+      ? "Vision"
+      : "FPV"
+  );
 }
 
 function confirmTarget() {
-  if (confirm("Confirm target?")) {
+  if (confirm("Confirm correct target identification?")) {
     api.executeCommand("RETURN_TO_TARGET", {});
     targetCoords.value = store?.targetCoords;
     setTimeout(() => {
@@ -516,7 +526,11 @@ function beginDeployment() {
     return;
   }
 
-  if (confirm(`Confirm deploy payload at ${deployCoords.value.toArray()}?`)) {
+  if (
+    confirm(
+      `Travel to target at coordinates?\n ${deployCoords.value.toArray()}`
+    )
+  ) {
     console.log("Beginning deployment procedure");
     api.executeCommand("DEPLOY_PAYLOAD", {
       targetCoords: targetCoords.value,
@@ -525,22 +539,22 @@ function beginDeployment() {
 }
 
 function smerf() {
-  if (confirm("Confirm SMERF?")) {
-    console.log("[SMERF] Executing SMERF");
+  if (confirm(`SMERF will deploy the payoad immediately.\n\nConfirm?`)) {
+    console.log("[MESSAGE] Executing SMERF");
     api.executeCommand("SMERF", {});
   }
 }
 
 function nerf() {
-  if (confirm("Confirm failsafe 2?")) {
-    console.log("[NERF] Executing NERF");
+  if (confirm("NERF will burn the rope holding the payload.\n\nConfirm?")) {
+    console.log("[MESSAGE] Executing NERF");
     api.executeCommand("NERF", {});
   }
 }
 
 function drip() {
-  if (confirm("Deploy payload now?")) {
-    console.log("[DRIP] Executing DRIP");
+  if (confirm("DRIP will deploy the payload.\n\nConfirm?")) {
+    console.log("[MESSAGE] Executing DRIP");
     api.executeCommand("DRIP", {});
   }
 }
