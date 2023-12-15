@@ -473,11 +473,11 @@ onMounted(() => {
   initFlowbite();
   let droneLat = store?.live_data?.lat;
   if (droneLat == null) {
-    droneLat = 145.24602266283097; //Default value
+    droneLat = -37.9616111291979; //Default value
   }
   let droneLong = store?.live_data?.long;
   if (droneLong == null) {
-    droneLong = -37.9616111291979;
+    droneLong = 145.24602266283097;
   }
   mapboxgl.accessToken =
     "pk.eyJ1IjoiaWxpbjAwMDUiLCJhIjoiY2xlYzh3aDhhMGF3czN3bnAzYTBqMWQ0ZyJ9.P2gZdcxMsZsxg1HdvKKEJQ";
@@ -485,7 +485,7 @@ onMounted(() => {
     container: "mapCon",
     style: "mapbox://styles/mapbox/satellite-v9",
     //Default center at melbourne Police Paddocks Dandenont
-    center: [droneLat, droneLong],
+    center: [droneLong, droneLat],
     zoom: 17,
   });
   //Resize map to be full screen --need to find a better way to fix this problem
