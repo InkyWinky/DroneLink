@@ -370,6 +370,7 @@ function zoomToWaypoint(waypt) {
 // }
 // testApi();
 //TODO: add drop down in gui to change the waypoint ids and input takeoff altitude
+
 async function formatWaypoints() {
   //The function formatWaypoints formats the waypoints from the gui into the format that the waypoints communication script accepts:
   //
