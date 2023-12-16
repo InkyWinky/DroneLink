@@ -15,6 +15,35 @@ class Polygon:
         self.segments = self.calculate_segments()
         self.count = self.calculate_count()
         self.centroid = self.calculate_centroid()
+        self.remove_obtuse_angles()
+
+    def remove_obtuse_angles(self):
+        obtuse_indices = []
+        acute_indices = []
+        for index in range(self.count):
+            vertex1 = self.vertices[index]
+            vertex2 = self.vertices[(index + 1) % self.count]
+            vertex3 = self.vertices[(index + 2) % self.count]
+
+            angle_from_points = angle_between_points(vertex1, vertex2, vertex3)
+            if angle_from_points >= pi:
+                obtuse_indices.append(index)
+            else:
+                acute_indices.append(index)
+
+        # Get list with least elements
+        if len(obtuse_indices) < len(acute_indices):
+            # Remove obtuce indices
+            sorted_list = sorted(obtuse_indices, reverse=True)
+            self.remove_indices(sorted_list)
+        elif len(acute_indices) < len(obtuse_indices):
+            # Remove acute indices
+            sorted_list = sorted(acute_indices, reverse=True)
+            self.remove_indices(sorted_list)
+
+    def remove_indices(self, indices):
+        for index in indices:
+            self.vertices.pop(index)
 
     def calculate_centroid(self):
         x_sum = 0
