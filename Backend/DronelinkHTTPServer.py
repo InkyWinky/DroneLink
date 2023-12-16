@@ -1,3 +1,4 @@
+import math
 import threading
 import json
 import time
@@ -198,6 +199,30 @@ class ServerHandler(BaseHTTPRequestHandler):
             # Make instance of SearchPathGenerator
             waypoint_spliner = spliner.SearchPathGenerator()
 
+            """UNCOMMENT THIS SECTION. THESE ARE THE PARAMETERS REQUIRED TO USE"""
+            # waypoint_spliner.set_search_area(parsed_content['waypoints'])
+            # turn_radius = 70  # Metres turn radius
+            # layer_distance = 100  # metres between each layer
+            # curve_resolution = 0.5  # waypoints per metre
+            #
+            # # Scale parameters
+            # scale_factor = 111320 / math.cos(parsed_content['waypoints'][0].lat)
+            # scaled_turn_radius = turn_radius / scale_factor
+            # scaled_layer_distance = layer_distance / scale_factor
+            # scaled_curve_resolution = curve_resolution * scale_factor
+            #
+            # # Fill in parameters
+            # waypoint_spliner.set_parameters(minimum_turn_radius=scaled_turn_radius,
+            #                               layer_distance=scaled_layer_distance,
+            #                               curve_resolution=scaled_curve_resolution,
+            #                               orientation=None,
+            #                               start_point=None,
+            #                               focal_length=None,
+            #                               sensor_size=None,
+            #                               paint_overlap=0.2,
+            #                               alt=200)
+            """END OF UNCOMMENT. COMMENT OUT THE BELOW SECTION"""
+
             # Give arguments
             waypoint_spliner.set_search_area(parsed_content['waypoints'])
             waypoint_spliner.set_parameters(minimum_turn_radius=0.0004,       # The minimum turn radius of the plane
@@ -207,6 +232,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                                             focal_length=None,              # Focal length of the camera on board the plane in mm
                                             sensor_size=None,               # Sensor size of the camera on board the plane as (width, height) in mm
                                             paint_overlap=0.2)             # The percentage of overlap desired for the camera to see on consecutive layers
+            """UP TO HERE"""
 
             # Generate and save spline
             waypoint_spliner.generate_search_area_path()

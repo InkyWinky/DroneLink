@@ -152,7 +152,7 @@ class SearchPathGenerator:
     max_flight_time = None  # The maximum amount of flight time
     sensor_size = None  # (width, height) in mm
     focal_length = None  # Lens focal length in mm
-    paint_overlap = None  # Minimum paint overlap required in terms of percentage. Must be less than 100%
+    paint_overlap = 0.2  # Minimum paint overlap required in terms of percentage. Must be less than 100%
     paint_radius = None  # The radius in metres around the plane that the cameras can see / paint
     perimeter_distance = None  # The distance rough points will be placed from the search area perimeter
     layer_distance = None  # Distance between each 'layer' of the flight path
@@ -226,7 +226,38 @@ class SearchPathGenerator:
         if layer_distance is not None:
             self.layer_distance = layer_distance
 
+    def check_parameter_accounted(self):
+        missing_parameters = []
+        # Check essential parameters
+        if self.search_area is None:
+            missing_parameters.append("Search area")
+        if self.alt is None:
+            missing_parameters.append("Altitude")
+        if self.turn_radius is None:
+            missing_parameters.append("Turn radius")
+        if self.curve_resolution is None:
+            missing_parameters.append("Curve resolution")
+        if self.sensor_size is None and self.focal_length is None and self.layer_distance is None:
+            if self.layer_distance is None:
+                if self.sensor_size is None:
+                    missing_parameters.append("Sensor size")
+                if self.focal_length is None:
+                    missing_parameters.append("Focal length")
+            else:
+                missing_parameters.append("Layer distance")
+
+        if len(missing_parameters) > 0:
+            return False, missing_parameters
+
+        return True, None
+
     def generate_search_area_path(self, do_plot=True):
+        # Initial checks
+        all_parameters_accounted_for, missing_parameters = self.check_parameter_accounted()
+        if not all_parameters_accounted_for:
+            self.path_points = {"Error": "Parameters missing", "Parameters": missing_parameters}
+            return self.path_points
+
         # Pre-algorithm calculations
         if self.sensor_size is not None and self.focal_length is not None and self.layer_distance is None:
             self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)
@@ -235,7 +266,7 @@ class SearchPathGenerator:
             self.orientation = calculate_best_orientation(polygon=self.search_area)
 
         if self.orientation > 0:
-            self.orientation -= self.orientation
+            self.orientation -= pi
 
         # Complete pre-calculation data and parameter validation checks
         validation, error_message = self.do_pre_validation_checks()
@@ -915,18 +946,20 @@ def calculate_angle_from_points(from_point=None, to_point=None):
     return math.atan2(y, x)
 
 def calculate_best_orientation(polygon=None):
-    # TODO: Make sure you return the correct orientation (+ or - pi or plus at all)
-    best_distance = 0
+    # Find which side of the polygon has the largest length
+    longest_distance = 0
     best_orientation = 0
-    for vertex1 in polygon.vertices:
-        for vertex2 in polygon.vertices:
-            if vertex1 == vertex2:
-                continue
-            distance = calculate_distance_between_points(vertex1, vertex2)
-            if distance > best_distance:
-                best_orientation = calculate_angle_from_points(from_point=vertex1, to_point=vertex2)
-                best_distance = distance
-    return clamp_angle(best_orientation - pi)
+    for index in range(len(polygon.vertices)):
+        vertex1 = polygon.vertices[index]
+        vertex2 = polygon.vertices[(index + 1) % len(polygon.vertices)]
+        if vertex1.equals(vertex2):
+            continue
+        distance = calculate_distance_between_points(vertex1, vertex2)
+        if distance > longest_distance:
+            longest_distance = distance
+            best_orientation = math.atan2(vertex1.lat - vertex2.lat, vertex1.lon - vertex2.lon)
+
+    return best_orientation
 
 def raycast_to_polygon(origin=None, direction=None, polygon=None):
     # Define the ray as a line
@@ -1565,9 +1598,10 @@ def do_entire_simulation(do_plot=True, do_random=True):
 
     path_generator = SearchPathGenerator()
     path_generator.set_data(search_area=search_area_polygon)
-    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
+    path_generator.set_parameters(alt=200, orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
 
-    path_generator.generate_search_area_path(do_plot=do_plot)
+    error = path_generator.generate_search_area_path(do_plot=do_plot)
+    print(error)
     return path_generator.error
 
 def run_number_of_sims(count=None, plot=None, do_random=False):

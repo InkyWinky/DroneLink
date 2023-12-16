@@ -94,7 +94,10 @@ class PathGenerator:
                                       alt=self.alt)
 
         # Generate path
-        path_generator.generate_search_area_path(do_plot=self.do_plot)
+        output = path_generator.generate_search_area_path(do_plot=self.do_plot)
+        if type(output) == dict:
+            print(output)
+            return None
 
         # Return waypoints in dictionary format
         return path_generator.get_waypoints()
