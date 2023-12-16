@@ -229,8 +229,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             print("Executed ARM_AIRCRAFT")
         elif command == Commands.TOGGLE_WEATHER_VANING:
             mp_sock.toggle_weather_vaning()
-        elif command == Commands.RETURN_TO_LAUNCH:
-            mp_sock.return_to_launch()
+        elif command == Commands.CHANGE_DRONE_MODE:
+            mp_sock.change_drone_mode(parsed_content['mode'])
             print("Executed RTL")
         elif command == "CONNECTIP":
             result = mp_sock.initialise_dronelink(parsed_content['ip'])

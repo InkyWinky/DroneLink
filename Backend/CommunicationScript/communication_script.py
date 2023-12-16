@@ -464,7 +464,7 @@ class MissionManager:
                         Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
                         Commands.SEND_COMMAND_INT: Commands.send_command_int,
                         Commands.TOGGLE_WEATHER_VANING: Commands.toggle_weather_vaning,
-                        Commands.RETURN_TO_LAUNCH: Commands.return_to_launch,
+                        Commands.CHANGE_DRONE_MODE: Commands.CHANGE_DRONE_MODE,
                         }  
         
         # run the command
@@ -632,12 +632,15 @@ class MissionManager:
             print(traceback.format_exc())
             print("[ERROR] Failed to toggle WEATHER VANING, Current State: " + str(status))
     
-    def return_to_launch(self):
-        """Sets the plane's mode to return to launch (RTL)
+    def change_drone_mode(self, mode):
+        """Sets the plane's mode. Please refer to MAVLINK Flight modes:
+        https://ardupilot.org/plane/docs/flight-modes.html#flight-modes
+        i.e. "QLOITER", "LOITER", "QRTL", "RTL", "MANUAL", "GUIDED", "AUTO", 
+        All modes can also be found on Mission Planner under Data -> Actions -> Dropdown for Set Mode
         """
         try:
-            MAV.setMode("RTL")
-            print("[INFO] Return to Launch (RTL) Set")
+            MAV.setMode(mode)
+            print("[INFO] Set plane's mode to: " + mode)
         except Exception as e:
             print(traceback.format_exc())
             print("[ERROR] Failed to change plane's mode to RTL")
@@ -713,7 +716,7 @@ class Commands:
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT"
     TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
-    RETURN_TO_LAUNCH = "RETURN_TO_LAUNCH"
+    CHANGE_DRONE_MODE = "CHANGE_DRONE_MODE"
 
 
     def override(self, mission_manager, decoded_data):
@@ -881,14 +884,17 @@ class Commands:
             print(traceback.format_exc())
             print("[ERROR] ERROR: Handling TOGGLE_WEATHER_VANING COMMAND")
     
-    def return_to_launch(self, mission_manager, decoded_data):
-        """Sets the plane to return to launch (RTL)
+    def change_drone_mode(self, mission_manager, decoded_data):
+        """Sets the plane's mode. Please refer to MAVLINK Flight modes:
+        https://ardupilot.org/plane/docs/flight-modes.html#flight-modes
+        i.e. "QLOITER", "LOITER", "QRTL", "RTL", "MANUAL", "GUIDED", "AUTO", 
+        All modes can also be found on Mission Planner under Data -> Actions -> Dropdown for Set Mode
         """
         try:
-            mission_manager.return_to_launch()
+            mission_manager.change_drone_mode(decoded_data["mode"])
         except Exception as e:
             print(traceback.format_exc())
-            print("[ERROR] Error handling RETURN_TO_LAUNCH COMMAND")
+            print("[ERROR] Error handling CHANGE DRONE MODE COMMAND")
     
 
 # ------------------------------------ End Classes ------------------------------------
