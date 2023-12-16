@@ -31,7 +31,7 @@ class WebSocketThread(threading.Thread):
         self.fpv_feed_thread = FPVFeedThread()
         self.vision_feed_thread = VisionFeedThread(self.vision_websocket_url)
         self.live_data_thread.start()
-        self.fpv_feed_thread.start()
+        # self.fpv_feed_thread.start()
         self.vision_feed_thread.start()
         try:
             self.server.serveforever()
