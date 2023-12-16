@@ -1,3 +1,4 @@
+import math
 import threading
 import json
 import time
@@ -200,6 +201,19 @@ class ServerHandler(BaseHTTPRequestHandler):
             start_pt = spliner.Coord(parsed_content['waypoints'][0]['lat'], parsed_content['waypoints'][0]['long'])
             # Give arguments
             waypoint_spliner.set_search_area(parsed_content['waypoints'])
+
+            """USE THESE IF YOU WANT TO TEST USING METRES"""
+            turn_radius = 100  # metres
+            layer_distance = 120  # metres
+            curve_resolution = 0.5  # 1 waypoint every 2 metres or 0.5 waypoints per metre
+            # Scale parameters
+            scale_factor = 111320 / math.cos(parsed_content['waypoints'][0]['lat'])
+            """USE THESE THREE PARAMETERS BELOW"""
+            scaled_turn_radius = turn_radius / scale_factor
+            scaled_layer_distance = layer_distance / scale_factor
+            scaled_curve_resolution = curve_resolution * scale_factor
+            """END OF USE THESE"""
+
             waypoint_spliner.set_parameters(minimum_turn_radius=0.0004,     # The minimum turn radius of the plane
                                             layer_distance=0.001,           # Distance between layers on map. Use this or both focal length and sensor size, not all three
                                             curve_resolution=4,             # How many waypoints per metre for curves
