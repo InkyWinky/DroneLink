@@ -24,19 +24,44 @@
         </p>
       </div>
     </div>
-    <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
     <div
       id="video-feed-large"
       :class="{ 'w-1/2': showMap.valueOf(), 'w-full': !showMap.valueOf() }"
     >
+      <div id="payload-process-container" v-if="showMap">
+        <div class="payload-process-popup" style="margin-top: 4%">
+          <h1>Select payload deployment location:</h1>
+          <p class="subtitle">Click on the map on the right.</p>
+          <p style="font-size: 0.8em">Deploy payload at ([long, lat)]:</p>
+
+          <span class="accent">{{ deployCoords || "None selected" }}</span>
+          <!-- <button class="popup-btn">Done</button> -->
+        </div>
+        <div class="payload-process-popup">
+          <h1>Select altitude to deploy at:</h1>
+          <input type="number" v-model="deployAlt" />
+          <!-- <button class="popup-btn">Done</button> -->
+        </div>
+        <div class="payload-process-popup">
+          <h1>Select Cardinal Direction:</h1>
+          <!-- Drop down list of cardinal directions -->
+          <select name="direction" id="direction">
+            <option value="north">North</option>
+            <option value="south">South</option>
+            <option value="east">East</option>
+            <option value="west">West</option>
+          </select>
+        </div>
+        <div id="go-btn" @click="beginDeployment()">GO!</div>
+      </div>
       <div
         v-if="displayVisionLarge.valueOf()"
         id="vid-feed-large-vision"
-        class="flex flex-col w-full h-full"
+        class="flex flex-col w-full h-full text-white bg-black"
       >
         VISION
-        <div class="w-full h-full bg-green-800">
-          <img ref="vision_large" class="bg-green-800 h-full w-full" />
+        <div class="w-full h-full camera-feed">
+          <img ref="vision_large" class="h-full w-full camera-feed" />
         </div>
         <div
           id="bounding-box"
@@ -53,7 +78,7 @@
       <div
         id="vid-feed-large-fpv"
         v-else-if="!displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full"
+        class="flex flex-col w-full h-full text-white bg-black"
       >
         FPV
         <div
@@ -73,6 +98,7 @@
         <!-- <video ref="FPVCamLarge" muted>Stream Unavailable</video> -->
       </div>
     </div>
+    <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
     <div
       id="small-vid-feed"
       class="w-1/5 h-1/4 absolute left-0 bottom-0 border-2 border-black m-2"
@@ -81,7 +107,7 @@
       <div
         id="small-vid-feed-fpv"
         v-if="displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full bg-gray-200"
+        class="flex flex-col w-full h-full text-white bg-black"
       >
         <p class="">FPV</p>
         <div
@@ -102,7 +128,7 @@
       <div
         id="small-vid-feed-vision"
         v-else-if="!displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full bg-gray-200"
+        class="flex flex-col w-full h-full text-white bg-black"
       >
         VISION
         <div class="w-full h-full bg-green-800">
@@ -207,15 +233,7 @@
             </div>
           </div>
         </div>
-        <div class="w-full flex h-auto">
-          <button
-            class="bg-green-200 rounded-md text-black p-2 m-1 hover:bg-green-400 w-full"
-            id="begin-button"
-            @click="beginDeployment()"
-          >
-            Begin
-          </button>
-        </div>
+
         <div v-if="debug_mode.valueOf()" class="w-full flex h-auto">
           <button
             class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
@@ -279,7 +297,7 @@ import {
 } from "@/store";
 import api from "@/api";
 import uikit from "uikit";
-
+const deployAlt = ref(0);
 const showOverlay = ref(true);
 const showMap = ref(false);
 const deployMarker = ref(null);
@@ -298,9 +316,9 @@ const vision_small = ref(null);
 const vision_potential_target = ref(null);
 const fpv_resolution = reactive({ width: 1920, height: 1080 });
 //Bounding box data (all are percentages)
-const x_perc = ref(50);
-const y_perc = ref(50);
-const width = ref(50);
+const x_perc = ref(0);
+const y_perc = ref(0);
+const width = ref(0);
 const showTargetDetectedModal = ref(true);
 
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
@@ -538,7 +556,7 @@ function beginDeployment() {
 
   if (
     confirm(
-      `Travel to target at coordinates?\n ${deployCoords.value.toArray()}`
+      `Are you sure you want to deploy payload at\n ${deployCoords.value.toArray()}?`
     )
   ) {
     console.log("Beginning deployment procedure");
@@ -571,6 +589,25 @@ function drip() {
 </script>
 
 <style scoped>
+.payload-process-popup {
+  height: 20%;
+  width: 75%;
+  margin: 2%;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 999;
+  text-align: left;
+  border-style: box-shadow;
+}
+.payload-process-popup:hover {
+  transform: scale(1.01);
+  transition: transform 0.1s ease-out;
+}
+h1 {
+  font-family: "Aldrich", sans-serif;
+}
+
 #payload-body {
   height: calc(100vh - 70px) !important;
 }
@@ -580,8 +617,49 @@ function drip() {
   border: 5px solid red;
   z-index: 999;
 }
-
+#payload-process-container {
+  background-color: none;
+  width: 50%;
+  position: absolute;
+  left: 0;
+  z-index: 9999;
+}
 #bbox-test-input {
   width: 100px;
+}
+.subtitle {
+  font-size: 0.8em;
+  font-family: "Open Sans", sans-serif;
+}
+
+.popup-btn {
+  background-color: #368bac;
+  border: none;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  float: right;
+}
+.accent {
+  color: #368bac;
+  font-weight: bold;
+}
+#go-btn {
+  color: white;
+  background: linear-gradient(0.25turn, #79d9ff, #9198e5);
+  width: 75%;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 2%;
+  border-style: box-shadow;
+  font-style: bold;
+  font-size: 1.2em;
+}
+#go-btn:hover {
+  transform: scale(1.05);
+  transition: transform 0.1s ease-out;
+}
+.camera-feed {
+  background-color: #3e4663;
 }
 </style>
