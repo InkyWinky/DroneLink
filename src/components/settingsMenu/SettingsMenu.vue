@@ -168,7 +168,7 @@ const patient_location = () => {
       {
         lat: -37.54213375308094,
         long: 145.64295397543202,
-        alt: 100,
+        alt: store?.settings?.default_alt,
         id: 17,
       },
     ],
