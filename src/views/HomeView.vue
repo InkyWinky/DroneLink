@@ -19,8 +19,8 @@
   <div id="current-monitor">
     <CurrentMonitor />
   </div>
-  <div id="pwm-monitor">
-    <PwmMonitor />
+  <div id="drone-actions">
+    <DroneActions />
   </div>
 </template>
 
@@ -31,7 +31,8 @@ import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
 import BatteryStatistics from "@/components/batteryStats/BatteryStatistics.vue";
 import CurrentMonitor from "@/components/currentMonitor/CurrentMonitor.vue";
-import PwmMonitor from "@/components/pwm/PwmMonitor.vue";
+// import PwmMonitor from "@/components/pwm/PwmMonitor.vue";
+import DroneActions from "@/components/droneActions/DroneActions.vue";
 import MultiFunctionTab from "@/components/multiFunctionTab/MultiFunctionTab.vue";
 import { store } from "@/store";
 
@@ -103,7 +104,7 @@ div {
   z-index: 0;
 }
 
-#pwm-monitor {
+#drone-actions {
   width: 29%;
   height: 37%;
   position: absolute;
