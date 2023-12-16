@@ -6,7 +6,7 @@
     <div class="uk-offcanvas-bar">
       <button class="uk-offcanvas-close" type="button" uk-close></button>
 
-      <h3 class="font-bold text-xl">Settings</h3>
+      <h3 class="font-bold text-xl" @click="secret++">Settings</h3>
       <form class="uk-grid-small" uk-grid>
         <div class="uk-width-1-1 uk-padding-remove-left">
           <p
@@ -122,6 +122,24 @@
           </button>
         </router-link>
       </span>
+      <div
+        v-if="true || secret > 5"
+        class="flex flex-col w-full gap-4 outline outline-white rounded-sm p-2"
+      >
+        <p class="font-bold text-md">Developer Tools</p>
+        <button
+          class="rounded-md bg-gray-500 hover:bg-gray-600 w-full"
+          @click="patient_location"
+        >
+          SET PATIENT LOCATION
+        </button>
+        <button class="rounded-md bg-gray-500 hover:bg-gray-600 w-full">
+          SET PAYLOAD DEPLOYMENT LOCATION
+        </button>
+        <button class="rounded-md bg-gray-500 hover:bg-gray-600 w-full">
+          RETURN HOME AFTER ASCENDING
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -129,6 +147,7 @@
 <script setup>
 import { ref } from "vue";
 import { store } from "@/store";
+import api from "@/api";
 let default_alt = store?.settings?.default_alt;
 let takeoff_alt = store?.settings?.takeoff_alt;
 let waypoint_type = store?.settings?.waypoint_type.toString();
@@ -138,10 +157,23 @@ let edited_default_alt = ref(false);
 let edited_takeoff_alt = ref(false);
 let edited_waypoint_type = ref(false);
 let edited_vtol_mode = ref(false);
+let secret = ref(0);
 
 // console.log(store?.settings);
 // console.log(store.settings.default_alt, default_alt);
 
+const patient_location = () => {
+  api.executeCommand("PATIENT_LOCATION", {
+    waypoints: [
+      {
+        lat: -37.54213375308094,
+        long: 145.64295397543202,
+        alt: 100,
+        id: 17,
+      },
+    ],
+  });
+};
 const resetForm = () => {
   default_alt = store?.settings?.default_alt;
   takeoff_alt = store?.settings?.takeoff_alt;
