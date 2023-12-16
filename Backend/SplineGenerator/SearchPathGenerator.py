@@ -266,7 +266,7 @@ class SearchPathGenerator:
             self.orientation = calculate_best_orientation(polygon=self.search_area)
 
         if self.orientation > 0:
-            self.orientation -= self.orientation
+            self.orientation -= pi
 
         # Complete pre-calculation data and parameter validation checks
         validation, error_message = self.do_pre_validation_checks()
@@ -946,18 +946,20 @@ def calculate_angle_from_points(from_point=None, to_point=None):
     return math.atan2(y, x)
 
 def calculate_best_orientation(polygon=None):
-    # TODO: Make sure you return the correct orientation (+ or - pi or plus at all)
-    best_distance = 0
+    # Find which side of the polygon has the largest length
+    longest_distance = 0
     best_orientation = 0
-    for vertex1 in polygon.vertices:
-        for vertex2 in polygon.vertices:
-            if vertex1 == vertex2:
-                continue
-            distance = calculate_distance_between_points(vertex1, vertex2)
-            if distance > best_distance:
-                best_orientation = calculate_angle_from_points(from_point=vertex1, to_point=vertex2)
-                best_distance = distance
-    return clamp_angle(best_orientation - pi)
+    for index in range(len(polygon.vertices)):
+        vertex1 = polygon.vertices[index]
+        vertex2 = polygon.vertices[(index + 1) % len(polygon.vertices)]
+        if vertex1.equals(vertex2):
+            continue
+        distance = calculate_distance_between_points(vertex1, vertex2)
+        if distance > longest_distance:
+            longest_distance = distance
+            best_orientation = math.atan2(vertex1.lat - vertex2.lat, vertex1.lon - vertex2.lon)
+
+    return best_orientation
 
 def raycast_to_polygon(origin=None, direction=None, polygon=None):
     # Define the ray as a line
@@ -1596,9 +1598,10 @@ def do_entire_simulation(do_plot=True, do_random=True):
 
     path_generator = SearchPathGenerator()
     path_generator.set_data(search_area=search_area_polygon)
-    path_generator.set_parameters(orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
+    path_generator.set_parameters(alt=200, orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
 
-    path_generator.generate_search_area_path(do_plot=do_plot)
+    error = path_generator.generate_search_area_path(do_plot=do_plot)
+    print(error)
     return path_generator.error
 
 def run_number_of_sims(count=None, plot=None, do_random=False):
