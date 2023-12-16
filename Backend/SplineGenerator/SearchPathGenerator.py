@@ -668,7 +668,7 @@ class SearchPathGenerator:
         if self.take_off_point is not None:
             distance_start = calculate_distance_between_points(self.take_off_point, rough_waypoints[0])
             distance_end = calculate_distance_between_points(self.take_off_point, rough_waypoints[-1])
-            if distance_end < distance_start:
+            if distance_end > distance_start:
                 rough_waypoints.reverse()
 
         return rough_waypoints
