@@ -160,7 +160,7 @@ class MissionPlannerSocket():
 
         
 
-    def override_waypoints(self, waypoints, takeoff_alt=None, vtol_transition_mode=None, do_RTL=False):
+    def override_waypoints(self, waypoints, takeoff_alt=None, vtol_transition_mode=None, do_RTL=False, init_mode=None, end_mode=None):
         """Sends a command to overwrite all the waypoints in mission planner.
         Args:
             waypoints (List[dict]): A list of dictionaries that contain keys: lat, long and alt.
@@ -171,6 +171,8 @@ class MissionPlannerSocket():
                         "takeoff_alt":takeoff_alt, 
                         "vtol_transition_mode": vtol_transition_mode,
                         "do_RTL": do_RTL,
+                        "init_mode": init_mode,
+                        "end_mode": end_mode,
                         })
         self.s.sendall(data + '\n\n')
     
@@ -215,10 +217,10 @@ class MissionPlannerSocket():
         data = json.dumps({"command": self.COMMANDS.TOGGLE_WEATHER_VANING})
         self.s.sendall(data  + '\n\n')
 
-    def change_drone_mode(self):
+    def change_drone_mode(self, mode):
         """Sends a command to change the plane's mode to return to launch (RTL)
         """
-        data = json.dumps({"command": self.COMMANDS.CHANGE_DRONE_MODE})
+        data = json.dumps({"command": self.COMMANDS.CHANGE_DRONE_MODE, "mode": mode})
         self.s.sendall(data  + '\n\n')
     
 
@@ -282,6 +284,7 @@ class Commands:
     SEND_COMMAND_INT = "SEND_COMMAND_INT" 
     TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
     CHANGE_DRONE_MODE = "CHANGE_DRONE_MODE"
+    PATIENT_LOCATION = "PATIENT_LOCATION"
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")

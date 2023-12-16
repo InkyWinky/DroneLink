@@ -28,11 +28,11 @@
 import api from "@/api";
 
 function RTL() {
-  api.executeCommand({ command: "CHANGE_DRONE_MODE", mode: "RTL" });
+  api.executeCommand("CHANGE_DRONE_MODE", { mode: "RTL" });
 }
 
 function setQLoiter() {
-  api.executeCommand({ command: "CHANGE_DRONE_MODE", mode: "QLOITER" });
+  api.executeCommand("CHANGE_DRONE_MODE", { mode: "QLOITER" });
 }
 </script>
 
