@@ -285,6 +285,7 @@ class Commands:
     TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
     CHANGE_DRONE_MODE = "CHANGE_DRONE_MODE"
     PATIENT_LOCATION = "PATIENT_LOCATION"
+    DROP_LOCATION = "DROP_LOCATION"
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")

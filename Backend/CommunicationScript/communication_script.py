@@ -733,8 +733,9 @@ class Commands:
         Returns:
             Action: An override action with the waypoints to override with.
         """
+        
         try:
-            if decoded_data["init_mode"] is not None: # set to loiter or qloiter before overriding waypoints in flight
+            if decoded_data["init_mode"] is not None: # set to guided, loiter or qloiter before overriding waypoints in flight
                 MAV.setMode(decoded_data["init_mode"])
                 Script.Sleep(4000)
             waypoints = decoded_data["waypoints"]

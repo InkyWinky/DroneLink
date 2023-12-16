@@ -234,7 +234,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], takeoff_alt=parsed_content['takeoff_alt'],  vtol_transition_mode=parsed_content['vtol_transition_mode'], do_RTL=True)
         elif command == Commands.PATIENT_LOCATION:
             mp_sock.override_waypoints(parsed_content['waypoints'], init_mode="LOITER", end_mode="AUTO")
-
+        elif command == Commands.DROP_LOCATION:
+            mp_sock.override_waypoints(parsed_content['waypoints'], init_mode="LOITER", end_mode="AUTO")
         elif command == Commands.SYNC_SCRIPT:
             mp_sock.sync_script()
             print("Executed SYNC SCRIPT")
