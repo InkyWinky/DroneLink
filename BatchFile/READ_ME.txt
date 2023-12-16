@@ -9,7 +9,7 @@ In order to use this batch file:
 
 4. Right click the shortcut click "Properties" and then "Change Icon". Press OK on the alert that pops up. Browse to the batchfile folder inside the Mission Management folder and select the mismanlogo icon.
 
-5. Double-click on the shortcut to start Mission Management, NOTE that this will take some time to load, so don't worry if the webpage appears blank for a while. The application will have completed loading when you see "DONE Compiled successfully in..." on one of the Command Prompts. 
+5. Double-click on the shortcut to start Mission Management, NOTE that this will take some time to load, so don't worry if the webpage appears blank for a while. The application will have completed loading when you see "DONE Compiled successfully in..." on one of the Command Prompts. Then you may click reload to refresh the webpage if required.
 
 6. To close the application, simply press the X on the two command prompts that pop up after running the bat file (shortcut). If you want to rerun the application, make sure to close the command prompts from previous runs. 
 
