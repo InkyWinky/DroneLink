@@ -215,10 +215,10 @@ class MissionPlannerSocket():
         data = json.dumps({"command": self.COMMANDS.TOGGLE_WEATHER_VANING})
         self.s.sendall(data  + '\n\n')
 
-    def return_to_launch(self):
+    def change_drone_mode(self):
         """Sends a command to change the plane's mode to return to launch (RTL)
         """
-        data = json.dumps({"command": self.COMMANDS.RETURN_TO_LAUNCH})
+        data = json.dumps({"command": self.COMMANDS.CHANGE_DRONE_MODE})
         self.s.sendall(data  + '\n\n')
     
 
@@ -281,7 +281,7 @@ class Commands:
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT" 
     TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
-    RETURN_TO_LAUNCH = "RETURN_TO_LAUNCH"
+    CHANGE_DRONE_MODE = "CHANGE_DRONE_MODE"
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")
