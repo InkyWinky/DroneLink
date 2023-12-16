@@ -4,7 +4,10 @@
     style="border-radius: 15px; padding: 30px; bottom: 4%"
   >
     <h3>DRONE ACTIONS</h3>
-    <div id="rtl-container" class="h-auto w-full m-2 p-2 bg-slate-200">
+    <div
+      id="rtl-container"
+      class="h-auto w-full m-2 p-2 bg-slate-200 action-btn"
+    >
       <button
         id="rtl-btn"
         class="w-full h-auto rounded p-2 flex items-center justify-center"
@@ -13,7 +16,10 @@
         RTL
       </button>
     </div>
-    <div id="qloiter-container" class="h-auto w-full m-2 p-2 bg-slate-200">
+    <div
+      id="qloiter-container"
+      class="action-btn h-auto w-full m-2 p-2 bg-slate-200"
+    >
       <button
         id="qloiter-btn"
         class="w-full h-auto rounded p-2 flex items-center justify-center"
@@ -36,4 +42,13 @@ function setQLoiter() {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.action-btn {
+  border-radius: 5px;
+  color: black;
+}
+.action-btn:hover {
+  background: linear-gradient(0.25turn, #79d9ff, #9198e5);
+  color: white;
+}
+</style>

@@ -99,14 +99,14 @@ div {
   position: absolute;
   right: 0;
   margin: 2%;
-  top: 23%;
+  top: 26%;
   border-radius: 15px;
   z-index: 0;
 }
 
 #drone-actions {
   width: 29%;
-  height: 37%;
+  height: 30%;
   position: absolute;
   right: 0;
   margin-right: 2%;

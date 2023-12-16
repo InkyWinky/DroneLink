@@ -1,3 +1,4 @@
+import math
 import threading
 import json
 import time
@@ -200,6 +201,19 @@ class ServerHandler(BaseHTTPRequestHandler):
             start_pt = spliner.Coord(parsed_content['waypoints'][0]['lat'], parsed_content['waypoints'][0]['long'])
             # Give arguments
             waypoint_spliner.set_search_area(parsed_content['waypoints'])
+
+            """USE THESE IF YOU WANT TO TEST USING METRES"""
+            turn_radius = 100  # metres
+            layer_distance = 120  # metres
+            curve_resolution = 0.5  # 1 waypoint every 2 metres or 0.5 waypoints per metre
+            # Scale parameters
+            scale_factor = 111320 / math.cos(parsed_content['waypoints'][0]['lat'])
+            """USE THESE THREE PARAMETERS BELOW"""
+            scaled_turn_radius = turn_radius / scale_factor
+            scaled_layer_distance = layer_distance / scale_factor
+            scaled_curve_resolution = curve_resolution * scale_factor
+            """END OF USE THESE"""
+
             waypoint_spliner.set_parameters(minimum_turn_radius=0.0004,     # The minimum turn radius of the plane
                                             layer_distance=0.001,           # Distance between layers on map. Use this or both focal length and sensor size, not all three
                                             curve_resolution=4,             # How many waypoints per metre for curves
@@ -218,6 +232,10 @@ class ServerHandler(BaseHTTPRequestHandler):
             print("Executed OVERRIDE FLIGHTPLANNER WAYPOINTS")
         elif command == Commands.DIRECT_WAYPOINTS:
             mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], takeoff_alt=parsed_content['takeoff_alt'],  vtol_transition_mode=parsed_content['vtol_transition_mode'], do_RTL=True)
+        elif command == Commands.PATIENT_LOCATION:
+            mp_sock.override_waypoints(parsed_content['waypoints'], init_mode="LOITER", end_mode="AUTO")
+        elif command == Commands.DROP_LOCATION:
+            mp_sock.override_waypoints(parsed_content['waypoints'], init_mode="LOITER", end_mode="AUTO")
         elif command == Commands.SYNC_SCRIPT:
             mp_sock.sync_script()
             print("Executed SYNC SCRIPT")
@@ -231,7 +249,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             mp_sock.toggle_weather_vaning()
         elif command == Commands.CHANGE_DRONE_MODE:
             mp_sock.change_drone_mode(parsed_content['mode'])
-            print("Executed RTL")
+            print("Executed CHANGE DRONE MODE TO: " + parsed_content['mode'])
         elif command == "CONNECTIP":
             result = mp_sock.initialise_dronelink(parsed_content['ip'])
             message = "Successfully connected to Mission Planner."
