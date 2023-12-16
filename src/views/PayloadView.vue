@@ -304,7 +304,9 @@ const targetDetected = computed(() => {
     ? store?.live_data?.vision_geotag_gps || false
     : false;
 });
-
+const geotagData = computed(() => {
+  return store?.live_data?.vision_geotag_gps || 0;
+});
 const payloadHeight = computed(() => {
   return !store?.live_data?.sonarrange || !store?.live_data?.lifeline_distance
     ? 0
@@ -321,16 +323,18 @@ const debug_mode = computed(() => {
   return store?.debug_mode.value;
 });
 
-watch(targetDetected, (newTargetData) => {
-  if (newTargetData != false) {
+watch(geotagData, async (newTargetData, oldTargetData) => {
+  if (targetDetected.value != false && newTargetData != oldTargetData) {
     vision_potential_target.value.src = vision_cam;
     showTargetDetectedModal.value = true;
-    console.log(newTargetData);
+    console.log("new:", newTargetData);
+    console.log("old", oldTargetData);
+    console.logt("new=old?", newTargetData == oldTargetData);
     targetCoords.value = [newTargetData.x, newTargetData.y]; //[LAT, LONG] I THINK
     x_perc.value = (store?.live_data?.vision_geotag_box?.x || 0) * 100;
     y_perc.value = (store?.live_data?.vision_geotag_box?.y || 0) * 100;
     width.value = (store?.live_data?.vision_geotag_box?.z || 0) * 100;
-    uikit.modal("#target-detected-modal").toggle();
+    uikit.modal("#target-detected-modal").show();
 
     if (!targetMarker.value) {
       targetMarker.value = new mapboxgl.Marker()
