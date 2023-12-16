@@ -304,12 +304,10 @@ const width = ref(50);
 const showTargetDetectedModal = ref(false);
 
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
-const targetDetected = computed(() => {
+const visionOn = computed(() => {
   // This function turns on prompts and bounding box when target is detected and not if vision_on is false
 
-  return store?.vision_on
-    ? store?.live_data?.vision_geotag_gps || false
-    : false;
+  return store?.vision_on;
 });
 const geotagData = computed(() => {
   return store?.live_data?.vision_geotag_gps || 0;
@@ -326,19 +324,28 @@ const lifelineStatus = computed(() => {
   return store?.live_data?.lifeline_status || "N/A";
 });
 
-watch(geotagData, async (newTargetData, oldTargetData) => {
-  if (targetDetected.value != false && newTargetData != oldTargetData) {
+watch(geotagData, async (newTargetData) => {
+  //this triggers everytime the computed property re-evaluates even if the computed property ends up with the same value
+  if (visionOn.value == true && newTargetData != 0) {
+    if (
+      targetCoords.value[0] != newTargetData.x &&
+      targetCoords.value[1] != newTargetData.y
+    ) {
+      targetCoords.value = [newTargetData.x, newTargetData.y]; //[LAT, LONG] I THINK
+      console.log(targetCoords.value);
+    }
+  }
+});
+
+watch(targetCoords, () => {
+  console.log(targetCoords.value);
+  if (geotagData.value != 0) {
     vision_potential_target.value.src = vision_cam;
-    showTargetDetectedModal.value = true;
-    console.log("new:", newTargetData);
-    console.log("old", oldTargetData);
-    console.logt("new=old?", newTargetData == oldTargetData);
-    targetCoords.value = [newTargetData.x, newTargetData.y]; //[LAT, LONG] I THINK
     x_perc.value = (store?.live_data?.vision_geotag_box?.x || 0) * 100;
     y_perc.value = (store?.live_data?.vision_geotag_box?.y || 0) * 100;
     width.value = (store?.live_data?.vision_geotag_box?.z || 0) * 100;
-    uikit.modal("#target-detected-modal").show();
 
+    uikit.modal("#target-detected-modal").show();
     if (!targetMarker.value) {
       targetMarker.value = new mapboxgl.Marker({ color: "red" })
         .setLngLat(targetCoords.value)
@@ -348,7 +355,6 @@ watch(geotagData, async (newTargetData, oldTargetData) => {
     }
   }
 });
-
 watch(vision_cam, (val) => {
   if (vision_large.value && displayVisionLarge.value) {
     vision_large.value.src = val;
