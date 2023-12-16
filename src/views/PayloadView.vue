@@ -24,6 +24,7 @@
         </p>
       </div>
     </div>
+    <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
     <div
       id="video-feed-large"
       :class="{ 'w-1/2': showMap.valueOf(), 'w-full': !showMap.valueOf() }"
@@ -72,7 +73,6 @@
         <!-- <video ref="FPVCamLarge" muted>Stream Unavailable</video> -->
       </div>
     </div>
-    <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
     <div
       id="small-vid-feed"
       class="w-1/5 h-1/4 absolute left-0 bottom-0 border-2 border-black m-2"

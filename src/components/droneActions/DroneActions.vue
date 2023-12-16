@@ -10,7 +10,7 @@
         class="w-full h-auto rounded p-2 flex items-center justify-center"
         @click="RTL()"
       >
-        Return to Launch
+        RTL
       </button>
     </div>
     <div id="qloiter-container" class="h-auto w-full m-2 p-2 bg-slate-200">
@@ -19,7 +19,7 @@
         class="w-full h-auto rounded p-2 flex items-center justify-center"
         @click="setQLoiter()"
       >
-        Set qLoiter
+        QLOITER
       </button>
     </div>
   </div>
@@ -28,11 +28,11 @@
 import api from "@/api";
 
 function RTL() {
-  api.executeCommand({ command: "CHANGE_DRONE_MODE", mode: "RTL" });
+  api.executeCommand("CHANGE_DRONE_MODE", { mode: "RTL" });
 }
 
 function setQLoiter() {
-  api.executeCommand({ command: "CHANGE_DRONE_MODE", mode: "QLOITER" });
+  api.executeCommand("CHANGE_DRONE_MODE", { mode: "QLOITER" });
 }
 </script>
 
