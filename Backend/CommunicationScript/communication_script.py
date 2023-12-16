@@ -350,6 +350,7 @@ class MissionManager:
     def toggle_arm_aircraft(self):
         # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
         # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
+        MAV.setWPCurrent(MAV.sysid, MAV.compid, 0) # Restart Mission (incase there was a previous mission that was not completed)
         MAV.setMode("QLOITER")
         if self.cs_drone and self.cs_drone.armed:
             MAV.doARM(False, True)
@@ -463,6 +464,7 @@ class MissionManager:
                         Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
                         Commands.SEND_COMMAND_INT: Commands.send_command_int,
                         Commands.TOGGLE_WEATHER_VANING: Commands.toggle_weather_vaning,
+                        Commands.RETURN_TO_LAUNCH: Commands.return_to_launch,
                         }  
         
         # run the command
@@ -629,13 +631,18 @@ class MissionManager:
         except Exception as e:
             print(traceback.format_exc())
             print("[ERROR] Failed to toggle WEATHER VANING, Current State: " + str(status))
-
-    def toggle_vision_detection(self):
-        """Toggles on and off Vision detection on the plane (Vision detection locates targets for Search and Rescue)
+    
+    def return_to_launch(self):
+        """Sets the plane's mode to return to launch (RTL)
         """
-        # placeholder until specific method is determined
-        print("[MESSAGE] in future this function will toggle Vision detection")
+        try:
+            MAV.setMode("RTL")
+            print("[INFO] Return to Launch (RTL) Set")
+        except Exception as e:
+            print(traceback.format_exc())
+            print("[ERROR] Failed to change plane's mode to RTL")
         
+
     def NamedValueFloatHandler(self, message):
         """Function handler for when a NAMED_VALUE_FLOAT message is received over mavlink
         https://mavlink.io/en/messages/common.html#NAMED_VALUE_FLOAT
@@ -706,7 +713,7 @@ class Commands:
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT"
     TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
-    TOGGLE_VISION_DETECTION = "TOGGLE_VISION_DETECTION"
+    RETURN_TO_LAUNCH = "RETURN_TO_LAUNCH"
 
 
     def override(self, mission_manager, decoded_data):
@@ -733,6 +740,8 @@ class Commands:
             mission_manager.waypoints = recv_waypoints
             mission_manager.waypoint_count = len(recv_waypoints)
             mission_manager.update()
+            # Restart Mission
+            MAV.setWPCurrent(MAV.sysid, MAV.compid, 0)
             print("[COMMAND] OVERRIDE Waypoint Command Executed.")
         except Exception as e:
             print(traceback.format_exc())
@@ -872,14 +881,15 @@ class Commands:
             print(traceback.format_exc())
             print("[ERROR] ERROR: Handling TOGGLE_WEATHER_VANING COMMAND")
     
-    def toggle_vision_detection(self, mission_manager, decoded_data):
-        """Toggles on and off Vision target detection on the plane (Vision detection detects targets for Search and Rescue)
+    def return_to_launch(self, mission_manager, decoded_data):
+        """Sets the plane to return to launch (RTL)
         """
         try:
-            mission_manager.toggle_vision_detection()
+            mission_manager.return_to_launch()
         except Exception as e:
             print(traceback.format_exc())
-            print("[ERROR] Error handling TOGGLE_VISION_DETECTION COMMAND")
+            print("[ERROR] Error handling RETURN_TO_LAUNCH COMMAND")
+    
 
 # ------------------------------------ End Classes ------------------------------------
 # def waypoint_mavlink_test():
