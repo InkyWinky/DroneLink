@@ -139,7 +139,10 @@
         >
           SET PAYLOAD DEPLOYMENT LOCATION
         </button>
-        <button class="rounded-md bg-gray-500 hover:bg-gray-600 w-full">
+        <button
+          class="rounded-md bg-gray-500 hover:bg-gray-600 w-full"
+          @click="ascend_and_rtl"
+        >
           RETURN HOME AFTER ASCENDING
         </button>
       </div>
@@ -167,11 +170,10 @@ let secret = ref(0);
 
 const patient_location = () => {
   api.executeCommand("PATIENT_LOCATION", {
-    location: {
+    patient_location: {
       lat: -37.54213375308094,
       long: 145.64295397543202,
       alt: store?.settings?.default_alt,
-      id: 17,
     },
   });
 };
@@ -182,12 +184,24 @@ const drop_location = () => {
     dropoff_coordinates: {
       lat: -37.543755530521956,
       long: 145.64702276429728,
-      alt: 40, // This alt is dependant on user
-      id: 17,
+      alt: 40, // This alt is dependant on user input
     },
     cruise_alt: store?.settings?.default_alt,
     transition_alt: store?.settings?.takeoff_alt,
     cardinal_approach: "SOUTH", // Can be NORTH, EAST, SOUTH or WEST
+  });
+};
+
+const ascend_and_rtl = () => {
+  api.executeCommand("ASCEND_AND_RTL", {
+    dropoff_coordinates: {
+      lat: -37.543755530521956,
+      long: 145.64702276429728,
+      alt: 40, // This alt is dependant on user input
+    },
+    cruise_alt: store?.settings?.default_alt,
+    transition_alt: store?.settings?.takeoff_alt,
+    cardinal_direction: "SOUTH", // Can be NORTH, EAST, SOUTH or WEST
   });
 };
 const resetForm = () => {

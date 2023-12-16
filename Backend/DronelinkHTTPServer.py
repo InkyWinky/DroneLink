@@ -233,9 +233,11 @@ class ServerHandler(BaseHTTPRequestHandler):
         elif command == Commands.DIRECT_WAYPOINTS:
             mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], takeoff_alt=parsed_content['takeoff_alt'],  vtol_transition_mode=parsed_content['vtol_transition_mode'], do_RTL=True)
         elif command == Commands.PATIENT_LOCATION:
-            mp_sock.override_waypoints([parsed_content['location']], init_mode="LOITER", end_mode="AUTO")
+            HTTPCommand().patient_location(parsed_content['patient_location'])
         elif command == Commands.DROP_LOCATION:
             HTTPCommand().drop_location(parsed_content['dropoff_coordinates'], parsed_content['cruise_alt'], parsed_content['transition_alt'], parsed_content['cardinal_approach'])
+        elif command == Commands.ASCEND_AND_RTL:
+            HTTPCommand().ascend_and_rtl(parsed_content['dropoff_coordinates'], parsed_content['cruise_alt'], parsed_content['transition_alt'], parsed_content['cardinal_direction'])
         elif command == Commands.SYNC_SCRIPT:
             mp_sock.sync_script()
             print("Executed SYNC SCRIPT")
@@ -275,10 +277,20 @@ class ServerHandler(BaseHTTPRequestHandler):
         print("Request finished at:", time.ctime())
 
 class HTTPCommand():
-    def drop_location(self, dropoff_coordinates, cruise_alt, transition_alt, cardinal_approach):
-        """DROP_LOCATION command which receives a drop coordinate ()
+    def patient_location(self, patient_location):
+        """PATIENT_LOCATION command which causes the plane to loiter around the given location
 
-        :param dropoff_coordinates: The location to dropoff the payload {lat: 0, long: 0, alt: 0, id:17}
+        :param patient_location: The location for the drone to loiter around {lat: 0, long: 0, alt: 0}
+        :type patient_location: Dict
+        """
+        patient_location["id"] = 17
+        mp_sock.override_waypoints([patient_location], init_mode="LOITER", end_mode="AUTO")
+
+
+    def drop_location(self, dropoff_coordinates, cruise_alt, transition_alt, cardinal_approach):
+        """DROP_LOCATION command which receives a dropoff location to deploy the payload
+
+        :param dropoff_coordinates: The location to dropoff the payload {lat: 0, long: 0, alt: 0}
         :type dropoff_coordinates: Dict
         :param cruise_alt: The cruise altitude of the plane
         :type cruise_alt: Float
@@ -287,17 +299,43 @@ class HTTPCommand():
         :param cardinal_approach: North, East, South or West direction that the plane will approach the dropoff location from and do a VTOL Transition.
         :type cardinal_approach: String ("NORTH", "EAST", "SOUTH", "WEST")
         """
-        print(dropoff_coordinates, cruise_alt, transition_alt, cardinal_approach)
+        dropoff_coordinates["id"] = 17
         cardinal_shift = {"NORTH": (-1, 0), "EAST":  (0, -1), "SOUTH": (1, 0), "WEST": (0, 1)}
         waypoints = []
         # Waypoint 250 away from the DO_VTOL_TRANSITION waypoint.
-        waypoints.append({"lat": dropoff_coordinates["lat"] + cardinal_shift[cardinal_approach][0] * 0.0032, "long":  dropoff_coordinates["long"] + cardinal_shift[cardinal_approach][1] * 0.0032, "alt": cruise_alt, "id": 16})
+        waypoints.append({"lat": dropoff_coordinates["lat"] + cardinal_shift[cardinal_approach][0] * 0.0037, "long":  dropoff_coordinates["long"] + cardinal_shift[cardinal_approach][1] * 0.0037, "alt": cruise_alt, "id": 16})
         # Waypoint 70m away from dropoff point for DO_VTOL_TRANSITION and also in parallel to cardinal direction and drop off loc
         waypoints.append({"lat": dropoff_coordinates["lat"] + cardinal_shift[cardinal_approach][0] * 0.0007, "long":  dropoff_coordinates["long"] + cardinal_shift[cardinal_approach][1] * 0.0007, "alt": transition_alt, "id": 16})
-        # DO_VTOL_TRANSITION WAYPOINT
-        waypoints.append({"lat": 0, "long": 0, "alt": 0, "id": 3000})
+        # DO_VTOL_TRANSITION WAYPOINT to VTOL
+        waypoints.append({"lat": 0, "long": 0, "alt": 0, "id": 3000, "p1": 3})
         # Dropoff location at transition alt
         waypoints.append({"lat": dropoff_coordinates["lat"], "long": dropoff_coordinates["long"], "alt": transition_alt, "id": 16})
         # Dropoff location at deployment alt (given by user)
         waypoints.append(dropoff_coordinates)  
         mp_sock.override_waypoints(waypoints, init_mode="LOITER", end_mode="AUTO")
+    
+    def ascend_and_rtl(self, dropoff_coordinates, cruise_alt, transition_alt, cardinal_direction):
+        """ASCEND_AND_RTL command which ascends the plane to the transition altitude, then transition into cruise, finally return to launch.
+
+        :param dropoff_coordinates: The location of the payload dropoff {lat: 0, long: 0, alt: 0}
+        :type dropoff_coordinates: Dict
+        :param cruise_alt: The cruise altitude of the plane
+        :type cruise_alt: Float
+        :param transition_alt: The transition/takeoff altitude of the plane
+        :type transition_alt: Float
+        :param cardinal_direction: North, East, South or West direction that the plane will go towards then transition into cruise mode.
+        :type cardinal_direction: String ("NORTH", "EAST", "SOUTH", "WEST")
+        """
+        cardinal_shift = {"NORTH": (-1, 0), "EAST":  (0, -1), "SOUTH": (1, 0), "WEST": (0, 1)}
+        waypoints = []
+        # Ascend to transition altitude
+        waypoints.append({"lat": dropoff_coordinates["lat"], "long":  dropoff_coordinates["long"], "alt": transition_alt, "id": 16})
+        # DO_VTOL_TRANSITION WAYPOINT to Cruise Mode
+        waypoints.append({"lat": 0, "long": 0, "alt": 0, "id": 3000, "p1": 4})
+        # 500m from dropoff location (Cruise transition distance)
+        waypoints.append({"lat": dropoff_coordinates["lat"] + cardinal_shift[cardinal_direction][0] * 0.005, "long":  dropoff_coordinates["long"] + cardinal_shift[cardinal_direction][1] * 0.005, "alt": cruise_alt, "id": 16})
+        # RTL waypoint
+        waypoints.append({"lat": 0, "long": 0, "alt": 0, "id": 20})
+        mp_sock.override_waypoints(waypoints, init_mode="LOITER", end_mode="AUTO")
+        
+
