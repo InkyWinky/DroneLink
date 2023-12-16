@@ -286,6 +286,7 @@ class Commands:
     CHANGE_DRONE_MODE = "CHANGE_DRONE_MODE"
     PATIENT_LOCATION = "PATIENT_LOCATION"
     DROP_LOCATION = "DROP_LOCATION"
+    ASCEND_AND_RTL = "ASCEND_AND_RTL"
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")
