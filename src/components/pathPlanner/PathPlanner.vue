@@ -6,6 +6,7 @@
   <Transition>
     <div v-show="showMap" id="mapCon" />
   </Transition>
+  <PayloadProcessModal />
   <div id="bg">
     <h3>PATH PLANNER</h3>
     <button
@@ -177,6 +178,7 @@ import { onMounted } from "vue";
 import api from "../../api.js";
 import { store } from "@/store";
 import { initFlowbite } from "flowbite";
+import PayloadProcessModal from "../PayloadProcessModal.vue";
 
 // give each waypoint a unique id
 const showMap = ref(false);

@@ -1,9 +1,5 @@
 <template>
-  <link
-    href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css"
-    rel="stylesheet"
-  />
-
+  <PayloadProcessModal />
   <div class="w-full flex" id="payload-body">
     <div id="target-detected-modal" uk-modal>
       <div class="uk-modal-dialog uk-modal-body" ref="showTargetDetectedModal">
@@ -24,14 +20,11 @@
         </p>
       </div>
     </div>
-    <div
-      id="video-feed-large"
-      :class="{ 'w-1/2': showMap.valueOf(), 'w-full': !showMap.valueOf() }"
-    >
+    <div id="video-feed-large">
       <div
         v-if="displayVisionLarge.valueOf()"
         id="vid-feed-large-vision"
-        class="flex flex-col w-full h-full"
+        class="flex flex-col w-full h-full bg-black text-white"
       >
         VISION
         <div class="w-full h-full bg-green-800">
@@ -52,7 +45,7 @@
       <div
         id="vid-feed-large-fpv"
         v-else-if="!displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full"
+        class="flex flex-col w-full h-full bg-black text-white camera-feed"
       >
         FPV
         <div
@@ -72,7 +65,6 @@
         <!-- <video ref="FPVCamLarge" muted>Stream Unavailable</video> -->
       </div>
     </div>
-    <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
     <div
       id="small-vid-feed"
       class="w-1/5 h-1/4 absolute left-0 bottom-0 border-2 border-black m-2"
@@ -81,7 +73,7 @@
       <div
         id="small-vid-feed-fpv"
         v-if="displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full bg-gray-200"
+        class="flex flex-col w-full h-full bg-gray-200 bg-black text-white"
       >
         <p class="">FPV</p>
         <div
@@ -102,7 +94,7 @@
       <div
         id="small-vid-feed-vision"
         v-else-if="!displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full bg-gray-200"
+        class="flex flex-col w-full h-full bg-gray-200 bg-black text-white"
       >
         VISION
         <div class="w-full h-full bg-green-800">
@@ -267,8 +259,7 @@
 
 <script setup>
 import { ref, onMounted, watch, reactive, computed } from "vue";
-import "mapbox-gl/dist/mapbox-gl.css";
-import mapboxgl from "mapbox-gl";
+
 import { initFlowbite } from "flowbite";
 import {
   store,
@@ -279,15 +270,16 @@ import {
 } from "@/store";
 import api from "@/api";
 import uikit from "uikit";
+import PayloadProcessModal from "@/components/PayloadProcessModal.vue";
 
 const showOverlay = ref(true);
-const showMap = ref(false);
+
 const deployMarker = ref(null);
 const targetMarker = ref(null);
 const targetCoords = ref([145.13453, -37.90984]); // placeholder for actual target coords
 const deployCoords = ref(null);
 const displayVisionLarge = ref(true); // boolean that determines which video feed is displayed large, and which small
-const Map = ref(null);
+
 const FPVCamLarge = ref(null);
 const FPVCamSmall = ref(null);
 // const fpv_small = document.getElementById("FPV-SMALL");
@@ -584,4 +576,8 @@ function drip() {
 #bbox-test-input {
   width: 100px;
 }
+
+/* #camera-feed {
+  background-image: url("../../public/noCamera.jpg");
+} */
 </style>
