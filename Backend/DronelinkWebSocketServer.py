@@ -103,7 +103,6 @@ class LiveDataThread(threading.Thread):
                     message_index_to_send_from = clientData[index]['messagesCount']
                 messages_to_send = self.mp_socket.messages[message_index_to_send_from:]
                 clientData[index]['messagesCount'] = len(self.mp_socket.messages)
-                print(len(self.mp_socket.messages))
                 # for message in self.mp_socket.messages[clientData[index]['messagesCount']:]:
                 #     clientData[index]['messagesCount'] = clientData[index]['messagesCount'] + 1
                 #     messages_to_send.append(message)
