@@ -19,6 +19,9 @@
       </li>
     </ul>
   </div>
+  <p>
+    {{ store?.messages.length }}
+  </p>
 </template>
 
 <script setup>

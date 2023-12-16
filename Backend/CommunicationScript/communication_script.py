@@ -255,7 +255,7 @@ class MissionManager:
             MAV.setWP(self.waypoints[i], i, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
 
         MAV.setWPACK()  # Send waypoint ACK
-        self.__set_home(self.waypoints[0])  # Set the home waypoint as the first waypoint
+        # self.__set_home(self.waypoints[0])  # Set the home waypoint as the first waypoint
         # self.__set_home(self.create_wp(self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt))  # Set the home waypoint as the vehicle's current location
         
     
@@ -350,7 +350,11 @@ class MissionManager:
     def toggle_arm_aircraft(self):
         # MAV.doCommand(MAVLink.MAV_CMD.RUN_PREARM_CHECKS, 0, 0, 0, 0, 0, 0, 0, False)
         # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
-        MAV.setWPCurrent(MAV.sysid, MAV.compid, 0) # Restart Mission (incase there was a previous mission that was not completed)
+        # Attempt to Restart Mission (incase there was a previous mission that was not completed)
+        try:
+            MAV.setWPCurrent(MAV.sysid, MAV.compid, 0) 
+        except:
+            pass
         MAV.setMode("QLOITER")
         if self.cs_drone and self.cs_drone.armed:
             MAV.doARM(False, True)
@@ -464,7 +468,7 @@ class MissionManager:
                         Commands.GET_FLIGHTPLANNER_WAYPOINTS: Commands.get_flightplanner_waypoints,
                         Commands.SEND_COMMAND_INT: Commands.send_command_int,
                         Commands.TOGGLE_WEATHER_VANING: Commands.toggle_weather_vaning,
-                        Commands.CHANGE_DRONE_MODE: Commands.CHANGE_DRONE_MODE,
+                        Commands.CHANGE_DRONE_MODE: Commands.change_drone_mode,
                         }  
         
         # run the command
@@ -729,7 +733,11 @@ class Commands:
         Returns:
             Action: An override action with the waypoints to override with.
         """
+        
         try:
+            if decoded_data["init_mode"] is not None: # set to guided, loiter or qloiter before overriding waypoints in flight
+                MAV.setMode(decoded_data["init_mode"])
+                Script.Sleep(4000)
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
             if decoded_data["vtol_transition_mode"] is not None:
@@ -737,14 +745,19 @@ class Commands:
                 Locationwp.p1.SetValue(vtol_transition_wp, decoded_data["vtol_transition_mode"]) # 3 for multicoptor, 4 fixed wing
                 recv_waypoints.insert(0, vtol_transition_wp)
             if decoded_data["takeoff_alt"] is not None:
-                recv_waypoints.insert(0,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.VTOL_TAKEOFF)))
+                recv_waypoints.insert(0, mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.VTOL_TAKEOFF)))
             if decoded_data["do_RTL"]:
                 recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
             mission_manager.waypoints = recv_waypoints
             mission_manager.waypoint_count = len(recv_waypoints)
             mission_manager.update()
-            # Restart Mission
-            MAV.setWPCurrent(MAV.sysid, MAV.compid, 0)
+            # Attempt to Restart Mission (incase there was a previous mission that was not completed)
+            try:
+                MAV.setWPCurrent(MAV.sysid, MAV.compid, 0) 
+            except:
+                pass
+            if decoded_data["end_mode"] is not None: # Set mode back to AUTO
+                MAV.setMode(decoded_data["end_mode"])
             print("[COMMAND] OVERRIDE Waypoint Command Executed.")
         except Exception as e:
             print(traceback.format_exc())
@@ -765,6 +778,8 @@ class Commands:
             print(decoded_data)
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
+            home = mission_manager.waypoints[0]
+            recv_waypoints.insert(0, home)
             # print("[override_flightplanner] takeoff_alt: ", decoded_data["takeoff_alt"], decoded_data["vtol_transition_mode"])
             if decoded_data["vtol_transition_mode"] is not None:
                 vtol_transition_wp = mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.DO_VTOL_TRANSITION))

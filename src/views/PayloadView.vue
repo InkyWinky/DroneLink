@@ -301,7 +301,7 @@ const fpv_resolution = reactive({ width: 1920, height: 1080 });
 const x_perc = ref(50);
 const y_perc = ref(50);
 const width = ref(50);
-const showTargetDetectedModal = ref(false);
+const showTargetDetectedModal = ref(true);
 
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
 const visionOn = computed(() => {
