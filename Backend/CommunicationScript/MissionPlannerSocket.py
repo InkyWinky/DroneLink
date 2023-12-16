@@ -214,6 +214,12 @@ class MissionPlannerSocket():
         """
         data = json.dumps({"command": self.COMMANDS.TOGGLE_WEATHER_VANING})
         self.s.sendall(data  + '\n\n')
+
+    def return_to_launch(self):
+        """Sends a command to change the plane's mode to return to launch (RTL)
+        """
+        data = json.dumps({"command": self.COMMANDS.RETURN_TO_LAUNCH})
+        self.s.sendall(data  + '\n\n')
     
 
     def set_cube_relay_pin(self, pin_num, pin_state):
@@ -254,13 +260,6 @@ class MissionPlannerSocket():
             "kwargs": kwargs
             })
         self.s.sendall(data + '\n\n')
-    
-    def toggle_vision_detection(self):
-        """Sends a command to toggle vision detection
-        """
-        print("Toggling Vision detection")
-        data = json.dumps({"command": self.COMMANDS.TOGGLE_VISION_DETECTION})
-        self.s.sendall(data + '\n\n')
         
 
 class Commands:
@@ -282,7 +281,7 @@ class Commands:
     SET_CUBE_RELAY_PIN = "SET_CUBE_RELAY_PIN"
     SEND_COMMAND_INT = "SEND_COMMAND_INT" 
     TOGGLE_WEATHER_VANING = "TOGGLE_WEATHER_VANING"
-    TOGGLE_VISION_DETECTION = "TOGGLE_VISION_DETECTION"
+    RETURN_TO_LAUNCH = "RETURN_TO_LAUNCH"
 
 if __name__ == "__main__":
     host = raw_input("Enter IP to connect to: ")
