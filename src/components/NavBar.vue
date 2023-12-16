@@ -96,7 +96,10 @@
         <!-- Vision Toggle Button END -->
         <!-- Weathervaning Toggle Button START -->
         <div v-if="isWeatherVaneLoading.valueOf()">
-          <div uk-spinner class="flex items-center h-20 w-20 -my-4" />
+          <div
+            uk-spinner
+            class="flex items-center h-20 w-20 -my-4 text-white"
+          />
         </div>
         <div
           v-else
