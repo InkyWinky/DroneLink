@@ -260,7 +260,7 @@ class MissionManager:
         
     
 
-    def create_wp(self, lat, lng, alt, id=None):
+    def create_wp(self, lat, lng, alt, id=None, **kwargs):
         """Creates a waypoint
 
         Args:
@@ -273,7 +273,10 @@ class MissionManager:
         """
         if id is None:
             id = self.id
-        return Locationwp().Set(lat, lng, alt, id)
+        wp = Locationwp().Set(lat, lng, alt, id)
+        if id == 3000: # DO_VTOL_TRANSITION (3) -> change to multicoptor
+            Locationwp.p1.SetValue(wp, 3)
+        return wp
     
 
     def set_waypoint(self, lat, lng, alt, index):
@@ -503,6 +506,7 @@ class MissionManager:
         """
         n = len(waypoints)  # number of waypoints
         res = [None for _ in range(n)]  # initialize list
+
         for i in range(n):
             res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"], id=waypoints[i]["id"])
         return res
@@ -757,6 +761,7 @@ class Commands:
             except:
                 pass
             if decoded_data["end_mode"] is not None: # Set mode back to AUTO
+                Script.Sleep(8000)
                 MAV.setMode(decoded_data["end_mode"])
             print("[COMMAND] OVERRIDE Waypoint Command Executed.")
         except Exception as e:

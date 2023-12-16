@@ -233,9 +233,9 @@ class ServerHandler(BaseHTTPRequestHandler):
         elif command == Commands.DIRECT_WAYPOINTS:
             mp_sock.override_flightplanner_waypoints(parsed_content['waypoints'], takeoff_alt=parsed_content['takeoff_alt'],  vtol_transition_mode=parsed_content['vtol_transition_mode'], do_RTL=True)
         elif command == Commands.PATIENT_LOCATION:
-            mp_sock.override_waypoints(parsed_content['waypoints'], init_mode="LOITER", end_mode="AUTO")
+            mp_sock.override_waypoints([parsed_content['location']], init_mode="LOITER", end_mode="AUTO")
         elif command == Commands.DROP_LOCATION:
-            mp_sock.override_waypoints(parsed_content['waypoints'], init_mode="LOITER", end_mode="AUTO")
+            HTTPCommand().drop_location(parsed_content['dropoff_coordinates'], parsed_content['cruise_alt'], parsed_content['transition_alt'], parsed_content['cardinal_approach'])
         elif command == Commands.SYNC_SCRIPT:
             mp_sock.sync_script()
             print("Executed SYNC SCRIPT")
@@ -273,3 +273,31 @@ class ServerHandler(BaseHTTPRequestHandler):
         # Send headers
         self.send_RESPONSE(statusCode, message=message)
         print("Request finished at:", time.ctime())
+
+class HTTPCommand():
+    def drop_location(self, dropoff_coordinates, cruise_alt, transition_alt, cardinal_approach):
+        """DROP_LOCATION command which receives a drop coordinate ()
+
+        :param dropoff_coordinates: The location to dropoff the payload {lat: 0, long: 0, alt: 0, id:17}
+        :type dropoff_coordinates: Dict
+        :param cruise_alt: The cruise altitude of the plane
+        :type cruise_alt: Float
+        :param transition_alt: The transition/takeoff altitude of the plane
+        :type transition_alt: Float
+        :param cardinal_approach: North, East, South or West direction that the plane will approach the dropoff location from and do a VTOL Transition.
+        :type cardinal_approach: String ("NORTH", "EAST", "SOUTH", "WEST")
+        """
+        print(dropoff_coordinates, cruise_alt, transition_alt, cardinal_approach)
+        cardinal_shift = {"NORTH": (-1, 0), "EAST":  (0, -1), "SOUTH": (1, 0), "WEST": (0, 1)}
+        waypoints = []
+        # Waypoint 250 away from the DO_VTOL_TRANSITION waypoint.
+        waypoints.append({"lat": dropoff_coordinates["lat"] + cardinal_shift[cardinal_approach][0] * 0.0032, "long":  dropoff_coordinates["long"] + cardinal_shift[cardinal_approach][1] * 0.0032, "alt": cruise_alt, "id": 16})
+        # Waypoint 70m away from dropoff point for DO_VTOL_TRANSITION and also in parallel to cardinal direction and drop off loc
+        waypoints.append({"lat": dropoff_coordinates["lat"] + cardinal_shift[cardinal_approach][0] * 0.0007, "long":  dropoff_coordinates["long"] + cardinal_shift[cardinal_approach][1] * 0.0007, "alt": transition_alt, "id": 16})
+        # DO_VTOL_TRANSITION WAYPOINT
+        waypoints.append({"lat": 0, "long": 0, "alt": 0, "id": 3000})
+        # Dropoff location at transition alt
+        waypoints.append({"lat": dropoff_coordinates["lat"], "long": dropoff_coordinates["long"], "alt": transition_alt, "id": 16})
+        # Dropoff location at deployment alt (given by user)
+        waypoints.append(dropoff_coordinates)  
+        mp_sock.override_waypoints(waypoints, init_mode="LOITER", end_mode="AUTO")
