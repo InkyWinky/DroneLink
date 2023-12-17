@@ -12,7 +12,11 @@
           A potential target has been detected. Would you like to confirm this
           target?
         </p>
-        <img ref="vision_potential_target" alt="target image" />
+        <img
+          ref="vision_potential_target"
+          alt="target image"
+          class="border border-black"
+        />
         <p class="uk-text-right">
           <button
             class="uk-button uk-button-default uk-modal-close"
@@ -145,12 +149,12 @@
       </div>
     </div>
     <div id="map-container" class="w-1/2" v-show="showMap.valueOf()">
-      <div>
+      <!-- <div>
         <img
           src="C:\Users\winky\Documents\MUAS\Mission-Management\public\planeCompass.png"
           alt="compass"
         />
-      </div>
+      </div> -->
     </div>
     <div
       id="small-vid-feed"
@@ -438,7 +442,7 @@ watch(geotagData, async (newTargetData) => {
 watch(targetCoords, () => {
   console.log(targetCoords.value);
   if (geotagData.value != 0) {
-    vision_potential_target.value.src = vision_cam;
+    vision_potential_target.value.src = vision_cam.value;
     x_perc.value = (store?.live_data?.vision_geotag_box?.x || 0) * 100;
     y_perc.value = (store?.live_data?.vision_geotag_box?.y || 0) * 100;
     width.value = (store?.live_data?.vision_geotag_box?.z || 0) * 100;
@@ -634,10 +638,6 @@ function confirmTarget() {
       "Add Manual Target Location. Do not press this button if the drone is not in CRUISE mode. \n\nConfirm?"
     )
   ) {
-    targetCoords.value = store?.targetCoords;
-    setTimeout(() => {
-      Map.value.resize();
-    }, 1);
     showMap.value = true;
     showPayloadProcess.value = true;
     showPatientPicker.value = true;
@@ -646,6 +646,10 @@ function confirmTarget() {
       center: [store?.live_data?.lng, store?.live_data?.lat],
       zoom: 13,
     });
+    targetCoords.value = store?.targetCoords;
+    setTimeout(() => {
+      Map.value.resize();
+    }, 1000);
   }
 }
 /**
