@@ -12,7 +12,11 @@
           A potential target has been detected. Would you like to confirm this
           target?
         </p>
-        <img ref="vision_potential_target" alt="target image" />
+        <img
+          ref="vision_potential_target"
+          alt="target image"
+          class="border border-black"
+        />
         <p class="uk-text-right">
           <button
             class="uk-button uk-button-default uk-modal-close"
@@ -20,7 +24,13 @@
           >
             No
           </button>
-          <button class="uk-button uk-button-primary" type="button">Yes</button>
+          <button
+            class="uk-button uk-button-primary"
+            type="button"
+            @click="confirmTarget"
+          >
+            Yes
+          </button>
         </p>
       </div>
     </div>
@@ -144,7 +154,14 @@
         <!-- <video ref="FPVCamLarge" muted>Stream Unavailable</video> -->
       </div>
     </div>
-    <div id="map-container" class="w-1/2" v-show="showMap.valueOf()"></div>
+    <div id="map-container" class="w-1/2" v-show="showMap.valueOf()">
+      <!-- <div>
+        <img
+          src="C:\Users\winky\Documents\MUAS\Mission-Management\public\planeCompass.png"
+          alt="compass"
+        />
+      </div> -->
+    </div>
     <div
       id="small-vid-feed"
       class="w-1/5 h-1/4 absolute left-0 bottom-0 border-2 border-black m-2"
@@ -301,9 +318,9 @@
           <button
             class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
             id="target-found-test-btn"
-            @click="confirmTarget()"
+            @click="startManualTarget()"
           >
-            TARGET FOUND
+            MANUAL TARGET LOCATION
           </button>
         </div>
         <div v-if="debug_mode" class="w-full flex h-auto">
@@ -431,7 +448,7 @@ watch(geotagData, async (newTargetData) => {
 watch(targetCoords, () => {
   console.log(targetCoords.value);
   if (geotagData.value != 0) {
-    vision_potential_target.value.src = vision_cam;
+    vision_potential_target.value.src = vision_cam.value;
     x_perc.value = (store?.live_data?.vision_geotag_box?.x || 0) * 100;
     y_perc.value = (store?.live_data?.vision_geotag_box?.y || 0) * 100;
     width.value = (store?.live_data?.vision_geotag_box?.z || 0) * 100;
@@ -622,19 +639,42 @@ function switchFeed() {
 }
 
 function confirmTarget() {
-  if (confirm("Confirm correct target identification?")) {
-    api.executeCommand("RETURN_TO_TARGET", {});
-    targetCoords.value = store?.targetCoords;
-    setTimeout(() => {
-      Map.value.resize();
-    }, 1);
+  targetCoords.value = store?.targetCoords;
+  store.vision_on = false;
+  uikit.modal("#target-detected-modal").hide();
+  showTargetDetectedModal.value = false;
+  setTimeout(() => {
+    Map.value.resize();
+  }, 1);
+  showMap.value = true;
+  showPayloadProcess.value = true;
+  showPatientPicker.value = true;
+  showGoBtn.value = true;
+  Map.value.flyTo({
+    center: [store?.live_data?.lng, store?.live_data?.lat],
+    zoom: 13,
+  });
+}
+
+function startManualTarget() {
+  if (
+    confirm(
+      "Add Manual Target Location. Do not press this button if the drone is not in CRUISE mode. \n\nConfirm?"
+    )
+  ) {
     showMap.value = true;
     showPayloadProcess.value = true;
     showPatientPicker.value = true;
     showGoBtn.value = true;
+    Map.value.flyTo({
+      center: [store?.live_data?.lng, store?.live_data?.lat],
+      zoom: 13,
+    });
+    setTimeout(() => {
+      Map.value.resize();
+    }, 1000);
   }
 }
-
 /**
  * beginDeployment() begins the lifeline deployment procedure by sending the Albatross back to the confirmed target
  * and then orbiting until the pilot chooses a payload drop location
@@ -660,13 +700,13 @@ function beginDeployment() {
       //Travel to payload drop location
       api.executeCommand("DROP_LOCATION", {
         dropoff_coordinates: {
-          lat: deployCoords.value[1],
-          long: deployCoords.value[0],
+          lat: deployCoords.value.lat,
+          long: deployCoords.value.lng,
           alt: deployAlt.value, // This alt is dependant on user input
         },
         cruise_alt: store?.settings?.default_alt,
         transition_alt: store?.settings?.takeoff_alt,
-        cardinal_direction: cardinalDir.value,
+        cardinal_approach: cardinalDir.value,
       });
     }
   } else if (showPatientPicker.value) {
@@ -686,10 +726,11 @@ function beginDeployment() {
       )
     ) {
       //Travel to patient
+      console.log(manualPatientCoords.value);
       api.executeCommand("PATIENT_LOCATION", {
         patient_location: {
-          lat: manualPatientCoords.value[1],
-          long: manualPatientCoords.value[0],
+          lat: manualPatientCoords.value.lat,
+          long: manualPatientCoords.value.lng,
           alt: store?.settings?.default_alt,
         },
       });
@@ -727,14 +768,40 @@ function ascendRTL() {
     console.log("[MESSAGE] Executing Ascend and RTL");
     api.executeCommand("ASCEND_AND_RTL", {
       dropoff_coordinates: {
-        lat: deployCoords.value[1],
-        long: deployCoords.value[0],
+        lat: deployCoords.value.lat,
+        long: deployCoords.value.lng,
         alt: deployAlt.value, // This alt is dependant on user input
       },
       cruise_alt: store?.settings?.default_alt,
       transition_alt: store?.settings?.takeoff_alt,
       cardinal_direction: cardinalDir.value,
     });
+  }
+}
+
+const droneMarker = ref();
+const droneLocation = computed(() => [
+  store?.live_data?.lng,
+  store?.live_data?.lat,
+]);
+watch(droneLocation, (val) => {
+  if (val[0] && val[1]) {
+    updateDroneMarker(val[0], val[1]);
+  }
+});
+
+function updateDroneMarker(latitude, longitude) {
+  if (droneMarker.value) {
+    droneMarker.value.setLngLat([latitude, longitude]).addTo(Map.value);
+  } else {
+    // Add drone marker to map
+    var el = document.createElement("div");
+    el.className = "marker droneMarker";
+    el.innerHTML = "<span><b></b></span>";
+    const marker = new mapboxgl.Marker(el) //({ offset: [0, -MARKER_HEIGHT / 2] })
+      .setLngLat([latitude, longitude])
+      .addTo(Map.value);
+    droneMarker.value = marker;
   }
 }
 </script>
@@ -751,10 +818,12 @@ function ascendRTL() {
   text-align: left;
   border-style: box-shadow;
 }
+
 .payload-process-popup:hover {
   transform: scale(1.01);
   transition: transform 0.1s ease-out;
 }
+
 h1 {
   font-family: "Aldrich", sans-serif;
 }
@@ -768,6 +837,7 @@ h1 {
   border: 5px solid red;
   z-index: 999;
 }
+
 #payload-process-container {
   background-color: none;
   width: 50%;
@@ -775,9 +845,11 @@ h1 {
   left: 0;
   z-index: 9999;
 }
+
 #bbox-test-input {
   width: 100px;
 }
+
 .subtitle {
   font-size: 0.8em;
   font-family: "Open Sans", sans-serif;
@@ -791,17 +863,21 @@ h1 {
   border-radius: 5px;
   float: right;
 }
+
 .accent-blue {
   color: #368bac;
   font-weight: bold;
 }
+
 .accent-orange {
   color: #f08000;
   font-weight: bold;
 }
+
 #go-btn {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
 }
+
 #big-drip-btn {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
 }
@@ -817,11 +893,37 @@ h1 {
   font-style: bold;
   font-size: 1.2em;
 }
+
 #go-btn:hover {
   transform: scale(1.05);
   transition: transform 0.1s ease-out;
 }
+
 .camera-feed {
   background-color: #3e4663;
+}
+.marker.droneMarker {
+  width: 0;
+  height: 0;
+  z-index: 99;
+}
+.marker.droneMarker b {
+  transform: rotateZ(135deg);
+}
+.marker.droneMarker span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 15px;
+  height: 15px;
+  color: #000000;
+  background: rgb(255, 25, 25);
+  border: solid 2px;
+  /* border-radius: 0 70% 70%; */
+  /* box-shadow: 0 0 2px #000; */
+  cursor: pointer;
+  transform-origin: 5px 8px;
+  /* transform: rotateZ(-135deg); */
 }
 </style>

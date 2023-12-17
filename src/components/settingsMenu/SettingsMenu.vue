@@ -195,7 +195,7 @@ const drop_location = () => {
 const ascend_and_rtl = () => {
   api.executeCommand("ASCEND_AND_RTL", {
     dropoff_coordinates: {
-      lat: -37.543755530521956,
+      lat: -37.5437555305,
       long: 145.64702276429728,
       alt: 40, // This alt is dependant on user input
     },
