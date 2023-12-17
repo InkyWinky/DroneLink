@@ -17,7 +17,7 @@
     <BatteryStatistics />
   </div>
   <div id="current-monitor">
-    <CurrentMonitor />
+    <VisionFeed />
   </div>
   <div id="drone-actions">
     <DroneActions />
@@ -30,7 +30,8 @@ import PathPlanner from "@/components/pathPlanner/PathPlanner.vue";
 import ToggleBtn from "@/components/armButton/ToggleBtn.vue";
 import SpeedIndicator from "@/components/speedIndicator/SpeedIndicator.vue";
 import BatteryStatistics from "@/components/batteryStats/BatteryStatistics.vue";
-import CurrentMonitor from "@/components/currentMonitor/CurrentMonitor.vue";
+// import CurrentMonitor from "@/components/currentMonitor/CurrentMonitor.vue";
+import VisionFeed from "@/components/VisionFeed.vue";
 // import PwmMonitor from "@/components/pwm/PwmMonitor.vue";
 import DroneActions from "@/components/droneActions/DroneActions.vue";
 import MultiFunctionTab from "@/components/multiFunctionTab/MultiFunctionTab.vue";
