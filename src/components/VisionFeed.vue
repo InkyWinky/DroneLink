@@ -3,7 +3,13 @@
     class="uk-card uk-card-default uk-card-body p-2"
     style="border-radius: 15px"
   >
-    <h3>VISION FEED</h3>
+    <router-link
+      to="/payload"
+      class="w-full h-full items-center justify-center"
+    >
+      <h3>VISION FEED</h3>
+    </router-link>
+
     <div class="bg-gray-500 rounded-md border border-black" style="height: 90%">
       <div
         v-if="!has_feed"
