@@ -18,7 +18,7 @@
   <nav>
     <div class="flex w-full items-center">
       <div class="w-1/3 flex items-center gap-10">
-        <div class="ml-2">
+        <div class="ml-2 z-[99999]">
           <SettingsMenu />
         </div>
         <!-- Vision Toggle Button START -->
