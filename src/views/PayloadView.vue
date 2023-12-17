@@ -751,6 +751,32 @@ function ascendRTL() {
     });
   }
 }
+
+const droneMarker = ref();
+const droneLocation = computed(() => [
+  store?.live_data?.lng,
+  store?.live_data?.lat,
+]);
+watch(droneLocation, (val) => {
+  if (val[0] && val[1]) {
+    updateDroneMarker(val[0], val[1]);
+  }
+});
+
+function updateDroneMarker(latitude, longitude) {
+  if (droneMarker.value) {
+    droneMarker.value.setLngLat([latitude, longitude]).addTo(Map.value);
+  } else {
+    // Add drone marker to map
+    var el = document.createElement("div");
+    el.className = "marker droneMarker";
+    el.innerHTML = "<span><b></b></span>";
+    const marker = new mapboxgl.Marker(el) //({ offset: [0, -MARKER_HEIGHT / 2] })
+      .setLngLat([latitude, longitude])
+      .addTo(Map.value);
+    droneMarker.value = marker;
+  }
+}
 </script>
 
 <style scoped>
@@ -848,5 +874,29 @@ h1 {
 
 .camera-feed {
   background-color: #3e4663;
+}
+.marker.droneMarker {
+  width: 0;
+  height: 0;
+  z-index: 99;
+}
+.marker.droneMarker b {
+  transform: rotateZ(135deg);
+}
+.marker.droneMarker span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 15px;
+  height: 15px;
+  color: #000000;
+  background: rgb(255, 25, 25);
+  border: solid 2px;
+  /* border-radius: 0 70% 70%; */
+  /* box-shadow: 0 0 2px #000; */
+  cursor: pointer;
+  transform-origin: 5px 8px;
+  /* transform: rotateZ(-135deg); */
 }
 </style>
