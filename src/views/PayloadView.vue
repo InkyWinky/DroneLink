@@ -88,8 +88,17 @@
         class="flex flex-col w-full h-full text-white bg-black"
       >
         VISION
-        <div class="w-full h-full camera-feed">
-          <img ref="vision_large" class="h-full w-full camera-feed" />
+        <div class="flex items-center justify-center w-full h-full camera-feed">
+          <div
+            v-if="!has_vision_feed"
+            uk-icon="icon:camera; ratio: 2"
+            class="flex flex-col justify-center items-center text-white relative"
+          ></div>
+          <img
+            v-show="has_vision_feed"
+            ref="vision_large"
+            class="h-[100%] w-fit"
+          />
         </div>
         <div
           id="bounding-box"
@@ -110,17 +119,26 @@
       >
         FPV
         <div
-          class="w-full h-full bg-gray-800 outline outline-black flex flex-col"
+          class="flex flex-col items-center justify-center w-full h-full bg-blue-500 outline outline-black"
         >
-          <p class="text-white bg-transparent absolute text-2xl p-4">
+          <p
+            class="text-white bg-transparent absolute top-16 left-2 text-2xl p-4"
+          >
             {{ fpv_cam_framerate.valueOf() }}
           </p>
+          <div
+            v-if="!has_fpv_feed && !displayVisionLarge"
+            uk-icon="icon:camera; ratio: 2"
+            class="flex flex-col justify-center items-center text-white relative"
+          ></div>
           <canvas
+            v-show="has_fpv_feed && !displayVisionLarge"
             ref="fpv_large"
-            class="bg-blue-500 place-self-center aspect-ratio h-full"
+            class="bg-blue-500 aspect-video h-full"
             :height="fpv_resolution.height"
             :width="fpv_resolution.width"
-          ></canvas>
+          >
+          </canvas>
         </div>
 
         <!-- <video ref="FPVCamLarge" muted>Stream Unavailable</video> -->
@@ -139,12 +157,20 @@
       >
         <p class="">FPV</p>
         <div
-          class="w-full h-full bg-gray-800 outline outline-black flex flex-col"
+          class="flex flex-col items-center justify-center w-full h-full bg-blue-500 outline outline-black"
         >
-          <p class="text-white bg-transparent absolute text-2xl p-1">
+          <p
+            class="text-white bg-transparent absolute top-6 left-2 text-2xl p-1"
+          >
             {{ fpv_cam_framerate.valueOf() }}
           </p>
+          <div
+            v-if="!has_fpv_feed && displayVisionLarge"
+            uk-icon="icon:camera; ratio: 2"
+            class="flex flex-col justify-center items-center text-white relative"
+          ></div>
           <canvas
+            v-show="has_fpv_feed && displayVisionLarge"
             ref="fpv_small"
             class="bg-blue-500 aspect-video h-full"
             :height="fpv_resolution.height"
@@ -159,8 +185,17 @@
         class="flex flex-col w-full h-full text-white bg-black"
       >
         VISION
-        <div class="w-full h-full bg-green-800">
-          <img ref="vision_small" class="bg-green-800 h-full w-full" />
+        <div class="w-full h-full flex items-center justify-center camera-feed">
+          <div
+            v-if="!has_vision_feed && !displayVisionLarge"
+            uk-icon="icon:camera; ratio: 2"
+            class="flex flex-col justify-center items-center text-white relative"
+          ></div>
+          <img
+            v-show="has_vision_feed && !displayVisionLarge"
+            ref="vision_small"
+            class="h-[100%] w-fit"
+          />
         </div>
         <!-- <canvas
           ref="vision_small"
@@ -347,6 +382,8 @@ const fpv_large = ref(null);
 const fpv_small = ref(null);
 const vision_large = ref(null);
 const vision_small = ref(null);
+const has_vision_feed = ref(false);
+const has_fpv_feed = ref(false);
 const vision_potential_target = ref(null);
 const fpv_resolution = reactive({ width: 1920, height: 1080 });
 //Bounding box data (all are percentages)
@@ -411,6 +448,7 @@ watch(targetCoords, () => {
 });
 watch(vision_cam, (val) => {
   if (vision_large.value && displayVisionLarge.value) {
+    has_vision_feed.value = true;
     vision_large.value.src = val;
     // let ctx = vision_large.value.getContext("2d");
     // let image = new Image();
@@ -429,6 +467,7 @@ watch(vision_cam, (val) => {
     //   );
     // });
   } else {
+    has_vision_feed.value = true;
     vision_small.value.src = val;
     // let ctx = vision_small.value.getContext("2d");
     // let image = new Image();
@@ -448,6 +487,7 @@ watch(vision_cam, (val) => {
 
 watch(fpv_cam, (val) => {
   if (fpv_large.value && !displayVisionLarge.value) {
+    has_fpv_feed.value = true;
     let ctx = fpv_large.value.getContext("2d");
     let image = new Image();
     image.src = val;
@@ -458,6 +498,7 @@ watch(fpv_cam, (val) => {
       ctx.drawImage(image, 0, 0, fpv_large.value.width, fpv_large.value.height);
     });
   } else {
+    has_fpv_feed.value = true;
     let ctx = fpv_small.value.getContext("2d");
     let image = new Image();
     // image.src = URL.createObjectURL(val);

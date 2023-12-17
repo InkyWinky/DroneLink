@@ -5,12 +5,17 @@
   >
     <h3>VISION FEED</h3>
     <div class="bg-gray-500 rounded-md border border-black" style="height: 90%">
-      <div
-        v-if="!has_feed"
-        uk-icon="icon:camera; ratio: 2"
-        class="flex flex-col justify-center items-center text-white relative"
-      ></div>
-      <img v-show="has_feed" ref="vision_feed" class="h-full w-full" />
+      <router-link
+        to="/payload"
+        class="w-full h-full flex items-center justify-center relative"
+      >
+        <div
+          v-if="!has_feed"
+          uk-icon="icon:camera; ratio: 2"
+          class="flex flex-col justify-center items-center text-white relative"
+        ></div>
+        <img v-show="has_feed" ref="vision_feed" class="h-[100%] w-fit" />
+      </router-link>
     </div>
   </div>
 </template>
