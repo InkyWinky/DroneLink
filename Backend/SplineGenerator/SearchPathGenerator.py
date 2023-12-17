@@ -117,8 +117,8 @@ class Polygon:
 
 
 class Waypoint:
-    def __init__(self, x=None, y=None):
-        self.coords = Coord(lon=x, lat=y)  # Point instance that stores location of waypoint
+    def __init__(self, lon=None, lat=None):
+        self.coords = Coord(lon=lon, lat=lat)  # Point instance that stores location of waypoint
         self.centre_point = None  # Point instance
         self.turn_type = None  # "circle", "double circle" "lightbulb", "lightbulb angled"
         self.entrance = None  # Point instance for where the Albatross starts turning
@@ -190,6 +190,7 @@ class SearchPathGenerator:
 
     error = False  # Flag for if an error occurred during runtime
     first_waypoint_index = 0  # Holds the index of the first waypoint after the take off points
+    scale_factor = None
 
     # Output Data
     path_waypoints = None  # Generated list of Waypoint class instances that make up the search path
@@ -288,9 +289,13 @@ class SearchPathGenerator:
             return self.path_points
 
         # Pre-algorithm calculations
+        # Scaling factor
+        self.scale_factor = 111320# / math.cos(self.take_off_point.lat)
+
         if self.sensor_size is not None and self.focal_length is not None and self.layer_distance is None:
-            self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=100)
+            self.paint_radius = calculate_viewing_radius(sensor_size=self.sensor_size, focal_length=self.focal_length, altitude=self.alt)
             self.layer_distance = calculate_layer_distance(viewing_radius=self.paint_radius, paint_overlap=self.paint_overlap)
+            self.layer_distance /= self.scale_factor
         if self.orientation is None:
             self.orientation = calculate_best_orientation(polygon=self.search_area)
 
@@ -395,9 +400,9 @@ class SearchPathGenerator:
 
         if self.take_off_point is not None:
             plt.scatter(self.take_off_point.lon, self.take_off_point.lat, marker='^', color='black')
-            plt.annotate("Takeoff", (self.take_off_point.lon, self.take_off_point.lat), textcoords="offset points", xytext=(0, 10), ha='center')
+            plt.annotate("Takeoff", (self.take_off_point.lon, self.take_off_point.lat), textcoords="offset points", xytext=(-10, -10), ha='center')
         plt.annotate("First Waypoint", (self.path_points[self.first_waypoint_index].lon, self.path_points[self.first_waypoint_index].lat), textcoords="offset points", xytext=(0, 10), ha='center')
-        plt.annotate("Final Waypoint", (self.path_points[-1].lon, self.path_points[-1].lat), textcoords="offset points", xytext=(0, 10), ha='center')
+        plt.annotate("Final Waypoint", (self.path_points[-1].lon, self.path_points[-1].lat), textcoords="offset points", xytext=(10, 10), ha='center')
 
         # Plot it all
         plt.axis('equal')
@@ -1297,7 +1302,7 @@ def determine_turn_type(layer_distance=None, turn_radius=None):
 def create_waypoints_from_points(points=None):
     waypoints = []
     for point in points:
-        new_waypoint = Waypoint(point.lon, point.lat)
+        new_waypoint = Waypoint(lon=point.lon, lat=point.lat)
         waypoints.append(new_waypoint)
     return waypoints
 
@@ -1609,16 +1614,18 @@ def do_entire_simulation(do_plot=True, do_random=True):
         minimum_turn_radius = random.uniform(0.1, 5)
         curve_resolution = 5
     else:
-        start_point = Coord(lat=-38.40, lon=144.88)
-        search_area_waypoints = [Coord(lat=-38.383944, lon=144.880181), Coord(lat=-38.397322, lon=144.908826), Coord(lat=-38.366840, lon=144.907242), Coord(lat=-38.364585, lon=144.880813)]
+        start_point = Coord(-38.61004498301495, 143.04017763537342)
+        search_area_waypoints = [Coord(-38.61057180827359, 143.05317350241418), Coord(-38.611878393934916, 143.06585626422287), Coord(-38.59938241332342, 143.06757900559757), Coord(-38.596620577054466, 143.0412961564291), Coord(-38.59499794870061, 143.04103111929456), Coord(-38.593444021910635, 143.02933950441795), Coord(-38.595195251078714, 143.028985722283), Coord(-38.59459615117085, 143.02435707268435), Coord(-38.60452684284669, 143.02174299359066), Coord(-38.60872724668079, 143.03822618435072), Coord(-38.60914953692951, 143.0381670876175), Coord(-38.61051797355668, 143.03983961313799), Coord(-38.61087161023878, 143.04109892647105), Coord(-38.61111761733741, 143.04115795678354)]
         search_area_polygon = Polygon(search_area_waypoints)
         layer_distance = 400  # Metres
-        minimum_turn_radius = 150  # Metres
+        minimum_turn_radius = 100  # Metres
         curve_resolution = 0.01  # Waypoints per metre on turns
-        scaling_factor = 111320 / math.cos(search_area_polygon.centroid.lat)
+        scaling_factor = 111320# / math.cos(search_area_polygon.centroid.lat)
         layer_distance /= scaling_factor
         minimum_turn_radius /= scaling_factor
         curve_resolution *= scaling_factor
+
+    # layer_distance = None
 
     sensor_size = (12.8, 9.6)
     focal_length = 16
@@ -1627,7 +1634,7 @@ def do_entire_simulation(do_plot=True, do_random=True):
 
     path_generator = SearchPathGenerator()
     path_generator.set_data(search_area=search_area_polygon)
-    path_generator.set_parameters(alt=200, orientation=angle, paint_overlap=paint_overlap, focal_length=None, sensor_size=None, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
+    path_generator.set_parameters(alt=80, orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
 
     error = path_generator.generate_search_area_path(do_plot=do_plot)
     print(error)
@@ -1646,7 +1653,7 @@ def run_number_of_sims(count=None, plot=None, do_random=False):
 
 def main_function():
     print("You are running a test of the search area path generation. If any runtime errors occur please tell Nic in mission management thank you.")
-    run_number_of_sims(1, plot=True, do_random=True)
+    run_number_of_sims(1, plot=True, do_random=False)
 
 
 if __name__ == "__main__":
