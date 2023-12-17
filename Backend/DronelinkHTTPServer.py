@@ -207,7 +207,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             layer_distance = 120  # metres
             curve_resolution = 0.5  # 1 waypoint every 2 metres or 0.5 waypoints per metre
             # Scale parameters
-            scale_factor = 111320 / math.cos(parsed_content['waypoints'][0]['lat'])
+            scale_factor = 111320
             """USE THESE THREE PARAMETERS BELOW"""
             scaled_turn_radius = turn_radius / scale_factor
             scaled_layer_distance = layer_distance / scale_factor
