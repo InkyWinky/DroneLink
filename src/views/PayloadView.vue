@@ -20,7 +20,13 @@
           >
             No
           </button>
-          <button class="uk-button uk-button-primary" type="button">Yes</button>
+          <button
+            class="uk-button uk-button-primary"
+            type="button"
+            @click="confirmTarget"
+          >
+            Yes
+          </button>
         </p>
       </div>
     </div>
@@ -308,7 +314,7 @@
           <button
             class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
             id="target-found-test-btn"
-            @click="confirmTarget()"
+            @click="startManualTarget()"
           >
             MANUAL TARGET LOCATION
           </button>
@@ -629,12 +635,29 @@ function switchFeed() {
 }
 
 function confirmTarget() {
+  targetCoords.value = store?.targetCoords;
+  store.vision_on = false;
+  uikit.modal("#target-detected-modal").hide();
+  showTargetDetectedModal.value = false;
+  setTimeout(() => {
+    Map.value.resize();
+  }, 1);
+  showMap.value = true;
+  showPayloadProcess.value = true;
+  showPatientPicker.value = true;
+  showGoBtn.value = true;
+  Map.value.flyTo({
+    center: [store?.live_data?.lng, store?.live_data?.lat],
+    zoom: 13,
+  });
+}
+
+function startManualTarget() {
   if (
     confirm(
       "Add Manual Target Location. Do not press this button if the drone is not in CRUISE mode. \n\nConfirm?"
     )
   ) {
-    targetCoords.value = store?.targetCoords;
     setTimeout(() => {
       Map.value.resize();
     }, 1);
