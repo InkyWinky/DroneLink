@@ -28,29 +28,44 @@
       id="video-feed-large"
       :class="{ 'w-1/2': showMap.valueOf(), 'w-full': !showMap.valueOf() }"
     >
-      <div id="payload-process-container" v-if="showMap">
-        <div class="payload-process-popup" style="margin-top: 4%">
-          <h1>Select payload deployment location:</h1>
+      <div id="payload-process-container" v-if="showPayloadProcess">
+        <div
+          class="payload-process-popup"
+          style="margin-top: 4%"
+          v-if="showPatientPicker"
+        >
+          <h1>Select patient location:</h1>
           <p class="subtitle">Click on the map on the right.</p>
-          <p style="font-size: 0.8em">Deploy payload at ([long, lat)]:</p>
-
-          <span class="accent">{{ deployCoords || "None selected" }}</span>
-          <!-- <button class="popup-btn">Done</button> -->
+          <p style="font-size: 0.8em">Go to patient located at:</p>
+          <span class="accent-orange">{{
+            manualPatientCoords || "None selected"
+          }}</span>
         </div>
-        <div class="payload-process-popup">
-          <h1>Select altitude to deploy at:</h1>
-          <input type="number" v-model="deployAlt" />
-          <!-- <button class="popup-btn">Done</button> -->
-        </div>
-        <div class="payload-process-popup">
-          <h1>Select Cardinal Direction:</h1>
-          <!-- Drop down list of cardinal directions -->
-          <select name="direction" id="direction">
-            <option value="north">North</option>
-            <option value="south">South</option>
-            <option value="east">East</option>
-            <option value="west">West</option>
-          </select>
+        <div v-if="showDeployLocPicker">
+          <div class="payload-process-popup" style="margin-top: 4%">
+            <h1>Select payload deployment location:</h1>
+            <p class="subtitle">Click on the map on the right.</p>
+            <p style="font-size: 0.8em">Deploy payload at ([long, lat)]:</p>
+            <span class="accent-blue">{{
+              deployCoords || "None selected"
+            }}</span>
+            <!-- <button class="popup-btn">Done</button> -->
+          </div>
+          <div class="payload-process-popup">
+            <h1>Select altitude to deploy at:</h1>
+            <input type="number" v-model="deployAlt" />
+            <!-- <button class="popup-btn">Done</button> -->
+          </div>
+          <div class="payload-process-popup">
+            <h1>Select Cardinal Direction of Approach:</h1>
+            <!-- Drop down list of cardinal directions -->
+            <select name="direction" id="direction">
+              <option value="north">North</option>
+              <option value="south">South</option>
+              <option value="east">East</option>
+              <option value="west">West</option>
+            </select>
+          </div>
         </div>
         <div id="go-btn" @click="beginDeployment()">GO!</div>
       </div>
@@ -297,10 +312,14 @@ import {
 } from "@/store";
 import api from "@/api";
 import uikit from "uikit";
+const showPayloadProcess = ref(false);
+const showDeployLocPicker = ref(false);
+const showPatientPicker = ref(false);
 const deployAlt = ref(0);
 const showOverlay = ref(true);
 const showMap = ref(false);
 const deployMarker = ref(null);
+const patientMarker = ref(null);
 const targetMarker = ref(null);
 const targetCoords = ref([145.13453, -37.90984]); // placeholder for actual target coords
 const deployCoords = ref(null);
@@ -320,6 +339,7 @@ const x_perc = ref(0);
 const y_perc = ref(0);
 const width = ref(0);
 const showTargetDetectedModal = ref(true);
+const manualPatientCoords = ref(null);
 
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
 const visionOn = computed(() => {
@@ -446,14 +466,26 @@ onMounted(() => {
   });
 
   Map.value.on("click", (e) => {
-    console.log(`[DEPLOYMENT COORDS] ${e.lngLat.toArray()}`);
-    deployCoords.value = e.lngLat;
-    if (!deployMarker.value) {
-      deployMarker.value = new mapboxgl.Marker()
-        .setLngLat(e.lngLat)
-        .addTo(Map.value);
-    } else {
-      deployMarker.value.setLngLat(e.lngLat);
+    console.log("x");
+    console.log(`[CLICKED COORDS] ${e.lngLat.toArray()}`);
+    if (showDeployLocPicker.value) {
+      deployCoords.value = e.lngLat;
+      if (!deployMarker.value) {
+        deployMarker.value = new mapboxgl.Marker()
+          .setLngLat(e.lngLat)
+          .addTo(Map.value);
+      } else {
+        deployMarker.value.setLngLat(e.lngLat);
+      }
+    } else if (showPatientPicker.value) {
+      manualPatientCoords.value = e.lngLat;
+      if (!patientMarker.value) {
+        patientMarker.value = new mapboxgl.Marker({ color: "orange" })
+          .setLngLat(e.lngLat)
+          .addTo(Map.value);
+      } else {
+        patientMarker.value.setLngLat(e.lngLat);
+      }
     }
   });
 
@@ -540,6 +572,8 @@ function confirmTarget() {
       Map.value.resize();
     }, 1);
     showMap.value = true;
+    showPayloadProcess.value = true;
+    showPatientPicker.value = true;
   }
 }
 
@@ -548,21 +582,43 @@ function confirmTarget() {
  * and then orbiting until the pilot chooses a payload drop location
  */
 function beginDeployment() {
-  if (!deployMarker.value) {
-    console.log("[ERROR] No deployment location set!");
-    confirm("[ERROR] No deployment location set!");
-    return;
-  }
+  if (showDeployLocPicker.value) {
+    if (!deployMarker.value) {
+      console.log("[ERROR] No deployment location set!");
+      confirm("[ERROR] No deployment location set!");
+      return;
+    }
+    if (
+      confirm(
+        `Are you sure you want to deploy payload at\n ${deployCoords.value.toArray()}?`
+      )
+    ) {
+      console.log("Beginning deployment procedure");
+      showPayloadProcess.value = false;
+      showPatientPicker.value = false;
+      showDeployLocPicker.value = false;
+      api.executeCommand("DEPLOY_PAYLOAD", {
+        targetCoords: targetCoords.value,
+      });
+    }
+  } else if (showPatientPicker.value) {
+    showDeployLocPicker.value = true;
+    showPatientPicker.value = false;
 
-  if (
-    confirm(
-      `Are you sure you want to deploy payload at\n ${deployCoords.value.toArray()}?`
-    )
-  ) {
-    console.log("Beginning deployment procedure");
-    api.executeCommand("DEPLOY_PAYLOAD", {
-      targetCoords: targetCoords.value,
-    });
+    if (!patientMarker.value) {
+      console.log("[ERROR] No patient location set!");
+      confirm("[ERROR] No patient location set!");
+      return;
+    }
+    if (
+      confirm(
+        `Are you sure you want to go to patient at\n ${patientMarker.value
+          .getLngLat()
+          .toArray()}?`
+      )
+    ) {
+      console.log("Beginning flight to patient procedure");
+    }
   }
 }
 
@@ -640,8 +696,12 @@ h1 {
   border-radius: 5px;
   float: right;
 }
-.accent {
+.accent-blue {
   color: #368bac;
+  font-weight: bold;
+}
+.accent-orange {
+  color: #f08000;
   font-weight: bold;
 }
 #go-btn {
