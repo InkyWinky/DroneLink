@@ -300,7 +300,7 @@ class HTTPCommand():
         :type cardinal_approach: String ("NORTH", "EAST", "SOUTH", "WEST")
         """
         dropoff_coordinates["id"] = 17
-        cardinal_shift = {"NORTH": (-1, 0), "EAST":  (0, -1), "SOUTH": (1, 0), "WEST": (0, 1)}
+        cardinal_shift = {"NORTH": (1, 0), "EAST":  (0, 1), "SOUTH": (-1, 0), "WEST": (0, -1)}
         waypoints = []
         # Waypoint 250 away from the DO_VTOL_TRANSITION waypoint.
         waypoints.append({"lat": dropoff_coordinates["lat"] + cardinal_shift[cardinal_approach][0] * 0.0037, "long":  dropoff_coordinates["long"] + cardinal_shift[cardinal_approach][1] * 0.0037, "alt": cruise_alt, "id": 16})
@@ -326,7 +326,7 @@ class HTTPCommand():
         :param cardinal_direction: North, East, South or West direction that the plane will go towards then transition into cruise mode.
         :type cardinal_direction: String ("NORTH", "EAST", "SOUTH", "WEST")
         """
-        cardinal_shift = {"NORTH": (-1, 0), "EAST":  (0, -1), "SOUTH": (1, 0), "WEST": (0, 1)}
+        cardinal_shift = {"NORTH": (1, 0), "EAST":  (0, 1), "SOUTH": (-1, 0), "WEST": (0, -1)}
         waypoints = []
         # Ascend to transition altitude
         waypoints.append({"lat": dropoff_coordinates["lat"], "long":  dropoff_coordinates["long"], "alt": transition_alt, "id": 16})

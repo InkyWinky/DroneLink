@@ -87,8 +87,7 @@
       </form>
     </div>
     <button
-      id="home-location-btn"
-      class="flex flex-row w-full justify-center items-center p-1 rounded-md text-xs divide-black divide-x-2"
+      class="flex flex-row w-full justify-center items-center p-1 rounded-md text-xs divide-black divide-x-2 shiny-pink-btn"
       data-tooltip-target="tooltip-location"
       @click="addCurrentLocationWaypt"
     >
@@ -776,11 +775,13 @@ input::-webkit-inner-spin-button {
   transform-origin: 5px 8px;
   /* transform: rotateZ(-135deg); */
 }
+</style>
 
-#home-location-btn {
+<style>
+.shiny-pink-btn {
   background: linear-gradient(0.25turn, #dab0f0, #9198e5);
 }
-#home-location-btn:hover {
+.shiny-pink-btn:hover {
   animation-name: shine;
   animation-duration: 300ms;
   animation-fill-mode: forwards;

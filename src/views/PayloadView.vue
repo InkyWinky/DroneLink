@@ -59,15 +59,28 @@
           <div class="payload-process-popup">
             <h1>Select Cardinal Direction of Approach:</h1>
             <!-- Drop down list of cardinal directions -->
-            <select name="direction" id="direction">
-              <option value="north">North</option>
-              <option value="south">South</option>
-              <option value="east">East</option>
-              <option value="west">West</option>
+            <select v-model="cardinalDir" name="direction" id="direction">
+              <option value="NORTH">North</option>
+              <option value="SOUTH">South</option>
+              <option value="EAST">East</option>
+              <option value="WEST">West</option>
             </select>
           </div>
         </div>
-        <div id="go-btn" @click="beginDeployment()">GO!</div>
+        <div
+          id="go-btn"
+          class="big-btn"
+          v-if="showGoBtn"
+          @click="beginDeployment()"
+        >
+          GO!
+        </div>
+        <div v-if="showDrip" style="margin-top: 5%">
+          <div id="big-drip-btn" class="big-btn" @click="drip()">DRIP</div>
+          <div class="big-btn shiny-pink-btn" @click="ascendRTL()">
+            Ascend and RTL
+          </div>
+        </div>
       </div>
       <div
         v-if="displayVisionLarge.valueOf()"
@@ -312,6 +325,8 @@ import {
 } from "@/store";
 import api from "@/api";
 import uikit from "uikit";
+const cardinalDir = ref(false);
+const showGoBtn = ref(false);
 const showPayloadProcess = ref(false);
 const showDeployLocPicker = ref(false);
 const showPatientPicker = ref(false);
@@ -340,6 +355,7 @@ const y_perc = ref(0);
 const width = ref(0);
 const showTargetDetectedModal = ref(true);
 const manualPatientCoords = ref(null);
+const showDrip = ref(false);
 
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
 const visionOn = computed(() => {
@@ -574,6 +590,7 @@ function confirmTarget() {
     showMap.value = true;
     showPayloadProcess.value = true;
     showPatientPicker.value = true;
+    showGoBtn.value = true;
   }
 }
 
@@ -594,11 +611,21 @@ function beginDeployment() {
       )
     ) {
       console.log("Beginning deployment procedure");
-      showPayloadProcess.value = false;
+
       showPatientPicker.value = false;
       showDeployLocPicker.value = false;
-      api.executeCommand("DEPLOY_PAYLOAD", {
-        targetCoords: targetCoords.value,
+      showGoBtn.value = false;
+      showDrip.value = true;
+      //Travel to payload drop location
+      api.executeCommand("DROP_LOCATION", {
+        dropoff_coordinates: {
+          lat: deployCoords.value[1],
+          long: deployCoords.value[0],
+          alt: deployAlt.value, // This alt is dependant on user input
+        },
+        cruise_alt: store?.settings?.default_alt,
+        transition_alt: store?.settings?.takeoff_alt,
+        cardinal_direction: cardinalDir.value,
       });
     }
   } else if (showPatientPicker.value) {
@@ -617,6 +644,14 @@ function beginDeployment() {
           .toArray()}?`
       )
     ) {
+      //Travel to patient
+      api.executeCommand("PATIENT_LOCATION", {
+        patient_location: {
+          lat: manualPatientCoords.value[1],
+          long: manualPatientCoords.value[0],
+          alt: store?.settings?.default_alt,
+        },
+      });
       console.log("Beginning flight to patient procedure");
     }
   }
@@ -640,6 +675,25 @@ function drip() {
   if (confirm("DRIP will deploy the payload.\n\nConfirm?")) {
     console.log("[MESSAGE] Executing DRIP");
     api.executeCommand("DRIP", {});
+  }
+}
+function ascendRTL() {
+  if (
+    confirm(
+      "Ascend and RTL will ascend the aircraft to the default altitude and then return to home. Do not press this if the plane is not in VTOL mode.\n\nConfirm?"
+    )
+  ) {
+    console.log("[MESSAGE] Executing Ascend and RTL");
+    api.executeCommand("ASCEND_AND_RTL", {
+      dropoff_coordinates: {
+        lat: deployCoords.value[1],
+        long: deployCoords.value[0],
+        alt: deployAlt.value, // This alt is dependant on user input
+      },
+      cruise_alt: store?.settings?.default_alt,
+      transition_alt: store?.settings?.takeoff_alt,
+      cardinal_direction: cardinalDir.value,
+    });
   }
 }
 </script>
@@ -705,8 +759,15 @@ h1 {
   font-weight: bold;
 }
 #go-btn {
-  color: white;
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
+}
+#big-drip-btn {
+  background: linear-gradient(0.25turn, #79d9ff, #9198e5);
+}
+
+.big-btn {
+  color: white;
+
   width: 75%;
   padding: 20px;
   border-radius: 10px;
