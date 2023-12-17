@@ -255,12 +255,13 @@ class MissionManager:
             MAV.setWP(self.waypoints[i], i, MAVLink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
 
         MAV.setWPACK()  # Send waypoint ACK
+        print("[UPLOAD] AUTO MISSION SUCCESSFULLY UPLOADED")
         # self.__set_home(self.waypoints[0])  # Set the home waypoint as the first waypoint
         # self.__set_home(self.create_wp(self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt))  # Set the home waypoint as the vehicle's current location
         
     
 
-    def create_wp(self, lat, lng, alt, id=None):
+    def create_wp(self, lat, lng, alt, **kwargs):
         """Creates a waypoint
 
         Args:
@@ -271,9 +272,17 @@ class MissionManager:
         Returns:
             Locationwp: The Locationwp object which contains the lat, lng and alt. This is an object from of MAVLink/Mission Planner.
         """
-        if id is None:
-            id = self.id
-        return Locationwp().Set(lat, lng, alt, id)
+        id = kwargs["id"] if "id" in kwargs.keys() else self.id
+        wp = Locationwp().Set(lat, lng, alt, id)
+        if "p1" in kwargs.keys():
+            Locationwp.p1.SetValue(wp, kwargs["p1"])
+        if "p2" in kwargs.keys():
+            Locationwp.p2.SetValue(wp, kwargs["p2"])
+        if "p3" in kwargs.keys():
+            Locationwp.p3.SetValue(wp, kwargs["p3"])
+        if "p4" in kwargs.keys():
+            Locationwp.p4.SetValue(wp, kwargs["p4"])
+        return wp
     
 
     def set_waypoint(self, lat, lng, alt, index):
@@ -352,7 +361,8 @@ class MissionManager:
         # MAV.doCommand(MAVLink.MAV_CMD.COMPONENT_ARM_DISARM, 1, 0, 0, 0, 0, 0, 0, 0)
         # Attempt to Restart Mission (incase there was a previous mission that was not completed)
         try:
-            MAV.setWPCurrent(MAV.sysid, MAV.compid, 0) 
+            if self.waypoint_count > 0:
+                MAV.setWPCurrent(MAV.sysid, MAV.compid, 0) 
         except:
             pass
         MAV.setMode("QLOITER")
@@ -503,8 +513,9 @@ class MissionManager:
         """
         n = len(waypoints)  # number of waypoints
         res = [None for _ in range(n)]  # initialize list
+
         for i in range(n):
-            res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"], id=waypoints[i]["id"])
+            res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"], **waypoints[i])
         return res
     
     def send_live_data(self):
@@ -660,8 +671,8 @@ class MissionManager:
         Returns:
             boolean: True if the message was handled successfully
         """
-        print("NAMED_VALUE_FLOAT from MAV.SubscribeToPacketType with sysid: " + str(message.sysid) + ", compid: " + str(message.compid))
         if int(message.msgid) == MAVLink.MAVLINK_MSG_ID.NAMED_VALUE_FLOAT.value__:
+            print("NAMED_VALUE_FLOAT from MAV.SubscribeToPacketType with sysid: " + str(message.sysid) + ", compid: " + str(message.compid))
             # If message from LIFELINE
             if int(message.sysid) == 1 and int(message.compid) == 171:
                 # print(dir(message.data))
@@ -681,6 +692,7 @@ class MissionManager:
 
     def DebugVectHandler(self,message):
         if int(message.msgid) == MAVLink.MAVLINK_MSG_ID.DEBUG_VECT.value__:
+            print("DEBUG_VECT from MAV.SubscribeToPacketType with sysid: " + str(message.sysid) + ", compid: " + str(message.compid))
             # If message from VISION
             if int(message.sysid) == 1 and int(message.compid) == 170:
                 name = str(bytearray(message.data.name)).rstrip('\x00')
@@ -733,9 +745,11 @@ class Commands:
         Returns:
             Action: An override action with the waypoints to override with.
         """
+        
         try:
-            if decoded_data["init_mode"] is not None: # set to loiter or qloiter before overriding waypoints in flight
+            if decoded_data["init_mode"] is not None: # set to guided, loiter or qloiter before overriding waypoints in flight
                 MAV.setMode(decoded_data["init_mode"])
+                print("[OVERRIDE] Drone mode Transitioning to " + decoded_data["init_mode"])
                 Script.Sleep(4000)
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
@@ -752,10 +766,13 @@ class Commands:
             mission_manager.update()
             # Attempt to Restart Mission (incase there was a previous mission that was not completed)
             try:
-                MAV.setWPCurrent(MAV.sysid, MAV.compid, 0) 
+                if mission_manager.waypoint_count > 0:
+                    MAV.setWPCurrent(MAV.sysid, MAV.compid, 0) 
             except:
                 pass
             if decoded_data["end_mode"] is not None: # Set mode back to AUTO
+                Script.Sleep(8000)
+                print("[OVERRIDE] Drone mode Transitioning to " + decoded_data["end_mode"])
                 MAV.setMode(decoded_data["end_mode"])
             print("[COMMAND] OVERRIDE Waypoint Command Executed.")
         except Exception as e:

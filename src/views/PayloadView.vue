@@ -28,14 +28,77 @@
       id="video-feed-large"
       :class="{ 'w-1/2': showMap.valueOf(), 'w-full': !showMap.valueOf() }"
     >
+      <div id="payload-process-container" v-if="showPayloadProcess">
+        <div
+          class="payload-process-popup"
+          style="margin-top: 4%"
+          v-if="showPatientPicker"
+        >
+          <h1>Select patient location:</h1>
+          <p class="subtitle">Click on the map on the right.</p>
+          <p style="font-size: 0.8em">Go to patient located at:</p>
+          <span class="accent-orange">{{
+            manualPatientCoords || "None selected"
+          }}</span>
+        </div>
+        <div v-if="showDeployLocPicker">
+          <div class="payload-process-popup" style="margin-top: 4%">
+            <h1>Select payload deployment location:</h1>
+            <p class="subtitle">Click on the map on the right.</p>
+            <p style="font-size: 0.8em">Deploy payload at ([long, lat)]:</p>
+            <span class="accent-blue">{{
+              deployCoords || "None selected"
+            }}</span>
+            <!-- <button class="popup-btn">Done</button> -->
+          </div>
+          <div class="payload-process-popup">
+            <h1>Select altitude to deploy at:</h1>
+            <input type="number" v-model="deployAlt" />
+            <!-- <button class="popup-btn">Done</button> -->
+          </div>
+          <div class="payload-process-popup">
+            <h1>Select Cardinal Direction of Approach:</h1>
+            <!-- Drop down list of cardinal directions -->
+            <select v-model="cardinalDir" name="direction" id="direction">
+              <option value="NORTH">North</option>
+              <option value="SOUTH">South</option>
+              <option value="EAST">East</option>
+              <option value="WEST">West</option>
+            </select>
+          </div>
+        </div>
+        <div
+          id="go-btn"
+          class="big-btn"
+          v-if="showGoBtn"
+          @click="beginDeployment()"
+        >
+          GO!
+        </div>
+        <div v-if="showDrip" style="margin-top: 5%">
+          <div id="big-drip-btn" class="big-btn" @click="drip()">DRIP</div>
+          <div class="big-btn shiny-pink-btn" @click="ascendRTL()">
+            Ascend and RTL
+          </div>
+        </div>
+      </div>
       <div
         v-if="displayVisionLarge.valueOf()"
         id="vid-feed-large-vision"
-        class="flex flex-col w-full h-full"
+        class="flex flex-col w-full h-full text-white bg-black"
       >
         VISION
-        <div class="w-full h-full bg-green-800">
-          <img ref="vision_large" class="bg-green-800 h-full w-full" />
+        <div class="flex items-center justify-center w-full h-full camera-feed">
+          <div
+            v-if="!has_vision_feed"
+            uk-icon="icon:camera; ratio: 2"
+            class="flex flex-col justify-center items-center text-white relative"
+          ></div>
+          <img
+            v-show="has_vision_feed"
+            ref="vision_large"
+            class="h-[100%] w-fit"
+          />
         </div>
         <div
           id="bounding-box"
@@ -52,21 +115,30 @@
       <div
         id="vid-feed-large-fpv"
         v-else-if="!displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full"
+        class="flex flex-col w-full h-full text-white bg-black"
       >
         FPV
         <div
-          class="w-full h-full bg-gray-800 outline outline-black flex flex-col"
+          class="flex flex-col items-center justify-center w-full h-full bg-blue-500 outline outline-black"
         >
-          <p class="text-white bg-transparent absolute text-2xl p-4">
+          <p
+            class="text-white bg-transparent absolute top-16 left-2 text-2xl p-4"
+          >
             {{ fpv_cam_framerate.valueOf() }}
           </p>
+          <div
+            v-if="!has_fpv_feed && !displayVisionLarge"
+            uk-icon="icon:camera; ratio: 2"
+            class="flex flex-col justify-center items-center text-white relative"
+          ></div>
           <canvas
+            v-show="has_fpv_feed && !displayVisionLarge"
             ref="fpv_large"
-            class="bg-blue-500 place-self-center aspect-ratio h-full"
+            class="bg-blue-500 aspect-video h-full"
             :height="fpv_resolution.height"
             :width="fpv_resolution.width"
-          ></canvas>
+          >
+          </canvas>
         </div>
 
         <!-- <video ref="FPVCamLarge" muted>Stream Unavailable</video> -->
@@ -81,16 +153,24 @@
       <div
         id="small-vid-feed-fpv"
         v-if="displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full bg-gray-200"
+        class="flex flex-col w-full h-full text-white bg-black"
       >
         <p class="">FPV</p>
         <div
-          class="w-full h-full bg-gray-800 outline outline-black flex flex-col"
+          class="flex flex-col items-center justify-center w-full h-full bg-blue-500 outline outline-black"
         >
-          <p class="text-white bg-transparent absolute text-2xl p-1">
+          <p
+            class="text-white bg-transparent absolute top-6 left-2 text-2xl p-1"
+          >
             {{ fpv_cam_framerate.valueOf() }}
           </p>
+          <div
+            v-if="!has_fpv_feed && displayVisionLarge"
+            uk-icon="icon:camera; ratio: 2"
+            class="flex flex-col justify-center items-center text-white relative"
+          ></div>
           <canvas
+            v-show="has_fpv_feed && displayVisionLarge"
             ref="fpv_small"
             class="bg-blue-500 aspect-video h-full"
             :height="fpv_resolution.height"
@@ -102,11 +182,20 @@
       <div
         id="small-vid-feed-vision"
         v-else-if="!displayVisionLarge.valueOf()"
-        class="flex flex-col w-full h-full bg-gray-200"
+        class="flex flex-col w-full h-full text-white bg-black"
       >
         VISION
-        <div class="w-full h-full bg-green-800">
-          <img ref="vision_small" class="bg-green-800 h-full w-full" />
+        <div class="w-full h-full flex items-center justify-center camera-feed">
+          <div
+            v-if="!has_vision_feed && !displayVisionLarge"
+            uk-icon="icon:camera; ratio: 2"
+            class="flex flex-col justify-center items-center text-white relative"
+          ></div>
+          <img
+            v-show="has_vision_feed && !displayVisionLarge"
+            ref="vision_small"
+            class="h-[100%] w-fit"
+          />
         </div>
         <!-- <canvas
           ref="vision_small"
@@ -207,15 +296,7 @@
             </div>
           </div>
         </div>
-        <div class="w-full flex h-auto">
-          <button
-            class="bg-green-200 rounded-md text-black p-2 m-1 hover:bg-green-400 w-full"
-            id="begin-button"
-            @click="beginDeployment()"
-          >
-            Begin
-          </button>
-        </div>
+
         <div v-if="debug_mode.valueOf()" class="w-full flex h-auto">
           <button
             class="bg-orange-300 rounded-md text-black p-2 m-1 hover:bg-orange-500 w-full"
@@ -279,10 +360,16 @@ import {
 } from "@/store";
 import api from "@/api";
 import uikit from "uikit";
-
+const cardinalDir = ref(false);
+const showGoBtn = ref(false);
+const showPayloadProcess = ref(false);
+const showDeployLocPicker = ref(false);
+const showPatientPicker = ref(false);
+const deployAlt = ref(0);
 const showOverlay = ref(true);
 const showMap = ref(false);
 const deployMarker = ref(null);
+const patientMarker = ref(null);
 const targetMarker = ref(null);
 const targetCoords = ref([145.13453, -37.90984]); // placeholder for actual target coords
 const deployCoords = ref(null);
@@ -295,13 +382,17 @@ const fpv_large = ref(null);
 const fpv_small = ref(null);
 const vision_large = ref(null);
 const vision_small = ref(null);
+const has_vision_feed = ref(false);
+const has_fpv_feed = ref(false);
 const vision_potential_target = ref(null);
 const fpv_resolution = reactive({ width: 1920, height: 1080 });
 //Bounding box data (all are percentages)
-const x_perc = ref(50);
-const y_perc = ref(50);
-const width = ref(50);
+const x_perc = ref(0);
+const y_perc = ref(0);
+const width = ref(0);
 const showTargetDetectedModal = ref(true);
+const manualPatientCoords = ref(null);
+const showDrip = ref(false);
 
 // const vision_resolution = reactive({ width: 1920, height: 1080 });
 const visionOn = computed(() => {
@@ -357,6 +448,7 @@ watch(targetCoords, () => {
 });
 watch(vision_cam, (val) => {
   if (vision_large.value && displayVisionLarge.value) {
+    has_vision_feed.value = true;
     vision_large.value.src = val;
     // let ctx = vision_large.value.getContext("2d");
     // let image = new Image();
@@ -375,6 +467,7 @@ watch(vision_cam, (val) => {
     //   );
     // });
   } else {
+    has_vision_feed.value = true;
     vision_small.value.src = val;
     // let ctx = vision_small.value.getContext("2d");
     // let image = new Image();
@@ -394,6 +487,7 @@ watch(vision_cam, (val) => {
 
 watch(fpv_cam, (val) => {
   if (fpv_large.value && !displayVisionLarge.value) {
+    has_fpv_feed.value = true;
     let ctx = fpv_large.value.getContext("2d");
     let image = new Image();
     image.src = val;
@@ -404,6 +498,7 @@ watch(fpv_cam, (val) => {
       ctx.drawImage(image, 0, 0, fpv_large.value.width, fpv_large.value.height);
     });
   } else {
+    has_fpv_feed.value = true;
     let ctx = fpv_small.value.getContext("2d");
     let image = new Image();
     // image.src = URL.createObjectURL(val);
@@ -428,14 +523,26 @@ onMounted(() => {
   });
 
   Map.value.on("click", (e) => {
-    console.log(`[DEPLOYMENT COORDS] ${e.lngLat.toArray()}`);
-    deployCoords.value = e.lngLat;
-    if (!deployMarker.value) {
-      deployMarker.value = new mapboxgl.Marker()
-        .setLngLat(e.lngLat)
-        .addTo(Map.value);
-    } else {
-      deployMarker.value.setLngLat(e.lngLat);
+    console.log("x");
+    console.log(`[CLICKED COORDS] ${e.lngLat.toArray()}`);
+    if (showDeployLocPicker.value) {
+      deployCoords.value = e.lngLat;
+      if (!deployMarker.value) {
+        deployMarker.value = new mapboxgl.Marker()
+          .setLngLat(e.lngLat)
+          .addTo(Map.value);
+      } else {
+        deployMarker.value.setLngLat(e.lngLat);
+      }
+    } else if (showPatientPicker.value) {
+      manualPatientCoords.value = e.lngLat;
+      if (!patientMarker.value) {
+        patientMarker.value = new mapboxgl.Marker({ color: "orange" })
+          .setLngLat(e.lngLat)
+          .addTo(Map.value);
+      } else {
+        patientMarker.value.setLngLat(e.lngLat);
+      }
     }
   });
 
@@ -522,6 +629,9 @@ function confirmTarget() {
       Map.value.resize();
     }, 1);
     showMap.value = true;
+    showPayloadProcess.value = true;
+    showPatientPicker.value = true;
+    showGoBtn.value = true;
   }
 }
 
@@ -530,21 +640,61 @@ function confirmTarget() {
  * and then orbiting until the pilot chooses a payload drop location
  */
 function beginDeployment() {
-  if (!deployMarker.value) {
-    console.log("[ERROR] No deployment location set!");
-    confirm("[ERROR] No deployment location set!");
-    return;
-  }
+  if (showDeployLocPicker.value) {
+    if (!deployMarker.value) {
+      console.log("[ERROR] No deployment location set!");
+      confirm("[ERROR] No deployment location set!");
+      return;
+    }
+    if (
+      confirm(
+        `Are you sure you want to deploy payload at\n ${deployCoords.value.toArray()}?`
+      )
+    ) {
+      console.log("Beginning deployment procedure");
 
-  if (
-    confirm(
-      `Travel to target at coordinates?\n ${deployCoords.value.toArray()}`
-    )
-  ) {
-    console.log("Beginning deployment procedure");
-    api.executeCommand("DEPLOY_PAYLOAD", {
-      targetCoords: targetCoords.value,
-    });
+      showPatientPicker.value = false;
+      showDeployLocPicker.value = false;
+      showGoBtn.value = false;
+      showDrip.value = true;
+      //Travel to payload drop location
+      api.executeCommand("DROP_LOCATION", {
+        dropoff_coordinates: {
+          lat: deployCoords.value[1],
+          long: deployCoords.value[0],
+          alt: deployAlt.value, // This alt is dependant on user input
+        },
+        cruise_alt: store?.settings?.default_alt,
+        transition_alt: store?.settings?.takeoff_alt,
+        cardinal_direction: cardinalDir.value,
+      });
+    }
+  } else if (showPatientPicker.value) {
+    showDeployLocPicker.value = true;
+    showPatientPicker.value = false;
+
+    if (!patientMarker.value) {
+      console.log("[ERROR] No patient location set!");
+      confirm("[ERROR] No patient location set!");
+      return;
+    }
+    if (
+      confirm(
+        `Are you sure you want to go to patient at\n ${patientMarker.value
+          .getLngLat()
+          .toArray()}?`
+      )
+    ) {
+      //Travel to patient
+      api.executeCommand("PATIENT_LOCATION", {
+        patient_location: {
+          lat: manualPatientCoords.value[1],
+          long: manualPatientCoords.value[0],
+          alt: store?.settings?.default_alt,
+        },
+      });
+      console.log("Beginning flight to patient procedure");
+    }
   }
 }
 
@@ -568,9 +718,47 @@ function drip() {
     api.executeCommand("DRIP", {});
   }
 }
+function ascendRTL() {
+  if (
+    confirm(
+      "Ascend and RTL will ascend the aircraft to the default altitude and then return to home. Do not press this if the plane is not in VTOL mode.\n\nConfirm?"
+    )
+  ) {
+    console.log("[MESSAGE] Executing Ascend and RTL");
+    api.executeCommand("ASCEND_AND_RTL", {
+      dropoff_coordinates: {
+        lat: deployCoords.value[1],
+        long: deployCoords.value[0],
+        alt: deployAlt.value, // This alt is dependant on user input
+      },
+      cruise_alt: store?.settings?.default_alt,
+      transition_alt: store?.settings?.takeoff_alt,
+      cardinal_direction: cardinalDir.value,
+    });
+  }
+}
 </script>
 
 <style scoped>
+.payload-process-popup {
+  height: 20%;
+  width: 75%;
+  margin: 2%;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 999;
+  text-align: left;
+  border-style: box-shadow;
+}
+.payload-process-popup:hover {
+  transform: scale(1.01);
+  transition: transform 0.1s ease-out;
+}
+h1 {
+  font-family: "Aldrich", sans-serif;
+}
+
 #payload-body {
   height: calc(100vh - 70px) !important;
 }
@@ -580,8 +768,60 @@ function drip() {
   border: 5px solid red;
   z-index: 999;
 }
-
+#payload-process-container {
+  background-color: none;
+  width: 50%;
+  position: absolute;
+  left: 0;
+  z-index: 9999;
+}
 #bbox-test-input {
   width: 100px;
+}
+.subtitle {
+  font-size: 0.8em;
+  font-family: "Open Sans", sans-serif;
+}
+
+.popup-btn {
+  background-color: #368bac;
+  border: none;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  float: right;
+}
+.accent-blue {
+  color: #368bac;
+  font-weight: bold;
+}
+.accent-orange {
+  color: #f08000;
+  font-weight: bold;
+}
+#go-btn {
+  background: linear-gradient(0.25turn, #79d9ff, #9198e5);
+}
+#big-drip-btn {
+  background: linear-gradient(0.25turn, #79d9ff, #9198e5);
+}
+
+.big-btn {
+  color: white;
+
+  width: 75%;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 2%;
+  border-style: box-shadow;
+  font-style: bold;
+  font-size: 1.2em;
+}
+#go-btn:hover {
+  transform: scale(1.05);
+  transition: transform 0.1s ease-out;
+}
+.camera-feed {
+  background-color: #3e4663;
 }
 </style>
