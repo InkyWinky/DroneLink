@@ -310,7 +310,7 @@
             id="target-found-test-btn"
             @click="confirmTarget()"
           >
-            TARGET FOUND
+            MANUAL TARGET LOCATION
           </button>
         </div>
         <div v-if="debug_mode" class="w-full flex h-auto">
@@ -629,8 +629,11 @@ function switchFeed() {
 }
 
 function confirmTarget() {
-  if (confirm("Confirm correct target identification?")) {
-    api.executeCommand("RETURN_TO_TARGET", {});
+  if (
+    confirm(
+      "Add Manual Target Location. Do not press this button if the drone is not in CRUISE mode. \n\nConfirm?"
+    )
+  ) {
     targetCoords.value = store?.targetCoords;
     setTimeout(() => {
       Map.value.resize();
@@ -639,6 +642,10 @@ function confirmTarget() {
     showPayloadProcess.value = true;
     showPatientPicker.value = true;
     showGoBtn.value = true;
+    Map.value.flyTo({
+      center: [store?.live_data?.lng, store?.live_data?.lat],
+      zoom: 13,
+    });
   }
 }
 /**
@@ -666,13 +673,13 @@ function beginDeployment() {
       //Travel to payload drop location
       api.executeCommand("DROP_LOCATION", {
         dropoff_coordinates: {
-          lat: deployCoords.value[1],
-          long: deployCoords.value[0],
+          lat: deployCoords.value.lat,
+          long: deployCoords.value.lng,
           alt: deployAlt.value, // This alt is dependant on user input
         },
         cruise_alt: store?.settings?.default_alt,
         transition_alt: store?.settings?.takeoff_alt,
-        cardinal_direction: cardinalDir.value,
+        cardinal_approach: cardinalDir.value,
       });
     }
   } else if (showPatientPicker.value) {
@@ -692,10 +699,11 @@ function beginDeployment() {
       )
     ) {
       //Travel to patient
+      console.log(manualPatientCoords.value);
       api.executeCommand("PATIENT_LOCATION", {
         patient_location: {
-          lat: manualPatientCoords.value[1],
-          long: manualPatientCoords.value[0],
+          lat: manualPatientCoords.value.lat,
+          long: manualPatientCoords.value.lng,
           alt: store?.settings?.default_alt,
         },
       });
@@ -733,8 +741,8 @@ function ascendRTL() {
     console.log("[MESSAGE] Executing Ascend and RTL");
     api.executeCommand("ASCEND_AND_RTL", {
       dropoff_coordinates: {
-        lat: deployCoords.value[1],
-        long: deployCoords.value[0],
+        lat: deployCoords.value.lat,
+        long: deployCoords.value.lng,
         alt: deployAlt.value, // This alt is dependant on user input
       },
       cruise_alt: store?.settings?.default_alt,
@@ -757,10 +765,12 @@ function ascendRTL() {
   text-align: left;
   border-style: box-shadow;
 }
+
 .payload-process-popup:hover {
   transform: scale(1.01);
   transition: transform 0.1s ease-out;
 }
+
 h1 {
   font-family: "Aldrich", sans-serif;
 }
@@ -774,6 +784,7 @@ h1 {
   border: 5px solid red;
   z-index: 999;
 }
+
 #payload-process-container {
   background-color: none;
   width: 50%;
@@ -781,9 +792,11 @@ h1 {
   left: 0;
   z-index: 9999;
 }
+
 #bbox-test-input {
   width: 100px;
 }
+
 .subtitle {
   font-size: 0.8em;
   font-family: "Open Sans", sans-serif;
@@ -797,17 +810,21 @@ h1 {
   border-radius: 5px;
   float: right;
 }
+
 .accent-blue {
   color: #368bac;
   font-weight: bold;
 }
+
 .accent-orange {
   color: #f08000;
   font-weight: bold;
 }
+
 #go-btn {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
 }
+
 #big-drip-btn {
   background: linear-gradient(0.25turn, #79d9ff, #9198e5);
 }
@@ -823,10 +840,12 @@ h1 {
   font-style: bold;
   font-size: 1.2em;
 }
+
 #go-btn:hover {
   transform: scale(1.05);
   transition: transform 0.1s ease-out;
 }
+
 .camera-feed {
   background-color: #3e4663;
 }
