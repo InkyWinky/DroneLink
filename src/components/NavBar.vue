@@ -150,7 +150,7 @@
         class="flex flex-row w-1/3 items-center justify-center"
       >
         <img src="../../public/logo.png" class="h-10" />
-        <p class="text-white">DroneLink</p>
+        <p class="text-white text-3xl">DroneLink</p>
       </router-link>
       <div class="w-1/3 flex justify-end">
         <ConnectionStatus />
