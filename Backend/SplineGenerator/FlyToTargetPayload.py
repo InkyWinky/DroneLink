@@ -35,7 +35,7 @@ class FlyToTargetPayload:
         if alt is not None:
             self.alt = alt
         if self.plane_location is not None:
-            scaling_factor = 111320 / math.cos(self.plane_location.lat)
+            scaling_factor = 111320# / math.cos(self.plane_location.lat)
             if turn_radius is not None:
                 self.turn_radius = turn_radius / scaling_factor
             if minimum_distance_to_start is not None:
