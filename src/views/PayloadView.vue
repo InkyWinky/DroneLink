@@ -670,7 +670,6 @@ function startManualTarget() {
       center: [store?.live_data?.lng, store?.live_data?.lat],
       zoom: 13,
     });
-    targetCoords.value = store?.targetCoords;
     setTimeout(() => {
       Map.value.resize();
     }, 1000);
