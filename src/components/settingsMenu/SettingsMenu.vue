@@ -49,6 +49,25 @@
           <p
             class="text-start font-bold text-sm"
             :class="{
+              'text-blue-500': edited_min_turn_radius.valueOf(),
+            }"
+          >
+            Minimum Turn Radius
+          </p>
+          <input
+            @change="onMinTurnRadiusChange"
+            v-model="min_turn_radius"
+            class="uk-input"
+            type="number"
+            placeholder="50"
+            aria-label="50"
+            color="secondary"
+          />
+        </div>
+        <div class="uk-width-1-1 uk-padding-remove-left">
+          <p
+            class="text-start font-bold text-sm"
+            :class="{
               'text-blue-500': edited_waypoint_type.valueOf(),
             }"
           >
@@ -158,11 +177,13 @@ let default_alt = store?.settings?.default_alt;
 let takeoff_alt = store?.settings?.takeoff_alt;
 let waypoint_type = store?.settings?.waypoint_type.toString();
 let vtol_transition_mode = store?.settings?.vtol_transition_mode.toString();
+let min_turn_radius = store?.settings?.min_turn_radius;
 let isSuccess = ref(false);
 let edited_default_alt = ref(false);
 let edited_takeoff_alt = ref(false);
 let edited_waypoint_type = ref(false);
 let edited_vtol_mode = ref(false);
+let edited_min_turn_radius = ref(false);
 let secret = ref(0);
 
 // console.log(store?.settings);
@@ -208,9 +229,11 @@ const resetForm = () => {
   default_alt = store?.settings?.default_alt;
   takeoff_alt = store?.settings?.takeoff_alt;
   waypoint_type = store?.settings?.waypoint_type.toString();
+  min_turn_radius = store?.settings?.min_turn_radius;
   edited_default_alt.value = false;
   edited_takeoff_alt.value = false;
   edited_waypoint_type.value = false;
+  edited_min_turn_radius.value = false;
 };
 
 const onSubmit = () => {
@@ -219,6 +242,7 @@ const onSubmit = () => {
   store.settings.takeoff_alt = Number(takeoff_alt);
   store.settings.waypoint_type = Number(waypoint_type);
   store.settings.vtol_transition_mode = Number(vtol_transition_mode);
+  store.settings.min_turn_radius = Number(min_turn_radius);
   edited_default_alt.value = false;
   edited_takeoff_alt.value = false;
   edited_waypoint_type.value = false;
@@ -248,6 +272,9 @@ const onWaypointTypeChange = () => {
 const onVTOLModeChange = () => {
   edited_vtol_mode.value =
     store?.settings?.vtol_transition_mode != vtol_transition_mode;
+};
+const onMinTurnRadiusChange = () => {
+  edited_min_turn_radius.value = store?.settings?.min_turn_radius;
 };
 </script>
 
