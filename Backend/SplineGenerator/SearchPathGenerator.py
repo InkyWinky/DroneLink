@@ -781,8 +781,8 @@ def generate_points_to(start_point=None, end_point=None, end_orientation=None, r
     # Get the curve points
     curve_points = general_curve_interpolation(start_angle=entrance_angle, end_point=end_point, centre_point=centre_point, radius=radius, turn_direction=turn_direction, curve_resolution=curve_resolution)
     # Create list of points from start to end
-    points = [start_point] + curve_points
-    return points
+    # points = [start_point] + curve_points
+    return curve_points
 
 def general_curve_interpolation(start_point=None, start_angle=None, end_point=None, end_angle=None, centre_point=None, radius=None, turn_direction=None, curve_resolution=None):
     if start_point is not None:
@@ -1614,7 +1614,7 @@ def do_entire_simulation(do_plot=True, do_random=True):
         minimum_turn_radius = random.uniform(0.1, 5)
         curve_resolution = 5
     else:
-        start_point = Coord(-38.61004498301495, 143.04017763537342)
+        start_point = Coord(-38.60999173825976, 143.0401757724082)
         search_area_waypoints = [Coord(-38.61057180827359, 143.05317350241418), Coord(-38.611878393934916, 143.06585626422287), Coord(-38.59938241332342, 143.06757900559757), Coord(-38.596620577054466, 143.0412961564291), Coord(-38.59499794870061, 143.04103111929456), Coord(-38.593444021910635, 143.02933950441795), Coord(-38.595195251078714, 143.028985722283), Coord(-38.59459615117085, 143.02435707268435), Coord(-38.60452684284669, 143.02174299359066), Coord(-38.60872724668079, 143.03822618435072), Coord(-38.60914953692951, 143.0381670876175), Coord(-38.61051797355668, 143.03983961313799), Coord(-38.61087161023878, 143.04109892647105), Coord(-38.61111761733741, 143.04115795678354)]
         search_area_polygon = Polygon(search_area_waypoints)
         layer_distance = 400  # Metres
