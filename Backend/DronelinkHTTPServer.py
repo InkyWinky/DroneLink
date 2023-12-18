@@ -1,3 +1,4 @@
+from __future__ import division
 import math
 import threading
 import json
@@ -198,25 +199,28 @@ class ServerHandler(BaseHTTPRequestHandler):
         if command == Commands.OVERRIDE_FLIGHTPLANNER:
             # Make instance of SearchPathGenerator
             waypoint_spliner = spliner.SearchPathGenerator()
-            start_pt = spliner.Coord(parsed_content['waypoints'][0]['lat'], parsed_content['waypoints'][0]['long'])
+            drone_lat = parsed_content['drone_location']['lat']
+            drone_lng= parsed_content['drone_location']['long']
+            start_pt =spliner.Coord(drone_lat, drone_lng) or spliner.Coord(-38.60999173825976, 143.0401757724082)
             # Give arguments
             waypoint_spliner.set_search_area(parsed_content['waypoints'])
+            
 
-            """USE THESE IF YOU WANT TO TEST USING METRES"""
-            turn_radius = 100  # metres
+            #USE THESE IF YOU WANT TO TEST USING METRES
+            turn_radius = parsed_content['min_turn_radius']                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             # metres
             layer_distance = 120  # metres
             curve_resolution = 0.5  # 1 waypoint every 2 metres or 0.5 waypoints per metre
             # Scale parameters
-            scale_factor = 111320 / math.cos(parsed_content['waypoints'][0]['lat'])
-            """USE THESE THREE PARAMETERS BELOW"""
+            scale_factor = 111320
+            #USE THESE THREE PARAMETERS BELOW"""
             scaled_turn_radius = turn_radius / scale_factor
             scaled_layer_distance = layer_distance / scale_factor
             scaled_curve_resolution = curve_resolution * scale_factor
-            """END OF USE THESE"""
+            print("stuff we give to waypoint algo: start_drone_lat: ", drone_lat, "start_drone_long: ", drone_lng, "turn_radius: ", turn_radius, "waypoints:", parsed_content['waypoints'], "scaled_turn_radius:",scaled_turn_radius,"scaled_layer_distance:",scaled_layer_distance, "scaled_curve_resolution=", scaled_curve_resolution)
 
-            waypoint_spliner.set_parameters(minimum_turn_radius=0.0004,     # The minimum turn radius of the plane
-                                            layer_distance=0.001,           # Distance between layers on map. Use this or both focal length and sensor size, not all three
-                                            curve_resolution=4,             # How many waypoints per metre for curves
+            waypoint_spliner.set_parameters(minimum_turn_radius=scaled_turn_radius,     # The minimum turn radius of the plane
+                                            layer_distance=scaled_layer_distance,           # Distance between layers on map. Use this or both focal length and sensor size, not all three
+                                            curve_resolution=1000,             # How many waypoints per metre for curves
                                             start_point=start_pt,               # Where the plane takes off from. Leave as None if not known
                                             focal_length=None,              # Focal length of the camera on board the plane in mm
                                             sensor_size=None,               # Sensor size of the camera on board the plane as (width, height) in mm

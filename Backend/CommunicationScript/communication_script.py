@@ -794,8 +794,8 @@ class Commands:
             print(decoded_data)
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
-            home = mission_manager.waypoints[0]
-            recv_waypoints.insert(0, home)
+            # home = mission_manager.waypoints[0]
+            # recv_waypoints.insert(0, home)
             # print("[override_flightplanner] takeoff_alt: ", decoded_data["takeoff_alt"], decoded_data["vtol_transition_mode"])
             if decoded_data["vtol_transition_mode"] is not None:
                 vtol_transition_wp = mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.DO_VTOL_TRANSITION))

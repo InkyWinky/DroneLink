@@ -70,7 +70,7 @@ class PathGenerator:
         path_generator = saPG.SearchPathGenerator()
 
         # Scale parameters
-        scale_factor = 111320 / math.cos(self.search_area.centroid.lat)
+        scale_factor = 111320# / math.cos(self.search_area.centroid.lat)
         scaled_turn_radius = self.minimum_turn_radius / scale_factor
         scaled_curve_resolution = self.curve_resolution * scale_factor
 
@@ -104,7 +104,7 @@ class PathGenerator:
 
     def handle_point_to_point_PG(self):
         # Scale parameters
-        scale_factor = 111320 / math.cos(self.waypoints[0].coords.lat)
+        scale_factor = 111320# / math.cos(self.waypoints[0].coords.lat)
         scaled_turn_radius = self.minimum_turn_radius / scale_factor
         scaled_curve_resolution = self.curve_resolution * scale_factor
 
@@ -141,7 +141,8 @@ class PathGenerator:
                                      target_circle_radius=self.target_circle_radius,
                                      minimum_distance_to_start=self.minimum_distance_to_start,
                                      times_to_circle=self.times_to_circle,
-                                     curve_resolution=self.curve_resolution)
+                                     curve_resolution=self.curve_resolution,
+                                     alt=self.alt)
 
         path = fly_to_target.generate_path()
         path_dict = fly_to_target.get_waypoints()
@@ -164,7 +165,8 @@ class PathGenerator:
                                      target_location=self.target_location,
                                      turn_radius=self.minimum_turn_radius,
                                      minimum_distance_to_start=self.minimum_distance_to_start,
-                                     curve_resolution=self.curve_resolution)
+                                     curve_resolution=self.curve_resolution,
+                                        alt=self.alt)
 
         path = path_generator.generate_path()
         if self.do_plot:
