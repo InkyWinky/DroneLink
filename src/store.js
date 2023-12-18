@@ -23,6 +23,7 @@ export const store = reactive({
   settings: {
     default_alt: 80,
     takeoff_alt: 50,
+    min_turn_radius: 100,
     waypoint_type: 16,
     vtol_transition_mode: 4,
   },
