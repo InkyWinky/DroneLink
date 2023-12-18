@@ -39,13 +39,14 @@ class FlyToCircleTarget:
         if target_location is not None:
             self.target_location = target_location
         if target_circle_radius is not None:
-            self.target_circle_radius = target_circle_radius
+            scaling_factor = 111320
+            self.target_circle_radius = target_circle_radius / scaling_factor
         if times_to_circle is not None:
             self.times_to_circle = times_to_circle
         if alt is not None:
             self.alt = alt
         if self.plane_location is not None:
-            scaling_factor = 111320 / math.cos(self.plane_location.lat)
+            scaling_factor = 111320# / math.cos(self.plane_location.lat)
             if turn_radius is not None:
                 self.turn_radius = turn_radius / scaling_factor
             if minimum_distance_to_start is not None:
