@@ -200,7 +200,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             waypoint_spliner = spliner.SearchPathGenerator()
             drone_lat = parsed_content['drone_location']['lat']
             drone_lng= parsed_content['drone_location']['lng']
-            start_pt =waypoint_spliner.coord(drone_lat, drone_lng) or waypoint_spliner.coord(-38.60999173825976, 143.0401757724082)
+            start_pt =spliner.Coord(drone_lat, drone_lng) or spliner.Coord(-38.60999173825976, 143.0401757724082)
             # Give arguments
             waypoint_spliner.set_search_area(parsed_content['waypoints'])
             
@@ -220,7 +220,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             waypoint_spliner.set_parameters(minimum_turn_radius=scaled_turn_radius,     # The minimum turn radius of the plane
                                             layer_distance=scaled_layer_distance,           # Distance between layers on map. Use this or both focal length and sensor size, not all three
                                             curve_resolution=scaled_curve_resolution,             # How many waypoints per metre for curves
-                                            start_point=start_pt,               # Where the plane takes off from. Leave as None if not known
+                                            start_point=None,               # Where the plane takes off from. Leave as None if not known
                                             focal_length=None,              # Focal length of the camera on board the plane in mm
                                             sensor_size=None,               # Sensor size of the camera on board the plane as (width, height) in mm
                                             paint_overlap=0.2,               # The percentage of overlap desired for the camera to see on consecutive layers
