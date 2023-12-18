@@ -178,7 +178,6 @@ let takeoff_alt = store?.settings?.takeoff_alt;
 let min_turn_radius = store?.settings?.min_turn_radius;
 let waypoint_type = store?.settings?.waypoint_type.toString();
 let vtol_transition_mode = store?.settings?.vtol_transition_mode.toString();
-let min_turn_radius = store?.settings?.min_turn_radius;
 let isSuccess = ref(false);
 let edited_default_alt = ref(false);
 let edited_takeoff_alt = ref(false);

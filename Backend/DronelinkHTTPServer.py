@@ -198,15 +198,15 @@ class ServerHandler(BaseHTTPRequestHandler):
         if command == Commands.OVERRIDE_FLIGHTPLANNER:
             # Make instance of SearchPathGenerator
             waypoint_spliner = spliner.SearchPathGenerator()
-            drone_lat = parsed_content['drone_location'].lat
-            drone_lng= parsed_content['drone_location'].lng
-            start_pt = [drone_lat, drone_lng] or [-38.60999173825976, 143.0401757724082]
+            drone_lat = parsed_content['drone_location']['lat']
+            drone_lng= parsed_content['drone_location']['lng']
+            start_pt =waypoint_spliner.coord(drone_lat, drone_lng) or waypoint_spliner.coord(-38.60999173825976, 143.0401757724082)
             # Give arguments
             waypoint_spliner.set_search_area(parsed_content['waypoints'])
             
 
             #USE THESE IF YOU WANT TO TEST USING METRES
-            turn_radius = parsed_content(['min_turn_radius'])  # metres
+            turn_radius = parsed_content['min_turn_radius']                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             # metres
             layer_distance = 120  # metres
             curve_resolution = 0.5  # 1 waypoint every 2 metres or 0.5 waypoints per metre
             # Scale parameters
