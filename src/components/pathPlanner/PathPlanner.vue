@@ -393,7 +393,7 @@ async function formatWaypoints() {
     takeoff_alt: takeoff_alt,
     cruise_alt: store?.settings?.default_alt,
     vtol_transition_mode: store?.settings?.vtol_transition_mode,
-    drone_location: { lat: store?.live_data?.lat, long: store?.live_data?.lng },
+    drone_location: { lat: store?.live_data?.lat, lng: store?.live_data?.lng },
     min_turn_radius: store?.settings?.min_turn_radius,
   });
 
