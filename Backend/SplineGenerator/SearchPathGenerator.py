@@ -1527,7 +1527,17 @@ def find_closest_intersection_point(ray_origin=None, ray_direction=None, polygon
     return minimum_found_intersection_point
 
 def create_point(point=None, dist=None, angle=None):
+    test_coord = create_coord(point, dist, angle)
+    true_coord = Coord(lon=point.lon + dist * math.cos(angle), lat=point.lat + dist * math.sin(angle))
+    # return create_coord(point, dist, angle)
     return Coord(lon=point.lon + dist * math.cos(angle), lat=point.lat + dist * math.sin(angle))
+
+def create_coord(coord=None, dist=None, bearing=None):
+    lat_radians, lon_radians = coord.lat * pi / 180, coord.lon * pi / 180
+    R = earth_radius(coord.lat)
+    lat_new = coord.lat + dist / R
+    lon_new = coord.lon + dist / (R * math.cos(lat_radians))
+    return Coord(lat=lat_new, lon=lon_new)
 
 def find_segment_intersection(segment1, segment2):
     xdiff = Coord(lon=segment1.start.lon - segment1.end.lon, lat=segment2.start.lon - segment2.end.lon)
@@ -1617,9 +1627,9 @@ def do_entire_simulation(do_plot=True, do_random=True):
         start_point = Coord(-38.60999173825976, 143.0401757724082)
         search_area_waypoints = [Coord(-38.61057180827359, 143.05317350241418), Coord(-38.611878393934916, 143.06585626422287), Coord(-38.59938241332342, 143.06757900559757), Coord(-38.596620577054466, 143.0412961564291), Coord(-38.59499794870061, 143.04103111929456), Coord(-38.593444021910635, 143.02933950441795), Coord(-38.595195251078714, 143.028985722283), Coord(-38.59459615117085, 143.02435707268435), Coord(-38.60452684284669, 143.02174299359066), Coord(-38.60872724668079, 143.03822618435072), Coord(-38.60914953692951, 143.0381670876175), Coord(-38.61051797355668, 143.03983961313799), Coord(-38.61087161023878, 143.04109892647105), Coord(-38.61111761733741, 143.04115795678354)]
         search_area_polygon = Polygon(search_area_waypoints)
-        layer_distance = 400  # Metres
+        layer_distance = 120  # Metres
         minimum_turn_radius = 100  # Metres
-        curve_resolution = 0.01  # Waypoints per metre on turns
+        curve_resolution = 0.5  # Waypoints per metre on turns
         scaling_factor = 111320# / math.cos(search_area_polygon.centroid.lat)
         layer_distance /= scaling_factor
         minimum_turn_radius /= scaling_factor
