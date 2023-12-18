@@ -1,3 +1,4 @@
+from __future__ import division
 import math
 import threading
 import json
@@ -199,7 +200,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             # Make instance of SearchPathGenerator
             waypoint_spliner = spliner.SearchPathGenerator()
             drone_lat = parsed_content['drone_location']['lat']
-            drone_lng= parsed_content['drone_location']['lng']
+            drone_lng= parsed_content['drone_location']['long']
             start_pt =spliner.Coord(drone_lat, drone_lng) or spliner.Coord(-38.60999173825976, 143.0401757724082)
             # Give arguments
             waypoint_spliner.set_search_area(parsed_content['waypoints'])
@@ -215,12 +216,12 @@ class ServerHandler(BaseHTTPRequestHandler):
             scaled_turn_radius = turn_radius / scale_factor
             scaled_layer_distance = layer_distance / scale_factor
             scaled_curve_resolution = curve_resolution * scale_factor
-           
+            print("stuff we give to waypoint algo: start_drone_lat: ", drone_lat, "start_drone_long: ", drone_lng, "turn_radius: ", turn_radius, "waypoints:", parsed_content['waypoints'], "scaled_turn_radius:",scaled_turn_radius,"scaled_layer_distance:",scaled_layer_distance, "scaled_curve_resolution=", scaled_curve_resolution)
 
             waypoint_spliner.set_parameters(minimum_turn_radius=scaled_turn_radius,     # The minimum turn radius of the plane
                                             layer_distance=scaled_layer_distance,           # Distance between layers on map. Use this or both focal length and sensor size, not all three
-                                            curve_resolution=scaled_curve_resolution,             # How many waypoints per metre for curves
-                                            start_point=None,               # Where the plane takes off from. Leave as None if not known
+                                            curve_resolution=1000,             # How many waypoints per metre for curves
+                                            start_point=start_pt,               # Where the plane takes off from. Leave as None if not known
                                             focal_length=None,              # Focal length of the camera on board the plane in mm
                                             sensor_size=None,               # Sensor size of the camera on board the plane as (width, height) in mm
                                             paint_overlap=0.2,               # The percentage of overlap desired for the camera to see on consecutive layers
