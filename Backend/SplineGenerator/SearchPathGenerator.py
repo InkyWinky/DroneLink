@@ -1624,6 +1624,14 @@ def earth_radius(latitude):
 
     return radius
 
+def plot_list(waypoints):
+    x_vals = [point.lon for point in waypoints]
+    y_vals = [point.lat for point in waypoints]
+
+    plt.plot(x_vals, y_vals)
+    plt.axis('equal')
+    plt.show()
+
 def do_entire_simulation(do_plot=True, do_random=True):
     if do_random:
         search_area_polygon = create_random_search_area(7)
@@ -1632,13 +1640,13 @@ def do_entire_simulation(do_plot=True, do_random=True):
         minimum_turn_radius = random.uniform(0.1, 5)
         curve_resolution = 5
     else:
-        start_point = Coord(-37.96370910, 145.24700320)
-        search_area_waypoints = [Coord(-37.97959318, 145.21115155),
-                                 Coord(-37.99295558, 145.31214867),
-                                 Coord(-37.92019654, 145.32861823),
-                                 Coord(-37.90586541, 145.21962853)]
+        start_point = Coord(lon=145.26285300, lat=-37.96060940)
+        search_area_waypoints = [Coord(lon=145.25312659, lat=-37.95454882),
+                                 Coord(lon=145.26681466, lat=-37.95402233),
+                                 Coord(lon=145.26748237, lat=-37.96101265),
+                                 Coord(lon=145.25423944, lat=-37.96092491)]
         search_area_polygon = Polygon(search_area_waypoints)
-        layer_distance = 400  # Metres
+        layer_distance = 120  # Metres
         minimum_turn_radius = 100  # Metres
         curve_resolution = 0.5  # Waypoints per metre on turns
         scaling_factor = 111320  # / math.cos(search_area_polygon.centroid.lat)
@@ -1653,13 +1661,14 @@ def do_entire_simulation(do_plot=True, do_random=True):
     paint_overlap = 0.1
     angle = None
 
-    waypoints = [{"lat": -37.97959318, "long": 145.21115155},
-                 {"lat": -37.99295558, "long": 145.31214867},
-                 {"lat": -37.92019654, "long": 145.32861823},
-                 {"lat": -37.90586541, "long": 145.21962853}]
+    # waypoints = [{"lat": -37.95906813, "long": 145.24514681},
+    #              {"lat": -37.95923634, "long": 145.24940112},
+    #              {"lat": -37.96187818, "long": 145.24936347},
+    #              {"lat": -37.96211565, "long": 145.24450678}]
 
     path_generator = SearchPathGenerator()
-    path_generator.set_search_area(waypoints)
+    path_generator.set_data(search_area=search_area_polygon)
+    # path_generator.set_search_area(waypoints)
     path_generator.set_parameters(alt=80, orientation=angle, paint_overlap=paint_overlap, focal_length=focal_length, sensor_size=sensor_size, minimum_turn_radius=minimum_turn_radius, layer_distance=layer_distance, curve_resolution=curve_resolution, start_point=start_point)
 
     error = path_generator.generate_search_area_path(do_plot=do_plot)
