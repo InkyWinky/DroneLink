@@ -142,7 +142,7 @@
         </router-link>
       </span>
       <div
-        v-if="secret > 5 || true"
+        v-if="secret > 5"
         class="flex flex-col w-full gap-4 outline outline-white rounded-sm p-2"
       >
         <p class="font-bold text-md">Not So Hidden Secret</p>
