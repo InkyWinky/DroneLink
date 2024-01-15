@@ -1,7 +1,7 @@
-import PointToPointPathGenerator as ptpPG
-import SearchPathGenerator as saPG
-import FlyToCircleTarget as ftctPG
-import FlyToTargetPayload as fttpPG
+from SplineGenerator import PointToPointPathGenerator as ptpPG
+from SplineGenerator import SearchPathGenerator as saPG
+from SplineGenerator import FlyToCircleTarget as ftctPG
+from SplineGenerator import FlyToTargetPayload as fttpPG
 import math
 
 class PathGenerationType:

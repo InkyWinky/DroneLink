@@ -3,7 +3,7 @@ import math
 import threading
 import json
 import time
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from CommunicationScript.MissionPlannerSocket import Commands
 from SplineGenerator.SearchPathGenerator import Coord, Polygon
 import SplineGenerator.PointToPointPathGenerator as ptpPG
