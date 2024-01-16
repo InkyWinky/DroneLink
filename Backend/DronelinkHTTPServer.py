@@ -62,7 +62,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
     def do_POST(self):
         # Get the message from API client
-        content_length = int(self.headers.getheader("content-length", 0))
+        content_length = int(self.headers.get("content-length", 0))
         post_message = self.rfile.read(content_length)
         statusCode = 200
         message = None
