@@ -1,8 +1,8 @@
 #from __future__ import division, print_function
 import math
 import matplotlib.pyplot as plt
-from PathGenerator import *
-from SearchPathGenerator import Coord, Polygon
+from SplineGenerator.PathGenerator import *
+from SplineGenerator.SearchPathGenerator import Coord, Polygon
 pi = math.pi
 
 class FlyToTargetPayload:

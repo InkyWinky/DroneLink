@@ -48,7 +48,7 @@ if __name__ == "__main__":
     print("[INFO] HTTP Server Initialised on:", IP + ":" + str(8000))
 
     try:
-        a = raw_input("PRESS ENTER TO STOP SERVERS\n")
+        a = input("PRESS ENTER TO STOP SERVERS\n")
     finally:
         try:
             web_socket_server.close()

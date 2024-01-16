@@ -1,5 +1,5 @@
-from PathGenerator import *
-from SearchPathGenerator import Coord, Polygon
+from SplineGenerator.PathGenerator import *
+from SplineGenerator.SearchPathGenerator import Coord, Polygon
 from PointToPointPathGenerator import Waypoint
 
 # Create class instance of PathGeneration
