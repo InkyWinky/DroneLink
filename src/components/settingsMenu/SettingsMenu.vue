@@ -145,25 +145,8 @@
         v-if="secret > 5"
         class="flex flex-col w-full gap-4 outline outline-white rounded-sm p-2"
       >
-        <p class="font-bold text-md">Developer Tools</p>
-        <button
-          class="rounded-md bg-gray-500 hover:bg-gray-600 w-full"
-          @click="patient_location"
-        >
-          SET PATIENT LOCATION
-        </button>
-        <button
-          class="rounded-md bg-gray-500 hover:bg-gray-600 w-full"
-          @click="drop_location"
-        >
-          SET PAYLOAD DEPLOYMENT LOCATION
-        </button>
-        <button
-          class="rounded-md bg-gray-500 hover:bg-gray-600 w-full"
-          @click="ascend_and_rtl"
-        >
-          RETURN HOME AFTER ASCENDING
-        </button>
+        <p class="font-bold text-md">Not So Hidden Secret</p>
+        <PartyMode />
       </div>
     </div>
   </div>
@@ -172,7 +155,7 @@
 <script setup>
 import { ref } from "vue";
 import { store } from "@/store";
-import api from "@/api";
+import PartyMode from "../PartyMode.vue";
 let default_alt = store?.settings?.default_alt;
 let takeoff_alt = store?.settings?.takeoff_alt;
 let min_turn_radius = store?.settings?.min_turn_radius;
@@ -189,42 +172,6 @@ let secret = ref(0);
 // console.log(store?.settings);
 // console.log(store.settings.default_alt, default_alt);
 
-const patient_location = () => {
-  api.executeCommand("PATIENT_LOCATION", {
-    patient_location: {
-      lat: -37.54213375308094,
-      long: 145.64295397543202,
-      alt: store?.settings?.default_alt,
-    },
-  });
-};
-
-const drop_location = () => {
-  // dropoff_coordinates, cruise_alt, transition_alt, cardinal_approach
-  api.executeCommand("DROP_LOCATION", {
-    dropoff_coordinates: {
-      lat: -37.543755530521956,
-      long: 145.64702276429728,
-      alt: 40, // This alt is dependant on user input
-    },
-    cruise_alt: store?.settings?.default_alt,
-    transition_alt: store?.settings?.takeoff_alt,
-    cardinal_approach: "SOUTH", // Can be NORTH, EAST, SOUTH or WEST
-  });
-};
-
-const ascend_and_rtl = () => {
-  api.executeCommand("ASCEND_AND_RTL", {
-    dropoff_coordinates: {
-      lat: -37.5437555305,
-      long: 145.64702276429728,
-      alt: 40, // This alt is dependant on user input
-    },
-    cruise_alt: store?.settings?.default_alt,
-    transition_alt: store?.settings?.takeoff_alt,
-    cardinal_direction: "SOUTH", // Can be NORTH, EAST, SOUTH or WEST
-  });
-};
 const resetForm = () => {
   default_alt = store?.settings?.default_alt;
   takeoff_alt = store?.settings?.takeoff_alt;
