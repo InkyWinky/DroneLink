@@ -269,6 +269,16 @@ class ServerHandler(BaseHTTPRequestHandler):
             mp_sock.send_command_int(1, MUASComponentID.LIFELINE,  MUASCommands.LIFELINE, param1=LifelineCommands.NERF)
         elif command == "DRIP":
             mp_sock.send_command_int(1, MUASComponentID.LIFELINE,  MUASCommands.LIFELINE, param1=LifelineCommands.DRIP)
+        elif command =="GIMBAL_TRACK_GPS":
+            lng = 0
+            lat = 0 #link to front end later
+            mp_sock.send_command_int(1, MUASComponentID.WADJET, 0, MUASCommands.WADJET, 0, 0, WadjetCommands.TRACK_GPS_MODE, lng, lat, 0, 0, 0, 0)
+        elif command =="GIMBAL_TRACK_TARGET":
+            mp_sock.send_command_int(1, MUASComponentID.WADJET, 0, MUASCommands.WADJET, 0, 0, WadjetCommands.TRACK_TARGET_MODE, 0, 0, 0, 0, 0, 0)
+        elif command =="GIMBAL_NEUTRAL":
+            mp_sock.send_command_int(1, MUASComponentID.WADJET, 0, MUASCommands.WADJET, 0, 0, WadjetCommands.NEUTRAL_MODE, 0, 0, 0, 0, 0, 0)
+        elif command =="GIMBAL_RESET_POSITION":
+            mp_sock.send_command_int(1, MUASComponentID.WADJET, 0, MUASCommands.WADJET, 0, 0, WadjetCommands.RESET_POSITION, 0, 0, 0, 0, 0, 0)
         # elif command == "DISREGARD_TARGET":
         #     mp_sock.
         else:

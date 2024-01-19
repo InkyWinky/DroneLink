@@ -67,5 +67,7 @@ class LifelineState:
         "900": "EMERGENCY",
         "800": "NERF",
     }
+    #CommandResults(msg.result).name
+    #E.g LifelineState(100).name
 
 
