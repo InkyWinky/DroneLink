@@ -3,7 +3,7 @@
     class="uk-card uk-card-default uk-card-body"
     style="border-radius: 20px; padding: 5px 20px 15px 20px"
   >
-    <div class="w-full overflow-x-auto h-fit">
+    <div class="w-full overflow-hidden h-fit">
       <ul class="uk-tab w-max" uk-tab>
         <li v-for="t in tabs" :key="t.name" @click="setTab(t.name)">
           <a href="#"> {{ t.name }} </a>
@@ -31,9 +31,12 @@
 import MessagesDisplay from "@/components/messagesDisplay/MessagesDisplay.vue";
 import NotePad_new from "@/components/notePad/NotePad_new.vue";
 import RawDataDisplay from "@/components/rawDataDisplay/RawDataDisplay.vue";
+import GimbalControlPanel from "./GimbalControlPanel.vue";
+
 import { ref } from "vue";
 const tabs = [
   { name: "Messages", component: <MessagesDisplay /> },
+  { name: "Gimbal", component: <GimbalControlPanel /> },
   { name: "Raw Data", component: <RawDataDisplay /> },
   { name: "Notes", component: <NotePad_new /> },
 ];
