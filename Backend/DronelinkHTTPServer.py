@@ -272,13 +272,13 @@ class ServerHandler(BaseHTTPRequestHandler):
         elif command =="GIMBAL_TRACK_GPS":
             lng = 0
             lat = 0 #link to front end later
-            mp_sock.send_command_int(1, MUASComponentID.WADJET, 0, MUASCommands.WADJET, 0, 0, WadjetCommands.TRACK_GPS_MODE, lng, lat, 0, 0, 0, 0)
+            mp_sock.send_command_int(1, MUASComponentID.WADJET, MUASCommands.WADJET,  param1 = WadjetCommands.TRACK_GPS_MODE, param2=lng, param3 =lat)
         elif command =="GIMBAL_TRACK_TARGET":
-            mp_sock.send_command_int(1, MUASComponentID.WADJET, 0, MUASCommands.WADJET, 0, 0, WadjetCommands.TRACK_TARGET_MODE, 0, 0, 0, 0, 0, 0)
+            mp_sock.send_command_int(1, MUASComponentID.WADJET, MUASCommands.WADJET, param1 =WadjetCommands.TRACK_TARGET_MODE)
         elif command =="GIMBAL_NEUTRAL":
-            mp_sock.send_command_int(1, MUASComponentID.WADJET, 0, MUASCommands.WADJET, 0, 0, WadjetCommands.NEUTRAL_MODE, 0, 0, 0, 0, 0, 0)
+            mp_sock.send_command_int(1, MUASComponentID.WADJET, MUASCommands.WADJET, param1 =WadjetCommands.NEUTRAL_MODE)
         elif command =="GIMBAL_RESET_POSITION":
-            mp_sock.send_command_int(1, MUASComponentID.WADJET, 0, MUASCommands.WADJET, 0, 0, WadjetCommands.RESET_POSITION, 0, 0, 0, 0, 0, 0)
+            mp_sock.send_command_int(1, MUASComponentID.WADJET, MUASCommands.WADJET, param1 = WadjetCommands.RESET_POSITION)
         # elif command == "DISREGARD_TARGET":
         #     mp_sock.
         else:
