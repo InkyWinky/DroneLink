@@ -77,7 +77,7 @@ def subscribe_success(message):
     return True
 
 def OtherMethod(message):
-    print "got HB"
+    print("got HB")
     return True
 
 def subscribe_to_mavlink_msg():
