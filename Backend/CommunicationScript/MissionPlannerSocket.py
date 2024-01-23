@@ -5,7 +5,7 @@ import time
 import sys
 from os import path
 # directory reach
-backend_dir = "/".join(path.abspath(__file__).split("/")[:-2])
+backend_dir = "/".join(path.abspath(__file__).split("/")[:-2]) # find file path to Backend directory
 sys.path.append(backend_dir)
 from MAVLink_Pipeline.mav_enums import *
 
@@ -135,12 +135,10 @@ class MissionPlannerSocket():
                             data['messages'] = []
                             # use lifeline status message to show text label
                             try:
-                                ll_status_key = str(int(data["lifeline_status"]))
-                                data["lifeline_status"] = LifelineState.LifeLineStateDict[ll_status_key]
-                                # print(data["lifeline_status"])
-
-                            except Exception as e:
-                                print("[MESSAGE] Encountered the following error when attempting to read lifeline status: " + str(e))
+                                enum_val = self.live_data["lifeline_status"]
+                                self.live_data["lifeline_status"] = LifelineState(enum_val).name
+                            except:
+                                pass
                             self.live_data = data
                             self.live_data_mutex.release()
                         except Exception as e:
