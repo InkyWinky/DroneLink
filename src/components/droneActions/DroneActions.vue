@@ -1,10 +1,10 @@
 <template>
   <div
     class="uk-card uk-card-default uk-card-body"
-    style="border-radius: 15px; padding: 30px; bottom: 4%"
+    style="border-radius: 15px; padding: 10px 30px; bottom: 4%"
   >
     <h3>DRONE ACTIONS</h3>
-    <div class="h-auto w-full m-2 p-2 bg-slate-200 action-btn">
+    <div class="h-auto w-full m-2 p-1 bg-slate-200 action-btn">
       <button
         class="w-full h-auto rounded p-2 flex items-center justify-center"
         @click="setLoiter()"
@@ -12,7 +12,7 @@
         LOITER
       </button>
     </div>
-    <div class="h-auto w-full m-2 p-2 bg-slate-200 action-btn">
+    <div class="h-auto w-full m-2 p-1 bg-slate-200 action-btn">
       <button
         class="w-full h-auto rounded p-2 flex items-center justify-center"
         @click="RTL()"
@@ -20,7 +20,7 @@
         RTL
       </button>
     </div>
-    <div class="action-btn h-auto w-full m-2 p-2 bg-slate-200">
+    <div class="action-btn h-auto w-full m-2 p-1 bg-slate-200">
       <button
         id="qloiter-btn"
         class="w-full h-auto rounded p-2 flex items-center justify-center"
