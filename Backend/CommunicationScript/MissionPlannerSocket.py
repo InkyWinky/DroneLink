@@ -2,7 +2,12 @@ import socket
 import threading
 import json
 import time
-from mav_enums import *
+import sys
+from os import path
+# directory reach
+backend_dir = "/".join(path.abspath(__file__).split("/")[:-2])
+sys.path.append(backend_dir)
+from MAVLink_Pipeline.mav_enums import *
 
 class MissionPlannerSocket():
     """MissionPlannerSocket maintains the connection between the Backend Server and the Mission Planner device.
@@ -128,6 +133,7 @@ class MissionPlannerSocket():
                             messages = data['messages']
                             self.messages = self.messages + messages
                             data['messages'] = []
+                            # use lifeline status message to show text label
                             try:
                                 ll_status_key = str(int(data["lifeline_status"]))
                                 data["lifeline_status"] = LifelineState.LifeLineStateDict[ll_status_key]
