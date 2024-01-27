@@ -98,17 +98,20 @@
         class="flex flex-col w-full h-full text-white bg-black"
       >
         VISION
-        <div class="flex items-center justify-center w-full h-full camera-feed">
-          <div
+        <div class="flex items-center justify-center w-full h-full">
+          <!-- <div
             v-if="!has_vision_feed"
             uk-icon="icon:camera; ratio: 2"
             class="flex flex-col justify-center items-center text-white relative"
-          ></div>
-          <img
+          ></div> -->
+          <video autoplay class="h-[100%] w-fit" ref="video">
+            <source src="../../public/visionSampleVideo.mp4" type="video/mp4" />
+          </video>
+          <!-- <img
             v-show="has_vision_feed"
             ref="vision_large"
             class="h-[100%] w-fit"
-          />
+          /> -->
         </div>
         <div
           id="bounding-box"
@@ -173,28 +176,9 @@
         class="flex flex-col w-full h-full text-white bg-black"
       >
         <p class="">FPV</p>
-        <div
-          class="flex flex-col items-center justify-center w-full h-full bg-blue-500 outline outline-black"
-        >
-          <p
-            class="text-white bg-transparent absolute top-6 left-2 text-2xl p-1"
-          >
-            {{ fpv_cam_framerate.valueOf() }}
-          </p>
-          <div
-            v-if="!has_fpv_feed && displayVisionLarge"
-            uk-icon="icon:camera; ratio: 2"
-            class="flex flex-col justify-center items-center text-white relative"
-          ></div>
-          <canvas
-            v-show="has_fpv_feed && displayVisionLarge"
-            ref="fpv_small"
-            class="bg-blue-500 aspect-video h-full"
-            :height="fpv_resolution.height"
-            :width="fpv_resolution.width"
-          >
-          </canvas>
-        </div>
+        <video autoplay class="h-[100%] w-fit" ref="video">
+          <source src="../../public/FpvFeedSample.mp4" type="video/mp4" />
+        </video>
       </div>
       <div
         id="small-vid-feed-vision"
@@ -214,6 +198,7 @@
             class="h-[100%] w-fit"
           />
         </div>
+
         <!-- <canvas
           ref="vision_small"
           class="bg-green-800"
@@ -331,32 +316,6 @@
           >
             DRIP
           </button>
-        </div>
-        <div id="bbox-testing">
-          <label for="x"> xperc</label>
-          <input
-            id="x"
-            class="bbox-test-input"
-            type="number"
-            v-model="x_perc"
-            style="width: 100px"
-          />
-          <label for="y">yperc</label>
-          <input
-            id="y"
-            class="bbox-test-input"
-            type="number"
-            v-model="y_perc"
-            style="width: 100px"
-          />
-          <label for="width"> width</label>
-          <input
-            id="width"
-            class="bbox-test-input"
-            type="number"
-            v-model="width"
-            style="width: 100px"
-          />
         </div>
       </div>
     </div>
@@ -643,9 +602,7 @@ function confirmTarget() {
   store.vision_on = false;
   uikit.modal("#target-detected-modal").hide();
   showTargetDetectedModal.value = false;
-  setTimeout(() => {
-    Map.value.resize();
-  }, 1);
+
   showMap.value = true;
   showPayloadProcess.value = true;
   showPatientPicker.value = true;
@@ -654,6 +611,9 @@ function confirmTarget() {
     center: [store?.live_data?.lng, store?.live_data?.lat],
     zoom: 13,
   });
+  // setTimeout(() => {
+  //   Map.value.resize();
+  // }, 1);
 }
 
 function startManualTarget() {
@@ -662,17 +622,25 @@ function startManualTarget() {
       "Add Manual Target Location. Do not press this button if the drone is not in CRUISE mode. \n\nConfirm?"
     )
   ) {
+    let droneLat = store?.live_data?.lat;
+    if (droneLat == null) {
+      droneLat = -37.91762962033175; //Default value
+    }
+    let droneLong = store?.live_data?.long;
+    if (droneLong == null) {
+      droneLong = 145.31284675198305;
+    }
     showMap.value = true;
     showPayloadProcess.value = true;
     showPatientPicker.value = true;
     showGoBtn.value = true;
     Map.value.flyTo({
-      center: [store?.live_data?.lng, store?.live_data?.lat],
-      zoom: 13,
+      center: [droneLong, droneLat],
+      zoom: 17,
     });
     setTimeout(() => {
       Map.value.resize();
-    }, 1000);
+    }, 1);
   }
 }
 /**
@@ -754,10 +722,7 @@ function nerf() {
 }
 
 function drip() {
-  if (confirm("DRIP will deploy the payload.\n\nConfirm?")) {
-    console.log("[MESSAGE] Executing DRIP");
-    api.executeCommand("DRIP", {});
-  }
+  Map.value.resize();
 }
 function ascendRTL() {
   if (
