@@ -1,11 +1,13 @@
+import sys
 import socket
 import threading
 import json
 import time
 import sys
 from os import path
+
 # directory reach
-backend_dir = "/".join(path.abspath(__file__).split("/")[:-2]) # find file path to Backend directory
+backend_dir = "/".join(path.abspath(__file__).split("/")[:-2]) # find file path to Backend directory (assumes that file remainl;LLLLs in */Backend/CommunicationScript/MissionPlannerSocket.py)
 sys.path.append(backend_dir)
 from MAVLink_Pipeline.mav_enums import *
 
