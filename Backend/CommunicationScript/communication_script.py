@@ -244,7 +244,7 @@ class MissionManager:
     def update(self):
         """Updates Mission Planner on the modified waypoints
         """
-        self.waypoints.insert(0, self.create_wp(self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt))
+        self.waypoints.insert(0, self.create_wp(**{'lat': self.cs_drone.lat, 'long': self.cs_drone.lng, 'alt': self.cs_drone.alt}))
         # print("HELP", self.cs_drone.lat, self.cs_drone.lng, self.cs_drone.alt)
         # print(self.waypoints[0])
         MAV.setWPTotal(len(self.waypoints))
@@ -259,19 +259,28 @@ class MissionManager:
         
     
 
-    def create_wp(self, lat, lng, alt, **kwargs):
+    def create_wp(self, **kwargs):
         """Creates a waypoint
 
-        Args:
+        Args (provided inside the kwargs dict):
             lat (float): The latitude in degrees.
             lng (float): longitude in degrees.
             alt (float): The altitude in meters.
+            id  (int):   The waypoint id
 
         Returns:
             Locationwp: The Locationwp object which contains the lat, lng and alt. This is an object from of MAVLink/Mission Planner.
         """
         id = kwargs["id"] if "id" in kwargs.keys() else self.id
-        wp = Locationwp().Set(lat, lng, alt, id)
+        try:
+            wp = Locationwp().Set(kwargs['lat'], kwargs['lng'], kwargs['alt'], id)
+        except Exception as e:
+            if not ("lat" in kwargs.keys() and "long" in kwargs.keys() and "alt" in kwargs.keys()):
+                print("[ERROR] lat, long, alt not passed properly")
+            else:
+                traceback.print_exc()
+                print('[ERROR] Error creating waypoints')
+
         if "p1" in kwargs.keys():
             Locationwp.p1.SetValue(wp, kwargs["p1"])
         if "p2" in kwargs.keys():
@@ -513,7 +522,7 @@ class MissionManager:
         res = [None for _ in range(n)]  # initialize list
 
         for i in range(n):
-            res[i] = self.create_wp(waypoints[i]["lat"], waypoints[i]["long"], waypoints[i]["alt"], **waypoints[i])
+            res[i] = self.create_wp(**waypoints[i])
         return res
     
     def send_live_data(self):
@@ -752,13 +761,13 @@ class Commands:
             waypoints = decoded_data["waypoints"]
             recv_waypoints = mission_manager.convert_to_locationwp(waypoints)
             if decoded_data["vtol_transition_mode"] is not None:
-                vtol_transition_wp = mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.DO_VTOL_TRANSITION))
+                vtol_transition_wp = mission_manager.create_wp(**{'lat': 0, 'long': 0, 'alt': decoded_data["takeoff_alt"], 'id': int(MAVLink.MAV_CMD.DO_VTOL_TRANSITION)})
                 Locationwp.p1.SetValue(vtol_transition_wp, decoded_data["vtol_transition_mode"]) # 3 for multicoptor, 4 fixed wing
                 recv_waypoints.insert(0, vtol_transition_wp)
             if decoded_data["takeoff_alt"] is not None:
-                recv_waypoints.insert(0, mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.VTOL_TAKEOFF)))
+                recv_waypoints.insert(0, mission_manager.create_wp(**{'lat': 0, 'long': 0, 'alt': decoded_data["takeoff_alt"], 'id': int(MAVLink.MAV_CMD.VTOL_TAKEOFF)}))
             if decoded_data["do_RTL"]:
-                recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
+                recv_waypoints.append(mission_manager.create_wp(**{'lat': 0, 'long': 0, 'alt': 0, 'id': int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)}))
             mission_manager.waypoints = recv_waypoints
             mission_manager.waypoint_count = len(recv_waypoints)
             mission_manager.update()
@@ -796,13 +805,13 @@ class Commands:
             # recv_waypoints.insert(0, home)
             # print("[override_flightplanner] takeoff_alt: ", decoded_data["takeoff_alt"], decoded_data["vtol_transition_mode"])
             if decoded_data["vtol_transition_mode"] is not None:
-                vtol_transition_wp = mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.DO_VTOL_TRANSITION))
+                vtol_transition_wp = mission_manager.create_wp(**{'lat': 0, 'long': 0, 'alt': decoded_data["takeoff_alt"], 'id': int(MAVLink.MAV_CMD.DO_VTOL_TRANSITION)})
                 Locationwp.p1.SetValue(vtol_transition_wp, decoded_data["vtol_transition_mode"]) # 3 for multicoptor, 4 fixed wing
                 recv_waypoints.insert(1, vtol_transition_wp)
             if decoded_data["takeoff_alt"] is not None:
-                recv_waypoints.insert(1,mission_manager.create_wp(0, 0, decoded_data["takeoff_alt"], id=int(MAVLink.MAV_CMD.VTOL_TAKEOFF)))
+                recv_waypoints.insert(1,mission_manager.create_wp(**{'lat': 0, 'long': 0, 'alt': decoded_data["takeoff_alt"], 'id': int(MAVLink.MAV_CMD.VTOL_TAKEOFF)}))
             if decoded_data["do_RTL"]:
-                recv_waypoints.append(mission_manager.create_wp(0, 0, 0, id=int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)))
+                recv_waypoints.append(mission_manager.create_wp(**{'lat': 0, 'long': 0, 'alt': decoded_data["takeoff_alt"], 'id': int(MAVLink.MAV_CMD.RETURN_TO_LAUNCH)}))
             FlightPlanner.WPtoScreen(List[Locationwp](recv_waypoints))
             print("[COMMAND] OVERRIDE_FLIGHTPLANNER Waypoints Command Executed.")
         except Exception as e:
