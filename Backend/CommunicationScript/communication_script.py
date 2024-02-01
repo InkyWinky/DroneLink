@@ -153,7 +153,7 @@ class MissionManager:
         txt = "----------------------------------------------\nWaypoints\n [num]. latitude, longitude, altitude\n"
         for i in range(self.waypoint_count):
             wp = self.waypoints[i]
-            txt += f"[ {i} ]. {wp.lat}, {wp.lng}, {wp.alt}\n"
+            txt += "[" + i + "]." + wp.lat + ", " + wp.lng + ", " + wp.alt + "\n"
         return txt + "----------------------------------------------"
     
 
@@ -190,6 +190,7 @@ class MissionManager:
             self.waypoint_count = MAV.getWPCount()
             self.waypoints = [MAV.getWP(index) for index in range(MAV.getWPCount())]
             self.cs_drone = cs  # update current state of drone object
+            print(cs)
             self.drone_connected = True
             print("[INFO] Syncing Live Waypoints Successful")
         except:
