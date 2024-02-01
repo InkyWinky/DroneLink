@@ -7,9 +7,11 @@ import sys
 from os import path
 
 # directory reach
-backend_dir = "/".join(path.abspath(__file__).split("/")[:-2]) # find file path to Backend directory (assumes that file remainl;LLLLs in */Backend/CommunicationScript/MissionPlannerSocket.py)
-sys.path.append(backend_dir)
-from MAVLink_Pipeline.mav_enums import *
+# backend_dir = "/".join(path.abspath(__file__).split("/")[:-2]) # find file path to Backend directory (assumes that file remainl;LLLLs in */Backend/CommunicationScript/MissionPlannerSocket.py)
+# sys.path.append(backend_dir)
+# from MAVLink_Pipeline.mav_enums import *
+
+import __init__
 
 class MissionPlannerSocket():
     """MissionPlannerSocket maintains the connection between the Backend Server and the Mission Planner device.
