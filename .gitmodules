@@ -4,3 +4,6 @@
 [submodule "Wadjet"]
 	path = Wadjet
 	url = https://github.com/MonashUAS/Wadjet
+[submodule "Backend/MAVLink_Pipeline"]
+	path = Backend/MAVLink_Pipeline
+	url = https://github.com/MonashUAS/MAVLink_Pipeline.git
