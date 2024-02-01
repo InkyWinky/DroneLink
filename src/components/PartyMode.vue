@@ -57,7 +57,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import p from "/public/🤖.json";
+import p from "/public/party.json";
 const img = ref("data:image/jpg;base64," + p.p1);
 const playground = ref();
 const isOpen = ref(false);
