@@ -26,6 +26,6 @@ body {
   height: 100%;
   overflow-y: hidden;
   margin: 0;
-  background-color: black;
+  background-color: white;
 }
 </style>
