@@ -32,7 +32,7 @@ class WebSocketThread(threading.Thread):
         # websocket: instance of the client
         try:
             async for message in websocket:
-                print("[WEBSOCKET] Message received from client: " + message)
+                print(f"[WEBSOCKET] Message received from client: {message}")
                 await websocket.send(f"[WEBSOCKET] Response: {message}")
         finally:
             index = clients.index(websocket)
@@ -47,56 +47,34 @@ class WebSocketThread(threading.Thread):
         )
         asyncio.get_event_loop().run_forever()
 
-        # old implementation (using SimpleWebSocketServer):
+        # old implementation using SimpleWebSocketServer:
         # self.server = SimpleWebSocketServer(self.host, 8081, WebSocketServer)
         self.live_data_thread = LiveDataThread(self.mp_socket)
         self.fpv_feed_thread = FPVFeedThread()
         self.vision_feed_thread = VisionFeedThread(self.vision_websocket_url)
-        self.live_data_thread.start()
+        await self.live_data_thread.start()
         # self.fpv_feed_thread.start()
-        self.vision_feed_thread.start()
-        try:
-            self.server.serveforever()
-        except:
-            pass
+        await self.vision_feed_thread.start()
+        # try:
+        #     self.server.serveforever()
+        # except:
+        #     pass
 
         # self.live_data_thread.join()
         print("[TERMINATION] Closed WebSocketThread")
 
-    def close(self):
-        websockets.close()
+    async def close(self):
+        await websockets.close()
         try:
-            self.live_data_thread.close()
-            self.camera_feed_thread.close()
-            self.vision_feed_thread.close()
-            self.live_data_thread.join()
-            self.camera_feed_thread.join()
-            self.vision_feed_thread.join()
+            await self.live_data_thread.close()
+            await self.camera_feed_thread.close()
+            await self.vision_feed_thread.close()
+            await self.live_data_thread.join()
+            await self.camera_feed_thread.join()
+            await self.vision_feed_thread.join()
         except:
             pass
         
-
-class WebSocketServer(WebSocket):
-    def handleMessage(self):
-        for client in clients:
-            if client != self:
-                client.sendMessage(self.address[0] + u' - ' + self.data)
-
-    def handleConnected(self):
-        print('[WEBSOCKET] ' + str(self.address) + ' connected')
-        for client in clients:
-            client.sendMessage(self.address[0] + u' - connected')
-        clients.append(self)
-        clientData.append({'messagesCount': 0})
-
-    def handleClose(self):
-        index = clients.index(self)
-        clients.pop(index)
-        clientData.pop(index)
-        print('[WEBSOCKET] ' + str(self.address) + ' closed')
-        for client in clients:
-            client.sendMessage(self.address[0] + u' - disconnected')
-
 
 class LiveDataThread(threading.Thread):
     # Sends Live data taken from Mission Planner to all self.clients connected via WebSockets.
