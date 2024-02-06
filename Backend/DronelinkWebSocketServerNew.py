@@ -4,8 +4,8 @@ import time
 import cv2
 import base64
 # from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
-import asyncio
 import websockets
+import asyncio
 from sys import platform
 import rel
 
