@@ -1,29 +1,51 @@
-import threading
 import json
 import time
 import cv2
 import base64
-# from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 import websockets
 import asyncio
 from sys import platform
 import rel
 
 
-class WebSocketThread(threading.Thread):
-    def __init__(self, host, mp_socket, vision_websocket_url):
+class WebSocketThread():
+
+    def __await__(self):
+        return self._async_init().__await__()
+
+    async def _async_init(self, host, mp_socket, vision_websocket_url, loop):
         # host: IP of the host to run the server on.
         # mp_socket: The MissionPlannerSocket that talks to Mission Planner.
         # vision_websocket_url: The WebSocket URL for Vision's Server for video feed.
-        threading.Thread.__init__(self)
+        # loop: the current asyncio event loop
         self.live_data_thread = None
         self.host = host
         self.mp_socket = mp_socket
         self.vision_websocket_url = vision_websocket_url
+        self.loop = loop 
         global clients
         clients = set()
         global clientData
         clientData = []
+
+        await self.run()
+        return self
+
+            
+    async def run(self):
+        # establish websocket server
+        self.loop.run_until_complete(websockets.serve(self.handler, self.host, 8081))
+
+        # initialise threads
+        self.live_data_thread = await LiveDataThread(self.mp_socket)
+        self.fpv_feed_thread = await FPVFeedThread()
+        self.vision_feed_thread = await VisionFeedThread(self.vision_websocket_url)
+
+        # run threads
+        self.loop.run_until_complete(self.live_data_thread.run())
+        self.loop.run_until_complete(self.vision_feed_thread.run())
+
+        print("[TERMINATION] Closed WebSocketThread")
 
     async def handler(self, websocket, path):
         clients.add(websocket)
@@ -40,55 +62,28 @@ class WebSocketThread(threading.Thread):
             print(f"[WEBSOCKET] Websocket {websocket} closed")
             clientData.pop(index)
 
-            
-    async def run(self):
-        asyncio.get_event_loop().run_until_complete(
-            websockets.serve(self.handler, self.host, 8081)
-        )
-        asyncio.get_event_loop().run_forever()
-
-        # old implementation using SimpleWebSocketServer:
-        # self.server = SimpleWebSocketServer(self.host, 8081, WebSocketServer)
-        self.live_data_thread = LiveDataThread(self.mp_socket)
-        self.fpv_feed_thread = FPVFeedThread()
-        self.vision_feed_thread = VisionFeedThread(self.vision_websocket_url)
-        await self.live_data_thread.start()
-        # self.fpv_feed_thread.start()
-        await self.vision_feed_thread.start()
-        # try:
-        #     self.server.serveforever()
-        # except:
-        #     pass
-
-        # self.live_data_thread.join()
-        print("[TERMINATION] Closed WebSocketThread")
-
     async def close(self):
         await websockets.close()
         try:
-            await self.live_data_thread.close()
-            await self.camera_feed_thread.close()
-            await self.vision_feed_thread.close()
-            await self.live_data_thread.join()
-            await self.camera_feed_thread.join()
-            await self.vision_feed_thread.join()
+            self.loop.stop()
+            self.loop.close()
         except:
             pass
         
 
-class LiveDataThread(threading.Thread):
+class LiveDataThread():
     # Sends Live data taken from Mission Planner to all self.clients connected via WebSockets.
     def __init__(self, mp_socket):
         # clients: The WebSocket clients list
         # mp_socket: The MissionPlannerSocket that talks to Mission Planner.
-        threading.Thread.__init__(self)
         self.quit = False
         self.data_interval = 1 # second
         self.mp_socket = mp_socket
 
+        self.loop = asyncio.get_event_loop()
+
     async def run(self):
         while not self.quit:
-            self.mp_socket.live_data_mutex.acquire()
             data = self.mp_socket.live_data
             data["ip"] = self.mp_socket.HOST
             # print("live_data:", data)
@@ -111,20 +106,20 @@ class LiveDataThread(threading.Thread):
                 await client.send(json.dumps(data))
                 # print(f'data: {data}')
 
-            self.mp_socket.live_data_mutex.release()
-            time.sleep(self.data_interval)
+            asyncio.sleep(self.data_interval)
         print("[TERMINATION] Closed LiveDataThread")
 
-    def close(self):
+    async def close(self):
         self.quit = True
 
-class FPVFeedThread(threading.Thread):
+class FPVFeedThread():
     # Sends Camera Feed Data taken from the onboard camera and other projects to all self.clients connected via WebSockets.
     def __init__(self):
-        threading.Thread.__init__(self)
         self.quit = False
         self.camera = None
         self.fps = 5
+
+        self.loop = asyncio.get_event_loop()
         
 
     async def run(self):
@@ -133,22 +128,22 @@ class FPVFeedThread(threading.Thread):
             if not self.camera:
                 try:
                     if platform == "win32":
-                            self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                            self.camera = await cv2.VideoCapture(0, cv2.CAP_DSHOW)
                     else:
-                            self.camera = cv2.VideoCapture(0)
+                            self.camera = await cv2.VideoCapture(0)
                     # Set camera resolution
-                    self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640) # 1920 / 1280
-                    self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) # 1080 / 720
-                    self.camera.set(cv2.CAP_PROP_FPS, 10)
+                    await self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640) # 1920 / 1280
+                    await self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) # 1080 / 720
+                    await self.camera.set(cv2.CAP_PROP_FPS, 10)
                 except:
                     self.camera = None
-                time.sleep(2)
+                asyncio.sleep(2)
             else:
                 try:
-                    ret, frame = self.camera.read()
+                    ret, frame = await self.camera.read()
                     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]
                     # encode_param = [int(cv2.IMWRITE_PNG_COMPRESSION), 1]
-                    buffer = cv2.imencode('.jpg', frame, encode_param)[1]
+                    buffer = await cv2.imencode('.jpg', frame, encode_param)[1]
                     # convert image to base64 before sending
                     data = {"command": "FPV_CAM", "image": "data:image/jpg;base64," + base64.b64encode(buffer)}
                     for index, client in enumerate(clients):
@@ -158,17 +153,18 @@ class FPVFeedThread(threading.Thread):
 
         print("[TERMINATION] Closed FPVFeedThread")
 
-    def close(self):
+    async def close(self):
         self.quit = True
-        self.camera.release()
+        await self.camera.release()
 
-class VisionFeedThread(threading.Thread):
+class VisionFeedThread():
     # Sends Vision Feed Data taken from the WebSocket relay (Ask Vision) connection and to all self.clients connected via WebSockets.
     def __init__(self, vision_websocket_url):
-        threading.Thread.__init__(self)
         self.quit = False
         self.connected = False
         self.vision_websocket_url = vision_websocket_url
+
+        self.loop = asyncio.get_event_loop()
 
     async def connect(self):
         self.connected = False
@@ -181,29 +177,29 @@ class VisionFeedThread(threading.Thread):
             except Exception as e:
                 self.connected = False
                 print("[VISION WebSocket] Failed to connect, retrying...")
-            time.sleep(1)
+            asyncio.sleep(1)
 
     async def run(self):
         while not self.quit:
             while not self.connected:
                 try:
-                    self.ws = websockets.connect(self.vision_websocket_url)
+                    self.ws = await websockets.connect(self.vision_websocket_url)
                     self.connected = True
                     await self.ws.send(f"[Vision WebSocket] Successfully Connected")
                 except Exception as e:
                     self.connected = False
                     print("[VISION WebSocket] Failed to connect, retrying...")
-                time.sleep(1) 
+                asyncio.sleep(1) 
 
             try:
                 buffer = await self.ws.recv()
                 # convert image to base64 before sending
-                data = {"command": "VISION_CAM", "image": "data:image/jpg;base64," + base64.b64encode(buffer)}
+                data = {"command": "VISION_CAM", "image": "data:image/jpg;base64," + await base64.b64encode(buffer)}
                 for index, client in enumerate(clients):
                     await client.send(json.dumps(data))
             except:
                 pass
-        self.ws.close()
+        await self.ws.close()
         print("[TERMINATION] Closed VisionFeedThread")
 
     def close(self):

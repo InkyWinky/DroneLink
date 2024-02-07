@@ -2,8 +2,10 @@ from __future__ import print_function, division
 import socket
 from CommunicationScript.MissionPlannerSocket import MissionPlannerSocket
 from DronelinkHTTPServer import HTTPServerThread
-from DronelinkWebSocketServer import WebSocketThread
-        
+from DronelinkWebSocketServerNew import WebSocketThread
+import websockets
+import asyncio
+
 
 def get_ip():
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,6 +21,8 @@ def get_ip():
         return IP
 
 if __name__ == "__main__":
+    # Create event loop object
+    loop = asyncio.get_event_loop()
 
     # Initialise Mission Planner Socket.
     MP_PORT = 7766
@@ -38,13 +42,14 @@ if __name__ == "__main__":
     vision_websocket_url = "wss://relay.uas.unexceptional.dev/relay/images/outbound"
 
     # Initialise Web Socket Server for real time data transfer.
-    web_socket_server = WebSocketThread(IP, mp_socket, vision_websocket_url)
-    web_socket_server.start()
+    web_socket_server = WebSocketThread(IP, mp_socket, vision_websocket_url, loop)
     print("[INFO] WebSocket Initialised on:", IP + ":" + str(8081))
+
 
     # HTTP Server
     http_server = HTTPServerThread(IP, mp_socket, vision_websocket_url)
-    http_server.start()
+    loop.run_until_complete(http_server.run())
+    
     print("[INFO] HTTP Server Initialised on:", IP + ":" + str(8000))
 
     try:
@@ -63,9 +68,5 @@ if __name__ == "__main__":
             mp_socket.close()
         except:
             pass
-    
-    # Wait until all threads are closed.
-    web_socket_server.join()
-    http_server.join()
-    
+
     print("[TERMINATION] Dronelink Server Successfully Closed!")
