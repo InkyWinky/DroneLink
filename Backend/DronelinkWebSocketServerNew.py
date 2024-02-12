@@ -10,10 +10,7 @@ import rel
 
 class WebSocketThread():
 
-    def __await__(self):
-        return self._async_init().__await__()
-
-    async def _async_init(self, host, mp_socket, vision_websocket_url, loop):
+    def init(self, host, mp_socket, vision_websocket_url, loop):
         # host: IP of the host to run the server on.
         # mp_socket: The MissionPlannerSocket that talks to Mission Planner.
         # vision_websocket_url: The WebSocket URL for Vision's Server for video feed.
@@ -28,9 +25,6 @@ class WebSocketThread():
         global clientData
         clientData = []
 
-        await self.run()
-        return self
-
             
     async def run(self):
         # establish websocket server
@@ -42,8 +36,8 @@ class WebSocketThread():
         self.vision_feed_thread = await VisionFeedThread(self.vision_websocket_url)
 
         # run threads
-        self.loop.run_until_complete(self.live_data_thread.run())
-        self.loop.run_until_complete(self.vision_feed_thread.run())
+        await self.live_data_thread.run()
+        await self.vision_feed_thread.run()
 
         print("[TERMINATION] Closed WebSocketThread")
 
@@ -64,12 +58,6 @@ class WebSocketThread():
 
     async def close(self):
         await websockets.close()
-        try:
-            self.loop.stop()
-            self.loop.close()
-        except:
-            pass
-        
 
 class LiveDataThread():
     # Sends Live data taken from Mission Planner to all self.clients connected via WebSockets.
@@ -79,8 +67,6 @@ class LiveDataThread():
         self.quit = False
         self.data_interval = 1 # second
         self.mp_socket = mp_socket
-
-        self.loop = asyncio.get_event_loop()
 
     async def run(self):
         while not self.quit:
@@ -163,8 +149,6 @@ class VisionFeedThread():
         self.quit = False
         self.connected = False
         self.vision_websocket_url = vision_websocket_url
-
-        self.loop = asyncio.get_event_loop()
 
     async def connect(self):
         self.connected = False
