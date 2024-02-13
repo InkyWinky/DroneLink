@@ -10,7 +10,7 @@ import rel
 
 class WebSocketThread():
 
-    def init(self, host, mp_socket, vision_websocket_url, loop):
+    def __init__(self, host, mp_socket, vision_websocket_url, loop):
         # host: IP of the host to run the server on.
         # mp_socket: The MissionPlannerSocket that talks to Mission Planner.
         # vision_websocket_url: The WebSocket URL for Vision's Server for video feed.
@@ -27,13 +27,14 @@ class WebSocketThread():
 
             
     async def run(self):
+        print(f"[RUNNING] Running WebSocketThread")
         # establish websocket server
-        self.loop.run_until_complete(websockets.serve(self.handler, self.host, 8081))
+        await websockets.serve(self.handler, self.host, 8081)
 
         # initialise threads
-        self.live_data_thread = await LiveDataThread(self.mp_socket)
-        self.fpv_feed_thread = await FPVFeedThread()
-        self.vision_feed_thread = await VisionFeedThread(self.vision_websocket_url)
+        self.live_data_thread = LiveDataThread(self.mp_socket)
+        self.fpv_feed_thread = FPVFeedThread()
+        self.vision_feed_thread = VisionFeedThread(self.vision_websocket_url)
 
         # run threads
         await self.live_data_thread.run()
@@ -69,11 +70,13 @@ class LiveDataThread():
         self.mp_socket = mp_socket
 
     async def run(self):
+        print(f"[RUNNING] Running LiveDataThread.run()")
         while not self.quit:
             data = self.mp_socket.live_data
             data["ip"] = self.mp_socket.HOST
             # print("live_data:", data)
             for index, client in enumerate(clients):
+                print(f"[RUNNING] Sending message to client {client}")
                 messages_to_send = []
                 # print(self.clientData[index]['messagesCount'])
                 # Send messages to keep client up to date. If the difference is more than 200, send the latest 200 only
@@ -109,6 +112,7 @@ class FPVFeedThread():
         
 
     async def run(self):
+        print(f"[RUNNING] Running FPVFeedThread.run()")
         while not self.quit:
             # If is no camera, try to connect.
             if not self.camera:

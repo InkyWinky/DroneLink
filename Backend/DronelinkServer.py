@@ -44,13 +44,14 @@ if __name__ == "__main__":
     # Initialise Web Socket Server for real time data transfer.
     web_socket_server = WebSocketThread(IP, mp_socket, vision_websocket_url, loop)
     print("[INFO] WebSocket Initialised on:", IP + ":" + str(8081))
-    loop.run_until_complete(web_socket_server.run())
 
     # HTTP Server
     http_server = HTTPServerThread(IP, mp_socket, vision_websocket_url)
-    loop.run_until_complete(http_server.run())
-    
     print("[INFO] HTTP Server Initialised on:", IP + ":" + str(8000))
+    
+    # start threads
+    loop.call_soon(web_socket_server.run())
+    loop.call_soon(http_server.run())
 
     try:
         a = input("PRESS ENTER TO STOP SERVERS\n")
