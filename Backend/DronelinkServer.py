@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # Initialise Web Socket Server for real time data transfer.
     web_socket_server = WebSocketThread(IP, mp_socket, vision_websocket_url, loop)
     print("[INFO] WebSocket Initialised on:", IP + ":" + str(8081))
-
+    loop.run_until_complete(web_socket_server.run())
 
     # HTTP Server
     http_server = HTTPServerThread(IP, mp_socket, vision_websocket_url)
