@@ -107,6 +107,7 @@ class LiveDataThread(threading.Thread):
                 #     clientData[index]['messagesCount'] = clientData[index]['messagesCount'] + 1
                 #     messages_to_send.append(message)
                 data['messages'] = messages_to_send
+                data['ip'] = self.mp_socket.HOST
                 data['command'] = "LIVE_DATA"
                 client.sendMessage(json.dumps(data))
                 # print('data:',data)

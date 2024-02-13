@@ -10,12 +10,12 @@
       <button class="uk-modal-close-default" type="button" uk-close></button>
       <form @submit="onSubmit" class="h-full flex flex-col justify-between">
         <span class="p-4 w-full">
-          <label class="font-bold text-lg">Connect to Mission Planner</label>
+          <label class="font-bold text-lg">Hello banan</label>
           <input
             v-model="ip.value"
             :class="{ 'uk-form-danger': ip.error }"
             :ref="ip.ref"
-            placeholder="Input Ip address of device with Mission Planner"
+            placeholder="InHello Bannana"
             class="uk-input"
           />
           <p v-if="ip.error" class="text-red-500">

@@ -556,7 +556,8 @@ class MissionManager:
                             "lifeline_distance": self.lifeline_distance,
                             "lifeline_velocity": self.lifeline_velocity,
                             "vision_geotag_gps": self.vision_geotag_gps,
-                            "vision_geotag_box": self.vision_geotag_box
+                            "vision_geotag_box": self.vision_geotag_box,
+                            
                             },
                         })
                     self.vision_mutex.release()

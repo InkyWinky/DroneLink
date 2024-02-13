@@ -158,6 +158,7 @@
 </template>
 
 <script>
+// import { store } from "@/store";
 import { useForm } from "vue-hooks-form";
 import api from "../api";
 import { ref, watch } from "vue";
@@ -175,6 +176,7 @@ export default {
     const isWebSocketConnected = ref(false);
     const lastFPVCamTime = ref(Date.now());
     const newTime = ref();
+    console.log(window.location.host.split(":")[0]);
 
     watch(isWebSocketConnected, async (value) => {
       // Reset live data if no connection
