@@ -114,7 +114,7 @@
               v-model="ip.value"
               :class="{ 'uk-form-danger': ip.error }"
               :ref="ip.ref"
-              placeholder="Input Ip address of device with Mission Planner"
+              :placeholder="ip.value"
               class="uk-input"
             />
             <div
@@ -186,9 +186,12 @@ export default {
     const { useField, handleSubmit } = useForm({
       defaultValues: {},
     });
+    const localIP = window.location.host.split(":")[0];
     const ip = useField("ip", {
+      value: localIP,
       rule: { required: true, min: 7, max: 15 },
     });
+    ip.value = localIP;
     let ws_connection = null;
     const connectWebSocket = () => {
       if (!ws_connection) {
