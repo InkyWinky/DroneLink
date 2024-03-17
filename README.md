@@ -1,4 +1,4 @@
-# **Mission Management: gui**
+# **DroneLink**
 ## Project setup
 ---
 ## Setting Up the Frontend
